@@ -5,6 +5,20 @@ date: "2022-09-06"
 output: html_document
 ---
 
+```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
+library(here)
+library(data.table)
+library(dplyr)
+library(foreach)
+
+library(stringr)
+library(glmnet)
+
+library(origami)
+library(hal9001)
+library(tictoc)
+```
+
 ```{r setup, include = FALSE}
 plotFolder <- here("results","images")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
@@ -16,7 +30,7 @@ knitr::opts_chunk$set(
   duplicate.label="allow"
 )
 
-set.seed(123)
+source("1_simu_functions.R")
 ```
 
 # Simulation #1
@@ -40,34 +54,67 @@ Data structure:  $O = (W, A, Z, Y)$
   + $W =  U_W$  
   + $A = (10 - 10W + U_A) * \mathbf{I}(0 \leq10 - 10W + U_A \leq 10) + 10* \mathbf{I}(0 \leq10 - 10W + U_A > 10)$  
   + $Z = \mathbf{I}[U_Z < expit(0.2*(W+A))]$
-  + $y = \mathbf{I}[U_Y < expit(0.1*W+0.3*A+Z)]$
+  + $y = \mathbf{I}[U_Y < expit(0.1*W+0.3*A+0.05*W*A+Z)]$
 
 
 ```{r}
-generate_data1 <- function(n){
+generate_data1 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- runif(n, 0, 1)
   U_A <- rnorm(n,0,1)
   U_Z <- runif(n, 0, 1)
   U_Y <- runif(n, 0, 1)
   
+  
   # endogenous variables
   W <- U_W
-  A <- (10 - 10*W + U_A)*as.numeric(10 - 10*W + U_A >= 0 & 10 - 10*W + U_A <= 10) + 10 * as.numeric(10 - 10*W + U_A > 10)
-  Z <- as.numeric(U_Z < plogis(0.2*(W+A)))
-  Y <- as.numeric(U_Z < plogis(0.1*W + 0.3*A + Z))
   
+  if(is.na(a)){
+    A <-  10 - 10*W + U_A
+    A[A<=0] = 0
+    A[A>=10] = 10
+  } else {
+    A <- rep(a, n)
+  }
+  
+  if(is.na(z)){
+    Z <- as.numeric(U_Z < plogis(0.2*(W+A)))
+  } else {
+    Z <- rep(z, n)
+  }
+  
+  Y <- as.numeric(U_Z < plogis(-0.05 * (W + 5*A + 3 * W * A + Z)))
+  
+
   # data frame
   O <- data.frame(W, A, Z, Y)
   return(O)
 }
 ```
 
-## n = 1000
+## Getting trul value
 ```{r}
-Obs1 <- generate_data1(1000)
+data_list_0 <- mapply(generate_data1, n=10000, a=seq(0.5, 10, 0.5), z=0,
+                      SIMPLIFY=F)
+data_list_1 <- mapply(generate_data1, n=10000, a=seq(0.5, 10, 0.5), z=1,
+                      SIMPLIFY=F)
 ```
 
+## n = 1000
+```{r}
+set.seed(123)
 
+Obs1 <- generate_data1(1000)
+summary(Obs1)
+```
+
+```{r}
+df <- Obs1
+y_name <- "Y"
+x_name <- c("W","A","Z")
+family_type = "binomial"
+
+undersmooth_init <- undersmooth_init()
+```
 
 
