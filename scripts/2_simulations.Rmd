@@ -109,12 +109,36 @@ summary(Obs1)
 ```
 
 ```{r}
-df <- Obs1
-y_name <- "Y"
-x_name <- c("W","A","Z")
-family_type = "binomial"
+Y <- Obs1$Y
+X <- Obs1 %>% 
+  select(W, A, Z) %>% 
+  mutate_if(sapply(., is.factor), as.numeric)
 
-undersmooth_init <- undersmooth_init()
+hal_init <- undersmooth_init(X, Y, family = "binomial")
+hal_undersmooth <- undersmooth_hal(X, Y,
+                                   fit_init = hal_init$fit_init,
+                                   basis_mat = hal_init$basis_mat,
+                                   family = "binomial")
+dgd_hal_fit <- fit_hal(X = X,
+                       Y = Y,
+                       family = "binomial",
+                       num_knots = num_knots_generator(
+                         max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                         smoothness_orders = 1,
+                         base_num_knots_0 = 500,
+                         base_num_knots_1 = 100
+                         #ceiling(sqrt(n))
+                         ),
+                       fit_control = list(
+                         cv_select = FALSE,
+                         n_folds = 10,
+                         foldid = NULL,
+                         use_min = TRUE,
+                         lambda.min.ratio = 1e-4,
+                         prediction_bounds = "default"
+                         ),
+                       lambda = hal_undersmooth$lambda_under
+                       )
 ```
 
 

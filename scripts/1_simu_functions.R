@@ -30,7 +30,7 @@ undersmooth_init <- function(X, Y, family = "gaussian"){
                       smoothness_orders = 0,
                       return_x_basis = TRUE,
                       family = family,
-                      num_knots = num_knots_generator(
+                      num_knots = hal9001:::num_knots_generator(
                         max_degree = ifelse(ncol(X) >= 20, 2, 3),
                         smoothness_orders = 0,
                         base_num_knots_0 = max(100, ceiling(sqrt(n)))
