@@ -145,3 +145,92 @@ get_maxscore <- function(basis_mat, resid_mat, sd_est, Nlam, us_fit){
   max_score <- apply(abs(score_all), 1, max)
   return(max_score)
 }
+
+
+
+
+########################
+# calculating ate
+########################
+cal_ate_hal <- function(df, y_name, x_names, y_type, a1, a0, z){
+  n <- nrow(df)
+  Y <- as.numeric(as.matrix(df %>% select(all_of(y_name))))
+  X <- df %>% 
+    select(all_of(x_names)) %>% 
+    mutate_if(sapply(., is.factor), as.numeric)
+  
+  hal_init <- undersmooth_init(X, Y, family = y_type)
+  hal_undersmooth <- undersmooth_hal(X, Y,
+                                     fit_init = hal_init$fit_init,
+                                     basis_mat = hal_init$basis_mat,
+                                     family = y_type)
+
+  
+  dgd_hal_fit <- fit_hal(X = X,
+                         Y = Y,
+                         family = y_type,
+                         num_knots = hal9001:::num_knots_generator(
+                           max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                           smoothness_orders = 1,
+                           base_num_knots_0 = 500,
+                           base_num_knots_1 = 100
+                           #ceiling(sqrt(n))
+                         ),
+                         fit_control = list(
+                           cv_select = FALSE,
+                           n_folds = 10,
+                           foldid = NULL,
+                           use_min = TRUE,
+                           lambda.min.ratio = 1e-4,
+                           prediction_bounds = "default"
+                         ),
+                         lambda = hal_undersmooth$lambda_init
+  )
+  
+  dgd_under_hal_fit <- fit_hal(X = X,
+                               Y = Y,
+                               family = y_type,
+                               num_knots = hal9001:::num_knots_generator(
+                                 max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                                 smoothness_orders = 1,
+                                 base_num_knots_0 = 500,
+                                 base_num_knots_1 = 100
+                                 #ceiling(sqrt(n))
+                               ),
+                               fit_control = list(
+                                 cv_select = FALSE,
+                                 n_folds = 10,
+                                 foldid = NULL,
+                                 use_min = TRUE,
+                                 lambda.min.ratio = 1e-4,
+                                 prediction_bounds = "default"
+                               ),
+                               lambda = hal_undersmooth$lambda_under
+  )
+  
+  X1 <- X
+  X1$A = a1
+  X1$Z = z
+  
+  X0 <- X
+  X0$A = a0
+  X0$Z = z
+  
+  y_preds <- predict(dgd_hal_fit, new_data = X)
+  y1_preds <- predict(dgd_hal_fit, new_data = X1)
+  y0_preds <- predict(dgd_hal_fit, new_data = X0)
+  psi_ss <- mean(y1_preds - y0_preds)
+  mse <- sum((y_preds - Y)^2)
+ 
+  y_preds_under <- predict(dgd_under_hal_fit, new_data = X)
+  y1_preds_under <- predict(dgd_under_hal_fit, new_data = X1)
+  y0_preds_under <- predict(dgd_under_hal_fit, new_data = X0)
+  psi_ss_under <- mean(y1_preds_under - y0_preds_under)
+  mse_under <- sum((y_preds_under - Y)^2)
+  
+  return(list("psi_ss_under" = psi_ss_under,
+              "mse_under" = mse_under,
+              "psi_ss_init" = psi_ss,
+              "mse_init" = mse))
+}
+
