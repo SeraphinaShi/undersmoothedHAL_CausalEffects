@@ -234,3 +234,37 @@ cal_ate_hal <- function(df, y_name, x_names, y_type, a1, a0, z){
               "mse_init" = mse))
 }
 
+
+# calculating the ate with given a avlues 
+# z =0 or 1
+ate_hal_avec0_z01 <- function(a_vec, psi0_a_0, psi0_a_1, obs_df){
+  psi_hat <- data.frame(targ_par = c(paste0("ATE(",a_vec,",0)"), paste0("ATE(",a_vec,",1)")), 
+                        psi0 = c(psi0_a_0, psi0_a_1),
+                        ss_under_hal = NA,
+                        ss_hal = NA)
+  
+  for (i in 1:length(a_vec)) {
+    a <- a_vec[i]
+    
+    ate_hal_a_0_relts <- cal_ate_hal(
+      df=obs_df,
+      y_name = "Y", x_names = c("W", "A", "Z"),
+      y_type = "binomial",
+      a1 = a, a0 = 0, z = 0
+    )
+    ate_hal_a_1_relts <- cal_ate_hal(
+      df=obs_df,
+      y_name = "Y", x_names = c("W", "A", "Z"),
+      y_type = "binomial",
+      a1 = a, a0 = 0, z = 1
+    )  
+    
+    psi_hat$ss_under_hal[i] = ate_hal_a_0_relts$psi_ss_under
+    psi_hat$ss_hal[i] = ate_hal_a_0_relts$psi_ss_init
+    psi_hat$ss_under_hal[i+length(a_vec)] = ate_hal_a_1_relts$psi_ss_under
+    psi_hat$ss_hal[i+length(a_vec)] = ate_hal_a_1_relts$psi_ss_init  
+    
+  }
+  
+  return(psi_hat)
+}
