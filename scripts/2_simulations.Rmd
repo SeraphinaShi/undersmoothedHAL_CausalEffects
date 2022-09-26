@@ -127,27 +127,27 @@ print(results_500)
 save.image(file=here("data", "rdata", "02_simulations_500.RData"))
 ```
 
-## n = 1000
-```{r simu_n1000}
-set.seed(123)
-n=1000
-B=1000
-results_1000 = run_simu(n=n, B=B)
+<!-- ## n = 1000 -->
+<!-- ```{r simu_n1000} -->
+<!-- set.seed(123) -->
+<!-- n=1000 -->
+<!-- B=1000 -->
+<!-- results_1000 = run_simu(n=n, B=B) -->
 
-print(results_1000)
+<!-- print(results_1000) -->
 
 
-save.image(file=here("data", "rdata", "02_simulations_1000.RData"))
-```
+<!-- save.image(file=here("data", "rdata", "02_simulations_1000.RData")) -->
+<!-- ``` -->
 
-## n = 5000
-```{r simu_n5000}
-set.seed(123)
-n=5000
-B=1000
-results_5000 = run_simu(n=n, B=B)
+<!-- ## n = 5000 -->
+<!-- ```{r simu_n5000} -->
+<!-- set.seed(123) -->
+<!-- n=5000 -->
+<!-- B=1000 -->
+<!-- results_5000 = run_simu(n=n, B=B) -->
 
-print(results_5000)
+<!-- print(results_5000) -->
 
-save.image(file=here("data", "rdata", "02_simulations_5000.RData"))
-```
+<!-- save.image(file=here("data", "rdata", "02_simulations_5000.RData")) -->
+<!-- ``` -->
