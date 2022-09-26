@@ -118,29 +118,34 @@ for (i in 1:length(a_vec)) {
 ## n = 500
 ```{r}
 set.seed(123)
-n=50
-B=10
+n=500
+B=1000
 results_500 = run_simu(n=n, B=B)
 
 print(results_500)
 
-save.image(file=here("data", "rdata", "02_simulations_500.RData"))
+# save.image(file=here("data", "rdata", "02_simulations_500.RData"))
 ```
 
 ## n = 1000
 ```{r}
 set.seed(123)
-results_1000 = run_simu(n=1000, B=1000)
+n=1000
+B=1000
+results_1000 = run_simu(n=n, B=B)
 
 print(results_1000)
 
-save.image(file=here("data", "rdata", "02_simulations_1000.RData"))
+
+# save.image(file=here("data", "rdata", "02_simulations_1000.RData"))
 ```
 
 ## n = 5000
 ```{r}
 set.seed(123)
-results_5000 = run_simu(n=5000, B=1000)
+n=5000
+B=1000
+results_5000 = run_simu(n=n, B=B)
 
 print(results_5000)
 

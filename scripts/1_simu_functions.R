@@ -196,6 +196,6 @@ run_simu <- function(n, B){
                            ss_under_hal_sd = ate_hal_a_0_relts_ss_under_hal_simu_sd,
                            ss_hal_mean = ate_hal_a_0_relts_ss_hal_simu_means,
                            ss_hal_sd = ate_hal_a_0_relts_ss_hal_simu_sd)
-  
+  results <- list("ATE_z=1"=results_z1, "ATE_z=0"=results_z0)
   return(results)
 }
