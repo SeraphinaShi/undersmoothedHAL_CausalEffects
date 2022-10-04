@@ -136,7 +136,7 @@ for (i in 1:length(a_vec)) {
 ```{r simu_n500}
 set.seed(123)
 n=500
-B=5
+B=1000
 results_500 = run_simu(generate_data = generate_data2, n=n, B=B)
 
 print(results_500)
@@ -147,5 +147,5 @@ save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
 
 ```{r}
 # load(here("data", "rdata", "02_simulation_2_500.RData"))
-print(results)
+# print(results_500)
 ```
