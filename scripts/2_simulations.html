@@ -408,9 +408,8 @@ treatment<br />
 <ul>
 <li><span class="math inline">\(W = U_W\)</span><br />
 </li>
-<li><span class="math inline">\(A = (10 - 10W + U_A) * \mathbf{I}(0
-\leq10 - 10W + U_A \leq 10) + 10* \mathbf{I}(0 \leq10 - 10W + U_A &gt;
-10)\)</span><br />
+<li><span class="math inline">\(A = bound(10 - 10W + U_A, min=0,
+max=10)\)</span><br />
 </li>
 <li><span class="math inline">\(Z = \mathbf{I}[U_Z &lt;
 expit(0.2(W+A))]\)</span></li>
@@ -418,56 +417,1113 @@ expit(0.2(W+A))]\)</span></li>
 expit(0.05(W-5A+3*W*A+Z))]\)</span></li>
 </ul></li>
 </ul>
-<div id="n-1000" class="section level2">
-<h2>n = 1000</h2>
-<pre><code>##        W                   A                Z               Y       
-##  Min.   :0.0004653   Min.   : 0.000   Min.   :0.000   Min.   :0.00  
-##  1st Qu.:0.2536403   1st Qu.: 2.567   1st Qu.:0.000   1st Qu.:0.00  
-##  Median :0.4899503   Median : 5.113   Median :1.000   Median :1.00  
-##  Mean   :0.4972778   Mean   : 5.036   Mean   :0.711   Mean   :0.66  
-##  3rd Qu.:0.7468051   3rd Qu.: 7.426   3rd Qu.:1.000   3rd Qu.:1.00  
-##  Max.   :0.9994045   Max.   :10.000   Max.   :1.000   Max.   :1.00</code></pre>
-<pre><code>##      targ_par      psi0  ss_under_hal       ss_hal
-## 1  ATE(0.5,0) 0.0215433 -1.281215e-03 -0.005435250
-## 2    ATE(1,0) 0.0435161 -1.190984e-03 -0.009927001
-## 3  ATE(1.5,0) 0.0649079 -8.920999e-05 -0.013649225
-## 4    ATE(2,0) 0.0864687 -4.377261e-04 -0.017300828
-## 5  ATE(2.5,0) 0.1074628 -4.904462e-06 -0.019331318
-## 6    ATE(3,0) 0.1276867 -1.917575e-04 -0.022340561
-## 7  ATE(3.5,0) 0.1479464  1.636042e-03 -0.024301126
-## 8    ATE(4,0) 0.1673120  1.428689e-03 -0.025974505
-## 9  ATE(4.5,0) 0.1862260 -3.436982e-04 -0.027410196
-## 10   ATE(5,0) 0.2041586  5.374383e-05 -0.027158309
-## 11 ATE(5.5,0) 0.2216181  1.161343e-03 -0.026478184
-## 12   ATE(6,0) 0.2386113  1.274617e-03 -0.022835518
-## 13 ATE(6.5,0) 0.2549489  4.528536e-03 -0.024811450
-## 14   ATE(7,0) 0.2696544  7.627255e-03 -0.022455794
-## 15 ATE(7.5,0) 0.2843640  8.977311e-03 -0.019070346
-## 16   ATE(8,0) 0.2980805  1.526423e-02 -0.018888228
-## 17 ATE(8.5,0) 0.3109092  2.048034e-02 -0.016677197
-## 18   ATE(9,0) 0.3233670  2.453076e-02 -0.017234642
-## 19 ATE(9.5,0) 0.3350097  3.780003e-02 -0.011417256
-## 20  ATE(10,0) 0.3459375  3.058758e-02 -0.012758734
-## 21 ATE(0.5,1) 0.0221072 -3.180935e-02  0.016771952
-## 22   ATE(1,1) 0.0439941  1.762874e-02  0.036075572
-## 23 ATE(1.5,1) 0.0657161  1.285511e-01  0.038115235
-## 24   ATE(2,1) 0.0871572  1.361400e-01  0.070575347
-## 25 ATE(2.5,1) 0.1087527  1.156231e-01  0.068752411
-## 26   ATE(3,1) 0.1290641  8.271012e-02  0.073964818
-## 27 ATE(3.5,1) 0.1493263  7.008714e-02  0.069659054
-## 28   ATE(4,1) 0.1691647  4.616788e-02  0.068609338
-## 29 ATE(4.5,1) 0.1882192 -2.532307e-02  0.068709992
-## 30   ATE(5,1) 0.2070369  7.276630e-02  0.079405249
-## 31 ATE(5.5,1) 0.2246711  1.593677e-01  0.089549150
-## 32   ATE(6,1) 0.2417863  1.828126e-01  0.098387925
-## 33 ATE(6.5,1) 0.2580420  1.800027e-01  0.102970194
-## 34   ATE(7,1) 0.2741142  1.767115e-01  0.109318594
-## 35 ATE(7.5,1) 0.2887397  1.854473e-01  0.120664026
-## 36   ATE(8,1) 0.3030930  1.964185e-01  0.127906498
-## 37 ATE(8.5,1) 0.3161315  1.985448e-01  0.134259390
-## 38   ATE(9,1) 0.3289552  1.989725e-01  0.139854791
-## 39 ATE(9.5,1) 0.3409879  1.973862e-01  0.146528447
-## 40  ATE(10,1) 0.3522860  1.974070e-01  0.150528941</code></pre>
+<div id="n-500" class="section level2">
+<h2>n = 500</h2>
+<pre><code>## [1] &quot;-----starting round 1-----&quot;
+## [1] &quot;-----starting round 2-----&quot;
+## [1] &quot;-----starting round 3-----&quot;
+## [1] &quot;-----starting round 4-----&quot;
+## [1] &quot;-----starting round 5-----&quot;
+## [1] &quot;-----starting round 6-----&quot;
+## [1] &quot;-----starting round 7-----&quot;
+## [1] &quot;-----starting round 8-----&quot;
+## [1] &quot;-----starting round 9-----&quot;
+## [1] &quot;-----starting round 10-----&quot;
+## [1] &quot;-----starting round 11-----&quot;
+## [1] &quot;-----starting round 12-----&quot;
+## [1] &quot;-----starting round 13-----&quot;
+## [1] &quot;-----starting round 14-----&quot;
+## [1] &quot;-----starting round 15-----&quot;
+## [1] &quot;-----starting round 16-----&quot;
+## [1] &quot;-----starting round 17-----&quot;
+## [1] &quot;-----starting round 18-----&quot;
+## [1] &quot;-----starting round 19-----&quot;
+## [1] &quot;-----starting round 20-----&quot;
+## [1] &quot;-----starting round 21-----&quot;
+## [1] &quot;-----starting round 22-----&quot;
+## [1] &quot;-----starting round 23-----&quot;
+## [1] &quot;-----starting round 24-----&quot;
+## [1] &quot;-----starting round 25-----&quot;
+## [1] &quot;-----starting round 26-----&quot;
+## [1] &quot;-----starting round 27-----&quot;
+## [1] &quot;-----starting round 28-----&quot;
+## [1] &quot;-----starting round 29-----&quot;
+## [1] &quot;-----starting round 30-----&quot;
+## [1] &quot;-----starting round 31-----&quot;
+## [1] &quot;-----starting round 32-----&quot;
+## [1] &quot;-----starting round 33-----&quot;
+## [1] &quot;-----starting round 34-----&quot;
+## [1] &quot;-----starting round 35-----&quot;
+## [1] &quot;-----starting round 36-----&quot;
+## [1] &quot;-----starting round 37-----&quot;
+## [1] &quot;-----starting round 38-----&quot;
+## [1] &quot;-----starting round 39-----&quot;
+## [1] &quot;-----starting round 40-----&quot;
+## [1] &quot;-----starting round 41-----&quot;
+## [1] &quot;-----starting round 42-----&quot;
+## [1] &quot;-----starting round 43-----&quot;
+## [1] &quot;-----starting round 44-----&quot;
+## [1] &quot;-----starting round 45-----&quot;
+## [1] &quot;-----starting round 46-----&quot;
+## [1] &quot;-----starting round 47-----&quot;
+## [1] &quot;-----starting round 48-----&quot;
+## [1] &quot;-----starting round 49-----&quot;
+## [1] &quot;-----starting round 50-----&quot;
+## [1] &quot;-----starting round 51-----&quot;
+## [1] &quot;-----starting round 52-----&quot;
+## [1] &quot;-----starting round 53-----&quot;
+## [1] &quot;-----starting round 54-----&quot;
+## [1] &quot;-----starting round 55-----&quot;
+## [1] &quot;-----starting round 56-----&quot;
+## [1] &quot;-----starting round 57-----&quot;
+## [1] &quot;-----starting round 58-----&quot;
+## [1] &quot;-----starting round 59-----&quot;
+## [1] &quot;-----starting round 60-----&quot;
+## [1] &quot;-----starting round 61-----&quot;
+## [1] &quot;-----starting round 62-----&quot;
+## [1] &quot;-----starting round 63-----&quot;
+## [1] &quot;-----starting round 64-----&quot;
+## [1] &quot;-----starting round 65-----&quot;
+## [1] &quot;-----starting round 66-----&quot;
+## [1] &quot;-----starting round 67-----&quot;
+## [1] &quot;-----starting round 68-----&quot;
+## [1] &quot;-----starting round 69-----&quot;
+## [1] &quot;-----starting round 70-----&quot;
+## [1] &quot;-----starting round 71-----&quot;
+## [1] &quot;-----starting round 72-----&quot;
+## [1] &quot;-----starting round 73-----&quot;
+## [1] &quot;-----starting round 74-----&quot;
+## [1] &quot;-----starting round 75-----&quot;
+## [1] &quot;-----starting round 76-----&quot;
+## [1] &quot;-----starting round 77-----&quot;
+## [1] &quot;-----starting round 78-----&quot;
+## [1] &quot;-----starting round 79-----&quot;
+## [1] &quot;-----starting round 80-----&quot;
+## [1] &quot;-----starting round 81-----&quot;
+## [1] &quot;-----starting round 82-----&quot;
+## [1] &quot;-----starting round 83-----&quot;
+## [1] &quot;-----starting round 84-----&quot;
+## [1] &quot;-----starting round 85-----&quot;
+## [1] &quot;-----starting round 86-----&quot;
+## [1] &quot;-----starting round 87-----&quot;
+## [1] &quot;-----starting round 88-----&quot;
+## [1] &quot;-----starting round 89-----&quot;
+## [1] &quot;-----starting round 90-----&quot;
+## [1] &quot;-----starting round 91-----&quot;
+## [1] &quot;-----starting round 92-----&quot;
+## [1] &quot;-----starting round 93-----&quot;
+## [1] &quot;-----starting round 94-----&quot;
+## [1] &quot;-----starting round 95-----&quot;
+## [1] &quot;-----starting round 96-----&quot;
+## [1] &quot;-----starting round 97-----&quot;
+## [1] &quot;-----starting round 98-----&quot;
+## [1] &quot;-----starting round 99-----&quot;
+## [1] &quot;-----starting round 100-----&quot;
+## [1] &quot;-----starting round 101-----&quot;
+## [1] &quot;-----starting round 102-----&quot;
+## [1] &quot;-----starting round 103-----&quot;
+## [1] &quot;-----starting round 104-----&quot;
+## [1] &quot;-----starting round 105-----&quot;
+## [1] &quot;-----starting round 106-----&quot;
+## [1] &quot;-----starting round 107-----&quot;
+## [1] &quot;-----starting round 108-----&quot;
+## [1] &quot;-----starting round 109-----&quot;
+## [1] &quot;-----starting round 110-----&quot;
+## [1] &quot;-----starting round 111-----&quot;
+## [1] &quot;-----starting round 112-----&quot;
+## [1] &quot;-----starting round 113-----&quot;
+## [1] &quot;-----starting round 114-----&quot;
+## [1] &quot;-----starting round 115-----&quot;
+## [1] &quot;-----starting round 116-----&quot;
+## [1] &quot;-----starting round 117-----&quot;
+## [1] &quot;-----starting round 118-----&quot;
+## [1] &quot;-----starting round 119-----&quot;
+## [1] &quot;-----starting round 120-----&quot;
+## [1] &quot;-----starting round 121-----&quot;
+## [1] &quot;-----starting round 122-----&quot;
+## [1] &quot;-----starting round 123-----&quot;
+## [1] &quot;-----starting round 124-----&quot;
+## [1] &quot;-----starting round 125-----&quot;
+## [1] &quot;-----starting round 126-----&quot;
+## [1] &quot;-----starting round 127-----&quot;
+## [1] &quot;-----starting round 128-----&quot;
+## [1] &quot;-----starting round 129-----&quot;
+## [1] &quot;-----starting round 130-----&quot;
+## [1] &quot;-----starting round 131-----&quot;
+## [1] &quot;-----starting round 132-----&quot;
+## [1] &quot;-----starting round 133-----&quot;
+## [1] &quot;-----starting round 134-----&quot;
+## [1] &quot;-----starting round 135-----&quot;
+## [1] &quot;-----starting round 136-----&quot;
+## [1] &quot;-----starting round 137-----&quot;
+## [1] &quot;-----starting round 138-----&quot;
+## [1] &quot;-----starting round 139-----&quot;
+## [1] &quot;-----starting round 140-----&quot;
+## [1] &quot;-----starting round 141-----&quot;
+## [1] &quot;-----starting round 142-----&quot;
+## [1] &quot;-----starting round 143-----&quot;
+## [1] &quot;-----starting round 144-----&quot;
+## [1] &quot;-----starting round 145-----&quot;
+## [1] &quot;-----starting round 146-----&quot;
+## [1] &quot;-----starting round 147-----&quot;
+## [1] &quot;-----starting round 148-----&quot;
+## [1] &quot;-----starting round 149-----&quot;
+## [1] &quot;-----starting round 150-----&quot;
+## [1] &quot;-----starting round 151-----&quot;
+## [1] &quot;-----starting round 152-----&quot;
+## [1] &quot;-----starting round 153-----&quot;
+## [1] &quot;-----starting round 154-----&quot;
+## [1] &quot;-----starting round 155-----&quot;
+## [1] &quot;-----starting round 156-----&quot;
+## [1] &quot;-----starting round 157-----&quot;
+## [1] &quot;-----starting round 158-----&quot;
+## [1] &quot;-----starting round 159-----&quot;
+## [1] &quot;-----starting round 160-----&quot;
+## [1] &quot;-----starting round 161-----&quot;
+## [1] &quot;-----starting round 162-----&quot;
+## [1] &quot;-----starting round 163-----&quot;
+## [1] &quot;-----starting round 164-----&quot;
+## [1] &quot;-----starting round 165-----&quot;
+## [1] &quot;-----starting round 166-----&quot;
+## [1] &quot;-----starting round 167-----&quot;
+## [1] &quot;-----starting round 168-----&quot;
+## [1] &quot;-----starting round 169-----&quot;
+## [1] &quot;-----starting round 170-----&quot;
+## [1] &quot;-----starting round 171-----&quot;
+## [1] &quot;-----starting round 172-----&quot;
+## [1] &quot;-----starting round 173-----&quot;
+## [1] &quot;-----starting round 174-----&quot;
+## [1] &quot;-----starting round 175-----&quot;
+## [1] &quot;-----starting round 176-----&quot;
+## [1] &quot;-----starting round 177-----&quot;
+## [1] &quot;-----starting round 178-----&quot;
+## [1] &quot;-----starting round 179-----&quot;
+## [1] &quot;-----starting round 180-----&quot;
+## [1] &quot;-----starting round 181-----&quot;
+## [1] &quot;-----starting round 182-----&quot;
+## [1] &quot;-----starting round 183-----&quot;
+## [1] &quot;-----starting round 184-----&quot;
+## [1] &quot;-----starting round 185-----&quot;
+## [1] &quot;-----starting round 186-----&quot;
+## [1] &quot;-----starting round 187-----&quot;
+## [1] &quot;-----starting round 188-----&quot;
+## [1] &quot;-----starting round 189-----&quot;
+## [1] &quot;-----starting round 190-----&quot;
+## [1] &quot;-----starting round 191-----&quot;
+## [1] &quot;-----starting round 192-----&quot;
+## [1] &quot;-----starting round 193-----&quot;
+## [1] &quot;-----starting round 194-----&quot;
+## [1] &quot;-----starting round 195-----&quot;
+## [1] &quot;-----starting round 196-----&quot;
+## [1] &quot;-----starting round 197-----&quot;
+## [1] &quot;-----starting round 198-----&quot;
+## [1] &quot;-----starting round 199-----&quot;
+## [1] &quot;-----starting round 200-----&quot;
+## [1] &quot;-----starting round 201-----&quot;
+## [1] &quot;-----starting round 202-----&quot;
+## [1] &quot;-----starting round 203-----&quot;
+## [1] &quot;-----starting round 204-----&quot;
+## [1] &quot;-----starting round 205-----&quot;
+## [1] &quot;-----starting round 206-----&quot;
+## [1] &quot;-----starting round 207-----&quot;
+## [1] &quot;-----starting round 208-----&quot;
+## [1] &quot;-----starting round 209-----&quot;
+## [1] &quot;-----starting round 210-----&quot;
+## [1] &quot;-----starting round 211-----&quot;
+## [1] &quot;-----starting round 212-----&quot;
+## [1] &quot;-----starting round 213-----&quot;
+## [1] &quot;-----starting round 214-----&quot;
+## [1] &quot;-----starting round 215-----&quot;
+## [1] &quot;-----starting round 216-----&quot;
+## [1] &quot;-----starting round 217-----&quot;
+## [1] &quot;-----starting round 218-----&quot;
+## [1] &quot;-----starting round 219-----&quot;
+## [1] &quot;-----starting round 220-----&quot;
+## [1] &quot;-----starting round 221-----&quot;
+## [1] &quot;-----starting round 222-----&quot;
+## [1] &quot;-----starting round 223-----&quot;
+## [1] &quot;-----starting round 224-----&quot;
+## [1] &quot;-----starting round 225-----&quot;
+## [1] &quot;-----starting round 226-----&quot;
+## [1] &quot;-----starting round 227-----&quot;
+## [1] &quot;-----starting round 228-----&quot;
+## [1] &quot;-----starting round 229-----&quot;
+## [1] &quot;-----starting round 230-----&quot;
+## [1] &quot;-----starting round 231-----&quot;
+## [1] &quot;-----starting round 232-----&quot;
+## [1] &quot;-----starting round 233-----&quot;
+## [1] &quot;-----starting round 234-----&quot;
+## [1] &quot;-----starting round 235-----&quot;
+## [1] &quot;-----starting round 236-----&quot;
+## [1] &quot;-----starting round 237-----&quot;
+## [1] &quot;-----starting round 238-----&quot;
+## [1] &quot;-----starting round 239-----&quot;
+## [1] &quot;-----starting round 240-----&quot;
+## [1] &quot;-----starting round 241-----&quot;
+## [1] &quot;-----starting round 242-----&quot;
+## [1] &quot;-----starting round 243-----&quot;
+## [1] &quot;-----starting round 244-----&quot;
+## [1] &quot;-----starting round 245-----&quot;
+## [1] &quot;-----starting round 246-----&quot;
+## [1] &quot;-----starting round 247-----&quot;
+## [1] &quot;-----starting round 248-----&quot;
+## [1] &quot;-----starting round 249-----&quot;
+## [1] &quot;-----starting round 250-----&quot;
+## [1] &quot;-----starting round 251-----&quot;
+## [1] &quot;-----starting round 252-----&quot;
+## [1] &quot;-----starting round 253-----&quot;
+## [1] &quot;-----starting round 254-----&quot;
+## [1] &quot;-----starting round 255-----&quot;
+## [1] &quot;-----starting round 256-----&quot;
+## [1] &quot;-----starting round 257-----&quot;
+## [1] &quot;-----starting round 258-----&quot;
+## [1] &quot;-----starting round 259-----&quot;
+## [1] &quot;-----starting round 260-----&quot;
+## [1] &quot;-----starting round 261-----&quot;
+## [1] &quot;-----starting round 262-----&quot;
+## [1] &quot;-----starting round 263-----&quot;
+## [1] &quot;-----starting round 264-----&quot;
+## [1] &quot;-----starting round 265-----&quot;
+## [1] &quot;-----starting round 266-----&quot;
+## [1] &quot;-----starting round 267-----&quot;
+## [1] &quot;-----starting round 268-----&quot;
+## [1] &quot;-----starting round 269-----&quot;
+## [1] &quot;-----starting round 270-----&quot;
+## [1] &quot;-----starting round 271-----&quot;
+## [1] &quot;-----starting round 272-----&quot;
+## [1] &quot;-----starting round 273-----&quot;
+## [1] &quot;-----starting round 274-----&quot;
+## [1] &quot;-----starting round 275-----&quot;
+## [1] &quot;-----starting round 276-----&quot;
+## [1] &quot;-----starting round 277-----&quot;
+## [1] &quot;-----starting round 278-----&quot;
+## [1] &quot;-----starting round 279-----&quot;
+## [1] &quot;-----starting round 280-----&quot;
+## [1] &quot;-----starting round 281-----&quot;
+## [1] &quot;-----starting round 282-----&quot;
+## [1] &quot;-----starting round 283-----&quot;
+## [1] &quot;-----starting round 284-----&quot;
+## [1] &quot;-----starting round 285-----&quot;
+## [1] &quot;-----starting round 286-----&quot;
+## [1] &quot;-----starting round 287-----&quot;
+## [1] &quot;-----starting round 288-----&quot;
+## [1] &quot;-----starting round 289-----&quot;
+## [1] &quot;-----starting round 290-----&quot;
+## [1] &quot;-----starting round 291-----&quot;
+## [1] &quot;-----starting round 292-----&quot;
+## [1] &quot;-----starting round 293-----&quot;
+## [1] &quot;-----starting round 294-----&quot;
+## [1] &quot;-----starting round 295-----&quot;
+## [1] &quot;-----starting round 296-----&quot;
+## [1] &quot;-----starting round 297-----&quot;
+## [1] &quot;-----starting round 298-----&quot;
+## [1] &quot;-----starting round 299-----&quot;
+## [1] &quot;-----starting round 300-----&quot;
+## [1] &quot;-----starting round 301-----&quot;
+## [1] &quot;-----starting round 302-----&quot;
+## [1] &quot;-----starting round 303-----&quot;
+## [1] &quot;-----starting round 304-----&quot;
+## [1] &quot;-----starting round 305-----&quot;
+## [1] &quot;-----starting round 306-----&quot;
+## [1] &quot;-----starting round 307-----&quot;
+## [1] &quot;-----starting round 308-----&quot;
+## [1] &quot;-----starting round 309-----&quot;
+## [1] &quot;-----starting round 310-----&quot;
+## [1] &quot;-----starting round 311-----&quot;
+## [1] &quot;-----starting round 312-----&quot;
+## [1] &quot;-----starting round 313-----&quot;
+## [1] &quot;-----starting round 314-----&quot;
+## [1] &quot;-----starting round 315-----&quot;
+## [1] &quot;-----starting round 316-----&quot;
+## [1] &quot;-----starting round 317-----&quot;
+## [1] &quot;-----starting round 318-----&quot;
+## [1] &quot;-----starting round 319-----&quot;
+## [1] &quot;-----starting round 320-----&quot;
+## [1] &quot;-----starting round 321-----&quot;
+## [1] &quot;-----starting round 322-----&quot;
+## [1] &quot;-----starting round 323-----&quot;
+## [1] &quot;-----starting round 324-----&quot;
+## [1] &quot;-----starting round 325-----&quot;
+## [1] &quot;-----starting round 326-----&quot;
+## [1] &quot;-----starting round 327-----&quot;
+## [1] &quot;-----starting round 328-----&quot;
+## [1] &quot;-----starting round 329-----&quot;
+## [1] &quot;-----starting round 330-----&quot;
+## [1] &quot;-----starting round 331-----&quot;
+## [1] &quot;-----starting round 332-----&quot;
+## [1] &quot;-----starting round 333-----&quot;
+## [1] &quot;-----starting round 334-----&quot;
+## [1] &quot;-----starting round 335-----&quot;
+## [1] &quot;-----starting round 336-----&quot;
+## [1] &quot;-----starting round 337-----&quot;
+## [1] &quot;-----starting round 338-----&quot;
+## [1] &quot;-----starting round 339-----&quot;
+## [1] &quot;-----starting round 340-----&quot;
+## [1] &quot;-----starting round 341-----&quot;
+## [1] &quot;-----starting round 342-----&quot;
+## [1] &quot;-----starting round 343-----&quot;
+## [1] &quot;-----starting round 344-----&quot;
+## [1] &quot;-----starting round 345-----&quot;
+## [1] &quot;-----starting round 346-----&quot;
+## [1] &quot;-----starting round 347-----&quot;
+## [1] &quot;-----starting round 348-----&quot;
+## [1] &quot;-----starting round 349-----&quot;
+## [1] &quot;-----starting round 350-----&quot;
+## [1] &quot;-----starting round 351-----&quot;
+## [1] &quot;-----starting round 352-----&quot;
+## [1] &quot;-----starting round 353-----&quot;
+## [1] &quot;-----starting round 354-----&quot;
+## [1] &quot;-----starting round 355-----&quot;
+## [1] &quot;-----starting round 356-----&quot;
+## [1] &quot;-----starting round 357-----&quot;
+## [1] &quot;-----starting round 358-----&quot;
+## [1] &quot;-----starting round 359-----&quot;
+## [1] &quot;-----starting round 360-----&quot;
+## [1] &quot;-----starting round 361-----&quot;
+## [1] &quot;-----starting round 362-----&quot;
+## [1] &quot;-----starting round 363-----&quot;
+## [1] &quot;-----starting round 364-----&quot;
+## [1] &quot;-----starting round 365-----&quot;
+## [1] &quot;-----starting round 366-----&quot;
+## [1] &quot;-----starting round 367-----&quot;
+## [1] &quot;-----starting round 368-----&quot;
+## [1] &quot;-----starting round 369-----&quot;
+## [1] &quot;-----starting round 370-----&quot;
+## [1] &quot;-----starting round 371-----&quot;
+## [1] &quot;-----starting round 372-----&quot;
+## [1] &quot;-----starting round 373-----&quot;
+## [1] &quot;-----starting round 374-----&quot;
+## [1] &quot;-----starting round 375-----&quot;
+## [1] &quot;-----starting round 376-----&quot;
+## [1] &quot;-----starting round 377-----&quot;
+## [1] &quot;-----starting round 378-----&quot;
+## [1] &quot;-----starting round 379-----&quot;
+## [1] &quot;-----starting round 380-----&quot;
+## [1] &quot;-----starting round 381-----&quot;
+## [1] &quot;-----starting round 382-----&quot;
+## [1] &quot;-----starting round 383-----&quot;
+## [1] &quot;-----starting round 384-----&quot;
+## [1] &quot;-----starting round 385-----&quot;
+## [1] &quot;-----starting round 386-----&quot;
+## [1] &quot;-----starting round 387-----&quot;
+## [1] &quot;-----starting round 388-----&quot;
+## [1] &quot;-----starting round 389-----&quot;
+## [1] &quot;-----starting round 390-----&quot;
+## [1] &quot;-----starting round 391-----&quot;
+## [1] &quot;-----starting round 392-----&quot;
+## [1] &quot;-----starting round 393-----&quot;
+## [1] &quot;-----starting round 394-----&quot;
+## [1] &quot;-----starting round 395-----&quot;
+## [1] &quot;-----starting round 396-----&quot;
+## [1] &quot;-----starting round 397-----&quot;
+## [1] &quot;-----starting round 398-----&quot;
+## [1] &quot;-----starting round 399-----&quot;
+## [1] &quot;-----starting round 400-----&quot;
+## [1] &quot;-----starting round 401-----&quot;
+## [1] &quot;-----starting round 402-----&quot;
+## [1] &quot;-----starting round 403-----&quot;
+## [1] &quot;-----starting round 404-----&quot;
+## [1] &quot;-----starting round 405-----&quot;
+## [1] &quot;-----starting round 406-----&quot;
+## [1] &quot;-----starting round 407-----&quot;
+## [1] &quot;-----starting round 408-----&quot;
+## [1] &quot;-----starting round 409-----&quot;
+## [1] &quot;-----starting round 410-----&quot;
+## [1] &quot;-----starting round 411-----&quot;
+## [1] &quot;-----starting round 412-----&quot;
+## [1] &quot;-----starting round 413-----&quot;
+## [1] &quot;-----starting round 414-----&quot;
+## [1] &quot;-----starting round 415-----&quot;
+## [1] &quot;-----starting round 416-----&quot;
+## [1] &quot;-----starting round 417-----&quot;
+## [1] &quot;-----starting round 418-----&quot;
+## [1] &quot;-----starting round 419-----&quot;
+## [1] &quot;-----starting round 420-----&quot;
+## [1] &quot;-----starting round 421-----&quot;
+## [1] &quot;-----starting round 422-----&quot;
+## [1] &quot;-----starting round 423-----&quot;
+## [1] &quot;-----starting round 424-----&quot;
+## [1] &quot;-----starting round 425-----&quot;
+## [1] &quot;-----starting round 426-----&quot;
+## [1] &quot;-----starting round 427-----&quot;
+## [1] &quot;-----starting round 428-----&quot;
+## [1] &quot;-----starting round 429-----&quot;
+## [1] &quot;-----starting round 430-----&quot;
+## [1] &quot;-----starting round 431-----&quot;
+## [1] &quot;-----starting round 432-----&quot;
+## [1] &quot;-----starting round 433-----&quot;
+## [1] &quot;-----starting round 434-----&quot;
+## [1] &quot;-----starting round 435-----&quot;
+## [1] &quot;-----starting round 436-----&quot;
+## [1] &quot;-----starting round 437-----&quot;
+## [1] &quot;-----starting round 438-----&quot;
+## [1] &quot;-----starting round 439-----&quot;
+## [1] &quot;-----starting round 440-----&quot;
+## [1] &quot;-----starting round 441-----&quot;
+## [1] &quot;-----starting round 442-----&quot;
+## [1] &quot;-----starting round 443-----&quot;
+## [1] &quot;-----starting round 444-----&quot;
+## [1] &quot;-----starting round 445-----&quot;
+## [1] &quot;-----starting round 446-----&quot;
+## [1] &quot;-----starting round 447-----&quot;
+## [1] &quot;-----starting round 448-----&quot;
+## [1] &quot;-----starting round 449-----&quot;
+## [1] &quot;-----starting round 450-----&quot;
+## [1] &quot;-----starting round 451-----&quot;
+## [1] &quot;-----starting round 452-----&quot;
+## [1] &quot;-----starting round 453-----&quot;
+## [1] &quot;-----starting round 454-----&quot;
+## [1] &quot;-----starting round 455-----&quot;
+## [1] &quot;-----starting round 456-----&quot;
+## [1] &quot;-----starting round 457-----&quot;
+## [1] &quot;-----starting round 458-----&quot;
+## [1] &quot;-----starting round 459-----&quot;
+## [1] &quot;-----starting round 460-----&quot;
+## [1] &quot;-----starting round 461-----&quot;
+## [1] &quot;-----starting round 462-----&quot;
+## [1] &quot;-----starting round 463-----&quot;
+## [1] &quot;-----starting round 464-----&quot;
+## [1] &quot;-----starting round 465-----&quot;
+## [1] &quot;-----starting round 466-----&quot;
+## [1] &quot;-----starting round 467-----&quot;
+## [1] &quot;-----starting round 468-----&quot;
+## [1] &quot;-----starting round 469-----&quot;
+## [1] &quot;-----starting round 470-----&quot;
+## [1] &quot;-----starting round 471-----&quot;
+## [1] &quot;-----starting round 472-----&quot;
+## [1] &quot;-----starting round 473-----&quot;
+## [1] &quot;-----starting round 474-----&quot;
+## [1] &quot;-----starting round 475-----&quot;
+## [1] &quot;-----starting round 476-----&quot;
+## [1] &quot;-----starting round 477-----&quot;
+## [1] &quot;-----starting round 478-----&quot;
+## [1] &quot;-----starting round 479-----&quot;
+## [1] &quot;-----starting round 480-----&quot;
+## [1] &quot;-----starting round 481-----&quot;
+## [1] &quot;-----starting round 482-----&quot;
+## [1] &quot;-----starting round 483-----&quot;
+## [1] &quot;-----starting round 484-----&quot;
+## [1] &quot;-----starting round 485-----&quot;
+## [1] &quot;-----starting round 486-----&quot;
+## [1] &quot;-----starting round 487-----&quot;
+## [1] &quot;-----starting round 488-----&quot;
+## [1] &quot;-----starting round 489-----&quot;
+## [1] &quot;-----starting round 490-----&quot;
+## [1] &quot;-----starting round 491-----&quot;
+## [1] &quot;-----starting round 492-----&quot;
+## [1] &quot;-----starting round 493-----&quot;
+## [1] &quot;-----starting round 494-----&quot;
+## [1] &quot;-----starting round 495-----&quot;
+## [1] &quot;-----starting round 496-----&quot;
+## [1] &quot;-----starting round 497-----&quot;
+## [1] &quot;-----starting round 498-----&quot;
+## [1] &quot;-----starting round 499-----&quot;
+## [1] &quot;-----starting round 500-----&quot;
+## [1] &quot;-----starting round 501-----&quot;
+## [1] &quot;-----starting round 502-----&quot;
+## [1] &quot;-----starting round 503-----&quot;
+## [1] &quot;-----starting round 504-----&quot;
+## [1] &quot;-----starting round 505-----&quot;
+## [1] &quot;-----starting round 506-----&quot;
+## [1] &quot;-----starting round 507-----&quot;
+## [1] &quot;-----starting round 508-----&quot;
+## [1] &quot;-----starting round 509-----&quot;
+## [1] &quot;-----starting round 510-----&quot;
+## [1] &quot;-----starting round 511-----&quot;
+## [1] &quot;-----starting round 512-----&quot;
+## [1] &quot;-----starting round 513-----&quot;
+## [1] &quot;-----starting round 514-----&quot;
+## [1] &quot;-----starting round 515-----&quot;
+## [1] &quot;-----starting round 516-----&quot;
+## [1] &quot;-----starting round 517-----&quot;
+## [1] &quot;-----starting round 518-----&quot;
+## [1] &quot;-----starting round 519-----&quot;
+## [1] &quot;-----starting round 520-----&quot;
+## [1] &quot;-----starting round 521-----&quot;
+## [1] &quot;-----starting round 522-----&quot;
+## [1] &quot;-----starting round 523-----&quot;
+## [1] &quot;-----starting round 524-----&quot;
+## [1] &quot;-----starting round 525-----&quot;
+## [1] &quot;-----starting round 526-----&quot;
+## [1] &quot;-----starting round 527-----&quot;
+## [1] &quot;-----starting round 528-----&quot;
+## [1] &quot;-----starting round 529-----&quot;
+## [1] &quot;-----starting round 530-----&quot;
+## [1] &quot;-----starting round 531-----&quot;
+## [1] &quot;-----starting round 532-----&quot;
+## [1] &quot;-----starting round 533-----&quot;
+## [1] &quot;-----starting round 534-----&quot;
+## [1] &quot;-----starting round 535-----&quot;
+## [1] &quot;-----starting round 536-----&quot;
+## [1] &quot;-----starting round 537-----&quot;
+## [1] &quot;-----starting round 538-----&quot;
+## [1] &quot;-----starting round 539-----&quot;
+## [1] &quot;-----starting round 540-----&quot;
+## [1] &quot;-----starting round 541-----&quot;
+## [1] &quot;-----starting round 542-----&quot;
+## [1] &quot;-----starting round 543-----&quot;
+## [1] &quot;-----starting round 544-----&quot;
+## [1] &quot;-----starting round 545-----&quot;
+## [1] &quot;-----starting round 546-----&quot;
+## [1] &quot;-----starting round 547-----&quot;
+## [1] &quot;-----starting round 548-----&quot;
+## [1] &quot;-----starting round 549-----&quot;
+## [1] &quot;-----starting round 550-----&quot;
+## [1] &quot;-----starting round 551-----&quot;
+## [1] &quot;-----starting round 552-----&quot;
+## [1] &quot;-----starting round 553-----&quot;
+## [1] &quot;-----starting round 554-----&quot;
+## [1] &quot;-----starting round 555-----&quot;
+## [1] &quot;-----starting round 556-----&quot;
+## [1] &quot;-----starting round 557-----&quot;
+## [1] &quot;-----starting round 558-----&quot;
+## [1] &quot;-----starting round 559-----&quot;
+## [1] &quot;-----starting round 560-----&quot;
+## [1] &quot;-----starting round 561-----&quot;
+## [1] &quot;-----starting round 562-----&quot;
+## [1] &quot;-----starting round 563-----&quot;
+## [1] &quot;-----starting round 564-----&quot;
+## [1] &quot;-----starting round 565-----&quot;
+## [1] &quot;-----starting round 566-----&quot;
+## [1] &quot;-----starting round 567-----&quot;
+## [1] &quot;-----starting round 568-----&quot;
+## [1] &quot;-----starting round 569-----&quot;
+## [1] &quot;-----starting round 570-----&quot;
+## [1] &quot;-----starting round 571-----&quot;
+## [1] &quot;-----starting round 572-----&quot;
+## [1] &quot;-----starting round 573-----&quot;
+## [1] &quot;-----starting round 574-----&quot;
+## [1] &quot;-----starting round 575-----&quot;
+## [1] &quot;-----starting round 576-----&quot;
+## [1] &quot;-----starting round 577-----&quot;
+## [1] &quot;-----starting round 578-----&quot;
+## [1] &quot;-----starting round 579-----&quot;
+## [1] &quot;-----starting round 580-----&quot;
+## [1] &quot;-----starting round 581-----&quot;
+## [1] &quot;-----starting round 582-----&quot;
+## [1] &quot;-----starting round 583-----&quot;
+## [1] &quot;-----starting round 584-----&quot;
+## [1] &quot;-----starting round 585-----&quot;
+## [1] &quot;-----starting round 586-----&quot;
+## [1] &quot;-----starting round 587-----&quot;
+## [1] &quot;-----starting round 588-----&quot;
+## [1] &quot;-----starting round 589-----&quot;
+## [1] &quot;-----starting round 590-----&quot;
+## [1] &quot;-----starting round 591-----&quot;
+## [1] &quot;-----starting round 592-----&quot;
+## [1] &quot;-----starting round 593-----&quot;
+## [1] &quot;-----starting round 594-----&quot;
+## [1] &quot;-----starting round 595-----&quot;
+## [1] &quot;-----starting round 596-----&quot;
+## [1] &quot;-----starting round 597-----&quot;
+## [1] &quot;-----starting round 598-----&quot;
+## [1] &quot;-----starting round 599-----&quot;
+## [1] &quot;-----starting round 600-----&quot;
+## [1] &quot;-----starting round 601-----&quot;
+## [1] &quot;-----starting round 602-----&quot;
+## [1] &quot;-----starting round 603-----&quot;
+## [1] &quot;-----starting round 604-----&quot;
+## [1] &quot;-----starting round 605-----&quot;
+## [1] &quot;-----starting round 606-----&quot;
+## [1] &quot;-----starting round 607-----&quot;
+## [1] &quot;-----starting round 608-----&quot;
+## [1] &quot;-----starting round 609-----&quot;
+## [1] &quot;-----starting round 610-----&quot;
+## [1] &quot;-----starting round 611-----&quot;
+## [1] &quot;-----starting round 612-----&quot;
+## [1] &quot;-----starting round 613-----&quot;
+## [1] &quot;-----starting round 614-----&quot;
+## [1] &quot;-----starting round 615-----&quot;
+## [1] &quot;-----starting round 616-----&quot;
+## [1] &quot;-----starting round 617-----&quot;
+## [1] &quot;-----starting round 618-----&quot;
+## [1] &quot;-----starting round 619-----&quot;
+## [1] &quot;-----starting round 620-----&quot;
+## [1] &quot;-----starting round 621-----&quot;
+## [1] &quot;-----starting round 622-----&quot;
+## [1] &quot;-----starting round 623-----&quot;
+## [1] &quot;-----starting round 624-----&quot;
+## [1] &quot;-----starting round 625-----&quot;
+## [1] &quot;-----starting round 626-----&quot;
+## [1] &quot;-----starting round 627-----&quot;
+## [1] &quot;-----starting round 628-----&quot;
+## [1] &quot;-----starting round 629-----&quot;
+## [1] &quot;-----starting round 630-----&quot;
+## [1] &quot;-----starting round 631-----&quot;
+## [1] &quot;-----starting round 632-----&quot;
+## [1] &quot;-----starting round 633-----&quot;
+## [1] &quot;-----starting round 634-----&quot;
+## [1] &quot;-----starting round 635-----&quot;
+## [1] &quot;-----starting round 636-----&quot;
+## [1] &quot;-----starting round 637-----&quot;
+## [1] &quot;-----starting round 638-----&quot;
+## [1] &quot;-----starting round 639-----&quot;
+## [1] &quot;-----starting round 640-----&quot;
+## [1] &quot;-----starting round 641-----&quot;
+## [1] &quot;-----starting round 642-----&quot;
+## [1] &quot;-----starting round 643-----&quot;
+## [1] &quot;-----starting round 644-----&quot;
+## [1] &quot;-----starting round 645-----&quot;
+## [1] &quot;-----starting round 646-----&quot;
+## [1] &quot;-----starting round 647-----&quot;
+## [1] &quot;-----starting round 648-----&quot;
+## [1] &quot;-----starting round 649-----&quot;
+## [1] &quot;-----starting round 650-----&quot;
+## [1] &quot;-----starting round 651-----&quot;
+## [1] &quot;-----starting round 652-----&quot;
+## [1] &quot;-----starting round 653-----&quot;
+## [1] &quot;-----starting round 654-----&quot;
+## [1] &quot;-----starting round 655-----&quot;
+## [1] &quot;-----starting round 656-----&quot;
+## [1] &quot;-----starting round 657-----&quot;
+## [1] &quot;-----starting round 658-----&quot;
+## [1] &quot;-----starting round 659-----&quot;
+## [1] &quot;-----starting round 660-----&quot;
+## [1] &quot;-----starting round 661-----&quot;
+## [1] &quot;-----starting round 662-----&quot;
+## [1] &quot;-----starting round 663-----&quot;
+## [1] &quot;-----starting round 664-----&quot;
+## [1] &quot;-----starting round 665-----&quot;
+## [1] &quot;-----starting round 666-----&quot;
+## [1] &quot;-----starting round 667-----&quot;
+## [1] &quot;-----starting round 668-----&quot;
+## [1] &quot;-----starting round 669-----&quot;
+## [1] &quot;-----starting round 670-----&quot;
+## [1] &quot;-----starting round 671-----&quot;
+## [1] &quot;-----starting round 672-----&quot;
+## [1] &quot;-----starting round 673-----&quot;
+## [1] &quot;-----starting round 674-----&quot;
+## [1] &quot;-----starting round 675-----&quot;
+## [1] &quot;-----starting round 676-----&quot;
+## [1] &quot;-----starting round 677-----&quot;
+## [1] &quot;-----starting round 678-----&quot;
+## [1] &quot;-----starting round 679-----&quot;
+## [1] &quot;-----starting round 680-----&quot;
+## [1] &quot;-----starting round 681-----&quot;
+## [1] &quot;-----starting round 682-----&quot;
+## [1] &quot;-----starting round 683-----&quot;
+## [1] &quot;-----starting round 684-----&quot;
+## [1] &quot;-----starting round 685-----&quot;
+## [1] &quot;-----starting round 686-----&quot;
+## [1] &quot;-----starting round 687-----&quot;
+## [1] &quot;-----starting round 688-----&quot;
+## [1] &quot;-----starting round 689-----&quot;
+## [1] &quot;-----starting round 690-----&quot;
+## [1] &quot;-----starting round 691-----&quot;
+## [1] &quot;-----starting round 692-----&quot;
+## [1] &quot;-----starting round 693-----&quot;
+## [1] &quot;-----starting round 694-----&quot;
+## [1] &quot;-----starting round 695-----&quot;
+## [1] &quot;-----starting round 696-----&quot;
+## [1] &quot;-----starting round 697-----&quot;
+## [1] &quot;-----starting round 698-----&quot;
+## [1] &quot;-----starting round 699-----&quot;
+## [1] &quot;-----starting round 700-----&quot;
+## [1] &quot;-----starting round 701-----&quot;
+## [1] &quot;-----starting round 702-----&quot;
+## [1] &quot;-----starting round 703-----&quot;
+## [1] &quot;-----starting round 704-----&quot;
+## [1] &quot;-----starting round 705-----&quot;
+## [1] &quot;-----starting round 706-----&quot;
+## [1] &quot;-----starting round 707-----&quot;
+## [1] &quot;-----starting round 708-----&quot;
+## [1] &quot;-----starting round 709-----&quot;
+## [1] &quot;-----starting round 710-----&quot;
+## [1] &quot;-----starting round 711-----&quot;
+## [1] &quot;-----starting round 712-----&quot;
+## [1] &quot;-----starting round 713-----&quot;
+## [1] &quot;-----starting round 714-----&quot;
+## [1] &quot;-----starting round 715-----&quot;
+## [1] &quot;-----starting round 716-----&quot;
+## [1] &quot;-----starting round 717-----&quot;
+## [1] &quot;-----starting round 718-----&quot;
+## [1] &quot;-----starting round 719-----&quot;
+## [1] &quot;-----starting round 720-----&quot;
+## [1] &quot;-----starting round 721-----&quot;
+## [1] &quot;-----starting round 722-----&quot;
+## [1] &quot;-----starting round 723-----&quot;
+## [1] &quot;-----starting round 724-----&quot;
+## [1] &quot;-----starting round 725-----&quot;
+## [1] &quot;-----starting round 726-----&quot;
+## [1] &quot;-----starting round 727-----&quot;
+## [1] &quot;-----starting round 728-----&quot;
+## [1] &quot;-----starting round 729-----&quot;
+## [1] &quot;-----starting round 730-----&quot;
+## [1] &quot;-----starting round 731-----&quot;
+## [1] &quot;-----starting round 732-----&quot;
+## [1] &quot;-----starting round 733-----&quot;
+## [1] &quot;-----starting round 734-----&quot;
+## [1] &quot;-----starting round 735-----&quot;
+## [1] &quot;-----starting round 736-----&quot;
+## [1] &quot;-----starting round 737-----&quot;
+## [1] &quot;-----starting round 738-----&quot;
+## [1] &quot;-----starting round 739-----&quot;
+## [1] &quot;-----starting round 740-----&quot;
+## [1] &quot;-----starting round 741-----&quot;
+## [1] &quot;-----starting round 742-----&quot;
+## [1] &quot;-----starting round 743-----&quot;
+## [1] &quot;-----starting round 744-----&quot;
+## [1] &quot;-----starting round 745-----&quot;
+## [1] &quot;-----starting round 746-----&quot;
+## [1] &quot;-----starting round 747-----&quot;
+## [1] &quot;-----starting round 748-----&quot;
+## [1] &quot;-----starting round 749-----&quot;
+## [1] &quot;-----starting round 750-----&quot;
+## [1] &quot;-----starting round 751-----&quot;
+## [1] &quot;-----starting round 752-----&quot;
+## [1] &quot;-----starting round 753-----&quot;
+## [1] &quot;-----starting round 754-----&quot;
+## [1] &quot;-----starting round 755-----&quot;
+## [1] &quot;-----starting round 756-----&quot;
+## [1] &quot;-----starting round 757-----&quot;
+## [1] &quot;-----starting round 758-----&quot;
+## [1] &quot;-----starting round 759-----&quot;
+## [1] &quot;-----starting round 760-----&quot;
+## [1] &quot;-----starting round 761-----&quot;
+## [1] &quot;-----starting round 762-----&quot;
+## [1] &quot;-----starting round 763-----&quot;
+## [1] &quot;-----starting round 764-----&quot;
+## [1] &quot;-----starting round 765-----&quot;
+## [1] &quot;-----starting round 766-----&quot;
+## [1] &quot;-----starting round 767-----&quot;
+## [1] &quot;-----starting round 768-----&quot;
+## [1] &quot;-----starting round 769-----&quot;
+## [1] &quot;-----starting round 770-----&quot;
+## [1] &quot;-----starting round 771-----&quot;
+## [1] &quot;-----starting round 772-----&quot;
+## [1] &quot;-----starting round 773-----&quot;
+## [1] &quot;-----starting round 774-----&quot;
+## [1] &quot;-----starting round 775-----&quot;
+## [1] &quot;-----starting round 776-----&quot;
+## [1] &quot;-----starting round 777-----&quot;
+## [1] &quot;-----starting round 778-----&quot;
+## [1] &quot;-----starting round 779-----&quot;
+## [1] &quot;-----starting round 780-----&quot;
+## [1] &quot;-----starting round 781-----&quot;
+## [1] &quot;-----starting round 782-----&quot;
+## [1] &quot;-----starting round 783-----&quot;
+## [1] &quot;-----starting round 784-----&quot;
+## [1] &quot;-----starting round 785-----&quot;
+## [1] &quot;-----starting round 786-----&quot;
+## [1] &quot;-----starting round 787-----&quot;
+## [1] &quot;-----starting round 788-----&quot;
+## [1] &quot;-----starting round 789-----&quot;
+## [1] &quot;-----starting round 790-----&quot;
+## [1] &quot;-----starting round 791-----&quot;
+## [1] &quot;-----starting round 792-----&quot;
+## [1] &quot;-----starting round 793-----&quot;
+## [1] &quot;-----starting round 794-----&quot;
+## [1] &quot;-----starting round 795-----&quot;
+## [1] &quot;-----starting round 796-----&quot;
+## [1] &quot;-----starting round 797-----&quot;
+## [1] &quot;-----starting round 798-----&quot;
+## [1] &quot;-----starting round 799-----&quot;
+## [1] &quot;-----starting round 800-----&quot;
+## [1] &quot;-----starting round 801-----&quot;
+## [1] &quot;-----starting round 802-----&quot;
+## [1] &quot;-----starting round 803-----&quot;
+## [1] &quot;-----starting round 804-----&quot;
+## [1] &quot;-----starting round 805-----&quot;
+## [1] &quot;-----starting round 806-----&quot;
+## [1] &quot;-----starting round 807-----&quot;
+## [1] &quot;-----starting round 808-----&quot;
+## [1] &quot;-----starting round 809-----&quot;
+## [1] &quot;-----starting round 810-----&quot;
+## [1] &quot;-----starting round 811-----&quot;
+## [1] &quot;-----starting round 812-----&quot;
+## [1] &quot;-----starting round 813-----&quot;
+## [1] &quot;-----starting round 814-----&quot;
+## [1] &quot;-----starting round 815-----&quot;
+## [1] &quot;-----starting round 816-----&quot;
+## [1] &quot;-----starting round 817-----&quot;
+## [1] &quot;-----starting round 818-----&quot;
+## [1] &quot;-----starting round 819-----&quot;
+## [1] &quot;-----starting round 820-----&quot;
+## [1] &quot;-----starting round 821-----&quot;
+## [1] &quot;-----starting round 822-----&quot;
+## [1] &quot;-----starting round 823-----&quot;
+## [1] &quot;-----starting round 824-----&quot;
+## [1] &quot;-----starting round 825-----&quot;
+## [1] &quot;-----starting round 826-----&quot;
+## [1] &quot;-----starting round 827-----&quot;
+## [1] &quot;-----starting round 828-----&quot;
+## [1] &quot;-----starting round 829-----&quot;
+## [1] &quot;-----starting round 830-----&quot;
+## [1] &quot;-----starting round 831-----&quot;
+## [1] &quot;-----starting round 832-----&quot;
+## [1] &quot;-----starting round 833-----&quot;
+## [1] &quot;-----starting round 834-----&quot;
+## [1] &quot;-----starting round 835-----&quot;
+## [1] &quot;-----starting round 836-----&quot;
+## [1] &quot;-----starting round 837-----&quot;
+## [1] &quot;-----starting round 838-----&quot;
+## [1] &quot;-----starting round 839-----&quot;
+## [1] &quot;-----starting round 840-----&quot;
+## [1] &quot;-----starting round 841-----&quot;
+## [1] &quot;-----starting round 842-----&quot;
+## [1] &quot;-----starting round 843-----&quot;
+## [1] &quot;-----starting round 844-----&quot;
+## [1] &quot;-----starting round 845-----&quot;
+## [1] &quot;-----starting round 846-----&quot;
+## [1] &quot;-----starting round 847-----&quot;
+## [1] &quot;-----starting round 848-----&quot;
+## [1] &quot;-----starting round 849-----&quot;
+## [1] &quot;-----starting round 850-----&quot;
+## [1] &quot;-----starting round 851-----&quot;
+## [1] &quot;-----starting round 852-----&quot;
+## [1] &quot;-----starting round 853-----&quot;
+## [1] &quot;-----starting round 854-----&quot;
+## [1] &quot;-----starting round 855-----&quot;
+## [1] &quot;-----starting round 856-----&quot;
+## [1] &quot;-----starting round 857-----&quot;
+## [1] &quot;-----starting round 858-----&quot;
+## [1] &quot;-----starting round 859-----&quot;
+## [1] &quot;-----starting round 860-----&quot;
+## [1] &quot;-----starting round 861-----&quot;
+## [1] &quot;-----starting round 862-----&quot;
+## [1] &quot;-----starting round 863-----&quot;
+## [1] &quot;-----starting round 864-----&quot;
+## [1] &quot;-----starting round 865-----&quot;
+## [1] &quot;-----starting round 866-----&quot;
+## [1] &quot;-----starting round 867-----&quot;
+## [1] &quot;-----starting round 868-----&quot;
+## [1] &quot;-----starting round 869-----&quot;
+## [1] &quot;-----starting round 870-----&quot;
+## [1] &quot;-----starting round 871-----&quot;
+## [1] &quot;-----starting round 872-----&quot;
+## [1] &quot;-----starting round 873-----&quot;
+## [1] &quot;-----starting round 874-----&quot;
+## [1] &quot;-----starting round 875-----&quot;
+## [1] &quot;-----starting round 876-----&quot;
+## [1] &quot;-----starting round 877-----&quot;
+## [1] &quot;-----starting round 878-----&quot;
+## [1] &quot;-----starting round 879-----&quot;
+## [1] &quot;-----starting round 880-----&quot;
+## [1] &quot;-----starting round 881-----&quot;
+## [1] &quot;-----starting round 882-----&quot;
+## [1] &quot;-----starting round 883-----&quot;
+## [1] &quot;-----starting round 884-----&quot;
+## [1] &quot;-----starting round 885-----&quot;
+## [1] &quot;-----starting round 886-----&quot;
+## [1] &quot;-----starting round 887-----&quot;
+## [1] &quot;-----starting round 888-----&quot;
+## [1] &quot;-----starting round 889-----&quot;
+## [1] &quot;-----starting round 890-----&quot;
+## [1] &quot;-----starting round 891-----&quot;
+## [1] &quot;-----starting round 892-----&quot;
+## [1] &quot;-----starting round 893-----&quot;
+## [1] &quot;-----starting round 894-----&quot;
+## [1] &quot;-----starting round 895-----&quot;
+## [1] &quot;-----starting round 896-----&quot;
+## [1] &quot;-----starting round 897-----&quot;
+## [1] &quot;-----starting round 898-----&quot;
+## [1] &quot;-----starting round 899-----&quot;
+## [1] &quot;-----starting round 900-----&quot;
+## [1] &quot;-----starting round 901-----&quot;
+## [1] &quot;-----starting round 902-----&quot;
+## [1] &quot;-----starting round 903-----&quot;
+## [1] &quot;-----starting round 904-----&quot;
+## [1] &quot;-----starting round 905-----&quot;
+## [1] &quot;-----starting round 906-----&quot;
+## [1] &quot;-----starting round 907-----&quot;
+## [1] &quot;-----starting round 908-----&quot;
+## [1] &quot;-----starting round 909-----&quot;
+## [1] &quot;-----starting round 910-----&quot;
+## [1] &quot;-----starting round 911-----&quot;
+## [1] &quot;-----starting round 912-----&quot;
+## [1] &quot;-----starting round 913-----&quot;
+## [1] &quot;-----starting round 914-----&quot;
+## [1] &quot;-----starting round 915-----&quot;
+## [1] &quot;-----starting round 916-----&quot;
+## [1] &quot;-----starting round 917-----&quot;
+## [1] &quot;-----starting round 918-----&quot;
+## [1] &quot;-----starting round 919-----&quot;
+## [1] &quot;-----starting round 920-----&quot;
+## [1] &quot;-----starting round 921-----&quot;
+## [1] &quot;-----starting round 922-----&quot;
+## [1] &quot;-----starting round 923-----&quot;
+## [1] &quot;-----starting round 924-----&quot;
+## [1] &quot;-----starting round 925-----&quot;
+## [1] &quot;-----starting round 926-----&quot;
+## [1] &quot;-----starting round 927-----&quot;
+## [1] &quot;-----starting round 928-----&quot;
+## [1] &quot;-----starting round 929-----&quot;
+## [1] &quot;-----starting round 930-----&quot;
+## [1] &quot;-----starting round 931-----&quot;
+## [1] &quot;-----starting round 932-----&quot;
+## [1] &quot;-----starting round 933-----&quot;
+## [1] &quot;-----starting round 934-----&quot;
+## [1] &quot;-----starting round 935-----&quot;
+## [1] &quot;-----starting round 936-----&quot;
+## [1] &quot;-----starting round 937-----&quot;
+## [1] &quot;-----starting round 938-----&quot;
+## [1] &quot;-----starting round 939-----&quot;
+## [1] &quot;-----starting round 940-----&quot;
+## [1] &quot;-----starting round 941-----&quot;
+## [1] &quot;-----starting round 942-----&quot;
+## [1] &quot;-----starting round 943-----&quot;
+## [1] &quot;-----starting round 944-----&quot;
+## [1] &quot;-----starting round 945-----&quot;
+## [1] &quot;-----starting round 946-----&quot;
+## [1] &quot;-----starting round 947-----&quot;
+## [1] &quot;-----starting round 948-----&quot;
+## [1] &quot;-----starting round 949-----&quot;
+## [1] &quot;-----starting round 950-----&quot;
+## [1] &quot;-----starting round 951-----&quot;
+## [1] &quot;-----starting round 952-----&quot;
+## [1] &quot;-----starting round 953-----&quot;
+## [1] &quot;-----starting round 954-----&quot;
+## [1] &quot;-----starting round 955-----&quot;
+## [1] &quot;-----starting round 956-----&quot;
+## [1] &quot;-----starting round 957-----&quot;
+## [1] &quot;-----starting round 958-----&quot;
+## [1] &quot;-----starting round 959-----&quot;
+## [1] &quot;-----starting round 960-----&quot;
+## [1] &quot;-----starting round 961-----&quot;
+## [1] &quot;-----starting round 962-----&quot;
+## [1] &quot;-----starting round 963-----&quot;
+## [1] &quot;-----starting round 964-----&quot;
+## [1] &quot;-----starting round 965-----&quot;
+## [1] &quot;-----starting round 966-----&quot;
+## [1] &quot;-----starting round 967-----&quot;
+## [1] &quot;-----starting round 968-----&quot;
+## [1] &quot;-----starting round 969-----&quot;
+## [1] &quot;-----starting round 970-----&quot;
+## [1] &quot;-----starting round 971-----&quot;
+## [1] &quot;-----starting round 972-----&quot;
+## [1] &quot;-----starting round 973-----&quot;
+## [1] &quot;-----starting round 974-----&quot;
+## [1] &quot;-----starting round 975-----&quot;
+## [1] &quot;-----starting round 976-----&quot;
+## [1] &quot;-----starting round 977-----&quot;
+## [1] &quot;-----starting round 978-----&quot;
+## [1] &quot;-----starting round 979-----&quot;
+## [1] &quot;-----starting round 980-----&quot;
+## [1] &quot;-----starting round 981-----&quot;
+## [1] &quot;-----starting round 982-----&quot;
+## [1] &quot;-----starting round 983-----&quot;
+## [1] &quot;-----starting round 984-----&quot;
+## [1] &quot;-----starting round 985-----&quot;
+## [1] &quot;-----starting round 986-----&quot;
+## [1] &quot;-----starting round 987-----&quot;
+## [1] &quot;-----starting round 988-----&quot;
+## [1] &quot;-----starting round 989-----&quot;
+## [1] &quot;-----starting round 990-----&quot;
+## [1] &quot;-----starting round 991-----&quot;
+## [1] &quot;-----starting round 992-----&quot;
+## [1] &quot;-----starting round 993-----&quot;
+## [1] &quot;-----starting round 994-----&quot;
+## [1] &quot;-----starting round 995-----&quot;
+## [1] &quot;-----starting round 996-----&quot;
+## [1] &quot;-----starting round 997-----&quot;
+## [1] &quot;-----starting round 998-----&quot;
+## [1] &quot;-----starting round 999-----&quot;
+## [1] &quot;-----starting round 1000-----&quot;</code></pre>
+<pre><code>## $`ATE_z=1`
+##      targ_par      psi0 ss_under_hal_mean ss_under_hal_sd ss_hal_mean
+## 1  ATE(0.5,0) 0.0219904        0.02707221       0.1065300  0.01309023
+## 2    ATE(1,0) 0.0440420        0.05519278       0.1493603  0.02488390
+## 3  ATE(1.5,0) 0.0653704        0.07721948       0.1673106  0.03522492
+## 4    ATE(2,0) 0.0869780        0.09380325       0.1749243  0.04404475
+## 5  ATE(2.5,0) 0.1080726        0.09760089       0.1870865  0.05116777
+## 6    ATE(3,0) 0.1288711        0.10094003       0.1988877  0.05673795
+## 7  ATE(3.5,0) 0.1491678        0.10432723       0.2028666  0.06094281
+## 8    ATE(4,0) 0.1692688        0.10475754       0.2052060  0.06441465
+## 9  ATE(4.5,0) 0.1878593        0.10297231       0.2069680  0.06733315
+## 10   ATE(5,0) 0.2066846        0.09909454       0.2154856  0.07029173
+## 11 ATE(5.5,0) 0.2244933        0.09483291       0.2141378  0.07386814
+## 12   ATE(6,0) 0.2417365        0.08676142       0.2177023  0.07844744
+## 13 ATE(6.5,0) 0.2580762        0.07891576       0.2221736  0.08340736
+## 14   ATE(7,0) 0.2738188        0.07308975       0.2347699  0.08811529
+## 15 ATE(7.5,0) 0.2884551        0.07330936       0.2441579  0.09221735
+## 16   ATE(8,0) 0.3027496        0.07401510       0.2513391  0.09537987
+## 17 ATE(8.5,0) 0.3161898        0.07267518       0.2566013  0.09755642
+## 18   ATE(9,0) 0.3287870        0.06574416       0.2627546  0.09895686
+## 19 ATE(9.5,0) 0.3407104        0.05470517       0.2716289  0.09981709
+## 20  ATE(10,0) 0.3519336        0.03832860       0.2819411  0.10028989
+##     ss_hal_sd
+## 1  0.01586773
+## 2  0.02954594
+## 3  0.04117610
+## 4  0.05078438
+## 5  0.05878260
+## 6  0.06560418
+## 7  0.07170616
+## 8  0.07745559
+## 9  0.08311690
+## 10 0.08867849
+## 11 0.09419253
+## 12 0.09942659
+## 13 0.10449742
+## 14 0.10913101
+## 15 0.11330816
+## 16 0.11717170
+## 17 0.12095188
+## 18 0.12465714
+## 19 0.12821932
+## 20 0.13162023
+## 
+## $`ATE_z=0`
+##      targ_par      psi0 ss_under_hal_mean ss_under_hal_sd  ss_hal_mean
+## 1  ATE(0.5,0) 0.0219320      -0.015508694      0.05266936 -0.008036450
+## 2    ATE(1,0) 0.0437376      -0.024134749      0.07615756 -0.014322072
+## 3  ATE(1.5,0) 0.0652967      -0.030513377      0.09122627 -0.019267971
+## 4    ATE(2,0) 0.0868653      -0.033437175      0.10161818 -0.023200815
+## 5  ATE(2.5,0) 0.1076888      -0.035977119      0.10872618 -0.026308429
+## 6    ATE(3,0) 0.1283504      -0.037171473      0.11481387 -0.028749274
+## 7  ATE(3.5,0) 0.1481807      -0.037055461      0.11826350 -0.030612895
+## 8    ATE(4,0) 0.1675470      -0.035151439      0.11981812 -0.031958257
+## 9  ATE(4.5,0) 0.1865543      -0.031204402      0.12025038 -0.032779534
+## 10   ATE(5,0) 0.2046132      -0.025029225      0.12032816 -0.033039935
+## 11 ATE(5.5,0) 0.2220933      -0.016267515      0.12219447 -0.032656937
+## 12   ATE(6,0) 0.2388930      -0.006650552      0.12552562 -0.031449462
+## 13 ATE(6.5,0) 0.2550089       0.005603310      0.12795380 -0.029322263
+## 14   ATE(7,0) 0.2702119       0.020023621      0.13532666 -0.026231373
+## 15 ATE(7.5,0) 0.2847665       0.039053839      0.14659333 -0.022108020
+## 16   ATE(8,0) 0.2982463       0.061816652      0.16378207 -0.016894236
+## 17 ATE(8.5,0) 0.3114105       0.082527654      0.17921218 -0.010522158
+## 18   ATE(9,0) 0.3239121       0.100124149      0.19905061 -0.002848236
+## 19 ATE(9.5,0) 0.3353108       0.115083300      0.21653777  0.006201135
+## 20  ATE(10,0) 0.3463508       0.130962315      0.23894144  0.016566531
+##      ss_hal_sd
+## 1  0.004478982
+## 2  0.007628378
+## 3  0.009878513
+## 4  0.011516445
+## 5  0.012753402
+## 6  0.013760640
+## 7  0.014632293
+## 8  0.015392645
+## 9  0.016124236
+## 10 0.016897296
+## 11 0.017770584
+## 12 0.018873484
+## 13 0.020450462
+## 14 0.022699574
+## 15 0.026008271
+## 16 0.030887694
+## 17 0.037754015
+## 18 0.047059624
+## 19 0.058756825
+## 20 0.072402725</code></pre>
+<!-- ## n = 1000 -->
+<!-- ```{r simu_n1000} -->
+<!-- set.seed(123) -->
+<!-- n=1000 -->
+<!-- B=1000 -->
+<!-- results_1000 = run_simu(n=n, B=B) -->
+<!-- print(results_1000) -->
+<!-- save.image(file=here("data", "rdata", "02_simulations_1000.RData")) -->
+<!-- ``` -->
+<!-- ## n = 5000 -->
+<!-- ```{r simu_n5000} -->
+<!-- set.seed(123) -->
+<!-- n=5000 -->
+<!-- B=1000 -->
+<!-- results_5000 = run_simu(n=n, B=B) -->
+<!-- print(results_5000) -->
+<!-- save.image(file=here("data", "rdata", "02_simulations_5000.RData")) -->
+<!-- ``` -->
 </div>
 </div>
 

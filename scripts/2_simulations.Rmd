@@ -92,7 +92,13 @@ generate_data1 <- function(n, a=NA, z=NA){
   return(O)
 }
 
+
+obs <- generate_data1(n=10000)
+summary(obs)
+
+summary(obs$W[obs$A < 1])
 ```
+
 
 ```{r}
 # Getting trul value of psi
@@ -127,6 +133,11 @@ print(results_500)
 save.image(file=here("data", "rdata", "02_simulations_500.RData"))
 ```
 
+
+```{r}
+load(here("data", "rdata", "02_simulations_500.RData"))
+print(results)
+```
 <!-- ## n = 1000 -->
 <!-- ```{r simu_n1000} -->
 <!-- set.seed(123) -->
