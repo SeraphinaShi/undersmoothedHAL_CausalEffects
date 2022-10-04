@@ -1,0 +1,140 @@
+---
+title: "Simulations of estimating causal effects using undersmoothed HAL"
+author: "Seraphina Shi"
+date: "2022-09-06"
+output: html_document
+---
+
+```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
+library(here)
+library(data.table)
+library(dplyr)
+library(foreach)
+
+library(stringr)
+library(glmnet)
+
+library(origami)
+library(hal9001)
+library(tictoc)
+```
+
+```{r setup, include = FALSE}
+plotFolder <- here("results","images")
+if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
+
+knitr::opts_chunk$set(
+  cache=FALSE, autodep=FALSE, warning=FALSE, message=FALSE, echo=FALSE,
+  results = 'markup', dev='png', dpi=150, fig.align = "center", fig.path=plotFolder,
+  cache.path=".cache/",
+  duplicate.label="allow"
+)
+
+source(here("scripts", "1_simu_functions_hal9001.R"))
+source(here("scripts", "1_simu_functions.R"))
+```
+
+# Simulation #1
+Data structure:  $O = (W, A, Z, Y)$ 
+
+ * U - exogenous variables  
+ * W - baseline covariate that is a standardized measure of body condition  
+ * A - treatment level based on W, continuous between 0 and 10  
+ * Z - intermediate curve based on W and A, indicator of taking the treatment  
+ * Y - outcome, indicator of an event ?  
+   
+ Underlying data generating process, $P_{U,X}$
+ 
+* Exogenous variables:  
+  + $U_W \sim Uniform(min = 0, max = 1)$  
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$  
+  + $U_Z \sim Uniform(min = 0, max = 1)$  
+  + $U_Y \sim Uniform(min = 0, max = 1)$  
+  
+* Structural equations F and endogenous variables:  
+  + $W =  U_W$  
+  + $A = bound(10 - 10W + U_A, min=0, max=10)$  
+  + $Z = \mathbf{I}[U_Z < expit(0.2(W+A))]$
+  + $y = \mathbf{I}[U_Y < expit(0.05(W-5A+3*W*A+Z))]$
+
+
+```{r}
+generate_data1 <- function(n, a=NA, z=NA){
+  # exogenous variables
+  U_W <- runif(n, 0, 1)
+  U_A <- rnorm(n,0,1)
+  U_Z <- runif(n, 0, 1)
+  U_Y <- runif(n, 0, 1)
+  
+  
+  # endogenous variables
+  W <- U_W
+  
+  if(is.na(a)){
+    A <-  10 - 10*W + U_A
+    A[A<=0] = 0
+    A[A>=10] = 10
+  } else {
+    A <- rep(a, n)
+  }
+  
+  if(is.na(z)){
+    Z <- as.numeric(U_Z < plogis(0.2*(W+A)))
+  } else {
+    Z <- rep(z, n)
+  }
+  
+  Y <- as.numeric(U_Z < plogis(0.05 * (-W + 5*A - 3 * W * A - Z)))
+  
+
+  # data frame
+  O <- data.frame(W, A, Z, Y)
+  return(O)
+}
+
+
+obs <- generate_data1(n=10000)
+summary(obs)
+
+summary(obs$W[obs$A < 1])
+```
+
+
+```{r}
+# Getting trul value of psi
+a_vec <- seq(0.5,10,0.5)
+psi0_a_0 <- c()
+psi0_a_1 <- c()
+
+N = 1e+07
+data_0_0 <- generate_data1(n=N, a=0, z=0)
+data_0_1 <- generate_data1(n=N, a=0, z=1)
+
+for (i in 1:length(a_vec)) {
+  a <- a_vec[i]
+
+  data_a_0 <- generate_data1(n=N, a=a, z=0)
+  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+
+  data_a_1 <- generate_data1(n=N, a=a, z=1)
+  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+}
+```
+
+## n = 500
+```{r simu_n500}
+set.seed(123)
+n=500
+B=1000
+results_500 = run_simu(n=n, B=B)
+
+print(results_500)
+
+save.image(file=here("data", "rdata", "02_simulations_500.RData"))
+```
+
+
+```{r}
+load(here("data", "rdata", "02_simulations_500.RData"))
+print(results)
+```
