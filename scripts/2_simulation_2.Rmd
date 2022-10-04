@@ -34,7 +34,7 @@ source(here("scripts", "1_simu_functions_hal9001.R"))
 source(here("scripts", "1_simu_functions.R"))
 ```
 
-# Simulation #1
+# Simulation #2
 Data structure:  $O = (W, A, Z, Y)$ 
 
  * U - exogenous variables  
@@ -47,22 +47,22 @@ Data structure:  $O = (W, A, Z, Y)$
  
 * Exogenous variables:  
   + $U_W \sim Uniform(min = 0, max = 1)$  
-  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$  
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 4^2)$  
   + $U_Z \sim Uniform(min = 0, max = 1)$  
   + $U_Y \sim Uniform(min = 0, max = 1)$  
   
 * Structural equations F and endogenous variables:  
   + $W =  U_W$  
-  + $A = bound(10 - 10W + U_A, min=0, max=10)$  
+  + $A = bound(10 - 10W + W^2 + U_A, min=0, max=10)$  
   + $Z = \mathbf{I}[U_Z < expit(0.2(W+A))]$
   + $y = \mathbf{I}[U_Y < expit(0.05(W-5A+3*W*A+Z))]$
 
 
 ```{r}
-generate_data1 <- function(n, a=NA, z=NA){
+generate_data2 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- runif(n, 0, 1)
-  U_A <- rnorm(n,0,1)
+  U_A <- rnorm(n,0,4)
   U_Z <- runif(n, 0, 1)
   U_Y <- runif(n, 0, 1)
   
@@ -71,7 +71,7 @@ generate_data1 <- function(n, a=NA, z=NA){
   W <- U_W
   
   if(is.na(a)){
-    A <-  10 - 10*W + U_A
+    A <-  10 - 10*W + W*W + U_A
     A[A<=0] = 0
     A[A>=10] = 10
   } else {
@@ -93,30 +93,41 @@ generate_data1 <- function(n, a=NA, z=NA){
 }
 
 
-obs <- generate_data1(n=10000)
+obs <- generate_data2(n=10000)
 summary(obs)
 
-summary(obs$W[obs$A < 1])
+# check positivity violations
+summary(obs$A[obs$W < 0.25])
+summary(obs$A[0.25 <= obs$W & obs$W < 0.5])
+summary(obs$A[0.5 <= obs$W & obs$W < 0.75])
+summary(obs$A[0.75 <= obs$W])
+
+
+plot(obs$W,obs$A)
+plot(obs$A,obs$Z)
+plot(obs$W,obs$Y)
+plot(obs$A,obs$Y)
+plot(obs$Z,obs$Y)
 ```
 
 
-```{r}
+```{r get_true_psis}
 # Getting trul value of psi
 a_vec <- seq(0.5,10,0.5)
 psi0_a_0 <- c()
 psi0_a_1 <- c()
 
 N = 1e+07
-data_0_0 <- generate_data1(n=N, a=0, z=0)
-data_0_1 <- generate_data1(n=N, a=0, z=1)
+data_0_0 <- generate_data2(n=N, a=0, z=0)
+data_0_1 <- generate_data2(n=N, a=0, z=1)
 
 for (i in 1:length(a_vec)) {
   a <- a_vec[i]
 
-  data_a_0 <- generate_data1(n=N, a=a, z=0)
+  data_a_0 <- generate_data2(n=N, a=a, z=0)
   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
 
-  data_a_1 <- generate_data1(n=N, a=a, z=1)
+  data_a_1 <- generate_data2(n=N, a=a, z=1)
   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
 }
 ```
@@ -125,16 +136,16 @@ for (i in 1:length(a_vec)) {
 ```{r simu_n500}
 set.seed(123)
 n=500
-B=1000
-results_500 = run_simu(n=n, B=B)
+B=5
+results_500 = run_simu(generate_data = generate_data2, n=n, B=B)
 
 print(results_500)
 
-save.image(file=here("data", "rdata", "02_simulations_500.RData"))
+save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
 ```
 
 
 ```{r}
-load(here("data", "rdata", "02_simulations_500.RData"))
+# load(here("data", "rdata", "02_simulation_2_500.RData"))
 print(results)
 ```

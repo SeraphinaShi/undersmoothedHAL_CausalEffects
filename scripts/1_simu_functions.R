@@ -152,7 +152,7 @@ ate_hal_avec0_z01 <- function(a_vec, obs_df){
 
 
 
-run_simu <- function(n, B){
+run_simu <- function(generate_data, n, B){
   
   ate_hal_a_1_relts_ss_under_hal_simu <- list()
   ate_hal_a_1_relts_ss_hal_simu <- list()
@@ -162,7 +162,7 @@ run_simu <- function(n, B){
   for (b in 1:B) {
     print(paste0("-----starting round ", b, "-----"))
     
-    Obs1_n <- generate_data1(n)
+    Obs1_n <- generate_data(n)
     ate_hal_a_z_n500 <- ate_hal_avec0_z01(a_vec, obs_df=Obs1_n)
     
     ate_hal_a_1_relts_ss_under_hal_simu[[b]] = ate_hal_a_z_n500$ate_hal_a_1_relts_ss_under_hal

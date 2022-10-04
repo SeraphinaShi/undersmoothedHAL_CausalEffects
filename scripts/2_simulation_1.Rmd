@@ -98,11 +98,17 @@ generate_data1 <- function(n, a=NA, z=NA){
 obs <- generate_data1(n=10000)
 summary(obs)
 
+# check positivity violations
 summary(obs$W[obs$A < 1])
+plot(obs$W,obs$A)
+plot(obs$A,obs$Z)
+plot(obs$W,obs$Y)
+plot(obs$A,obs$Y)
+plot(obs$Z,obs$Y)
 ```
 
 
-```{r}
+```{r get_true_psis}
 # Getting trul value of psi
 a_vec <- seq(0.5,10,0.5)
 psi0_a_0 <- c()
@@ -128,7 +134,7 @@ for (i in 1:length(a_vec)) {
 set.seed(123)
 n=500
 B=1000
-results_500 = run_simu(n=n, B=B)
+results_500 = run_simu(generate_data = generate_data1, n=n, B=B)
 
 print(results_500)
 
