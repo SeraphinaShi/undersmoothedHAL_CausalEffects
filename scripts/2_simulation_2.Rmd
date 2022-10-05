@@ -2,7 +2,10 @@
 title: "Simulations of estimating causal effects using undersmoothed HAL"
 author: "Seraphina Shi"
 date: "2022-09-06"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
@@ -97,9 +100,13 @@ obs <- generate_data2(n=10000)
 summary(obs)
 
 # check positivity violations
+cat("Summary of A given W < 0.25:")
 summary(obs$A[obs$W < 0.25])
+cat("Summary of A given 0.25 < W <= 0.5:")
 summary(obs$A[0.25 <= obs$W & obs$W < 0.5])
+cat("Summary of A given 0.5 < W <= 0.75:")
 summary(obs$A[0.5 <= obs$W & obs$W < 0.75])
+cat("Summary of A given 0.75 < W:")
 summary(obs$A[0.75 <= obs$W])
 
 
@@ -139,13 +146,13 @@ n=500
 B=1000
 results_500 = run_simu(generate_data = generate_data2, n=n, B=B)
 
-print(results_500)
+# print(results_500)
 
 save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
 ```
 
-
+### results
 ```{r}
 # load(here("data", "rdata", "02_simulation_2_500.RData"))
-# print(results_500)
+print(results_500)
 ```

@@ -2,7 +2,10 @@
 title: "Simulations of estimating causal effects using undersmoothed HAL"
 author: "Seraphina Shi"
 date: "2022-09-06"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 This is the first data generating distribution (DGD) we tried that with positivity violations for A given W (for a specific range of W, we don't observe the entire range of possible A). So the HAL doesn't perform well. We move on to the next DGD without positivity violations and come back later. 
