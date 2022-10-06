@@ -56,7 +56,7 @@ Data structure:  $O = (W, A, Z, Y)$
   
 * Structural equations F and endogenous variables:  
   + $W =  U_W$  
-  + $A = bound(10 - 10W + W^2 + U_A, min=0, max=10)$  
+  + $A = bound(10 - 10W + U_A, min=0, max=10)$  
   + $Z = \mathbf{I}[U_Z < expit(0.2(W+A))]$
   + $y = \mathbf{I}[U_Y < expit(0.05(W-5A+3*W*A+Z))]$
 
@@ -74,7 +74,7 @@ generate_data2 <- function(n, a=NA, z=NA){
   W <- U_W
   
   if(is.na(a)){
-    A <-  10 - 10*W + W*W + U_A
+    A <-  10 - 10*W  + U_A
     A[A<=0] = 0
     A[A>=10] = 10
   } else {
@@ -112,9 +112,11 @@ summary(obs$A[0.75 <= obs$W])
 par(mfrow=c(2,3))
 plot(obs$W,obs$A)
 plot(obs$A,obs$Z)
+plot(obs$Z,obs$Y)
+plot(obs$W,obs$Z)
 plot(obs$W,obs$Y)
 plot(obs$A,obs$Y)
-plot(obs$Z,obs$Y)
+
 ```
 
 
