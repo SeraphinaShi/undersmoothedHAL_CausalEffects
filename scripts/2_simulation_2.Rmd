@@ -144,8 +144,8 @@ for (i in 1:length(a_vec)) {
 set.seed(123)
 n=500
 B=1000
-# results_500 = run_simu(generate_data = generate_data2, n=n, B=B)
-# save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
+results_500 = run_simu(generate_data = generate_data2, n=n, B=B)
+save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
 ```
 
 ### results
@@ -156,4 +156,25 @@ results_500[[1]] <- results_500[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4)
 
 print(results_500)
+```
+
+
+
+## n = 1000
+```{r simu_n1000}
+set.seed(123)
+n=1000
+B=1000
+results_1000 = run_simu(generate_data = generate_data2, n=n, B=B)
+save.image(file=here("data", "rdata", "02_simulation_2_1000.RData"))
+```
+
+### results
+```{r}
+load(here("data", "rdata", "02_simulation_2_1000.RData"))
+
+results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4)
+results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4)
+
+print(results_1000)
 ```
