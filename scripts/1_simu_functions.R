@@ -10,7 +10,7 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
                                      basis_mat = hal_init$basis_mat,
                                      family = y_type)
 
-  printf("  Fitting initial HAL with lambda:       %f \n", hal_undersmooth$lambda_init)
+  sprintf("  Fitting initial HAL with lambda:       %f \n", hal_undersmooth$lambda_init)
   dgd_hal_fit <- fit_hal(X = X,
                          Y = Y,
                          family = y_type,
@@ -32,7 +32,7 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
                          lambda = hal_undersmooth$lambda_init
   )
   
-  printf("  Fitting undersmoothed HAL with lambda: %f \n", hal_undersmooth$lambda_under)
+  sprintf("  Fitting undersmoothed HAL with lambda: %f \n", hal_undersmooth$lambda_under)
   dgd_under_hal_fit <- fit_hal(X = X,
                                Y = Y,
                                family = y_type,
