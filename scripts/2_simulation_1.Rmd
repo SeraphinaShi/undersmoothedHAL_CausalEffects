@@ -22,6 +22,8 @@ library(glmnet)
 library(origami)
 library(hal9001)
 library(tictoc)
+
+library(R.utils)
 ```
 
 ```{r setup, include = FALSE}
