@@ -8,4 +8,4 @@
 #$ -m base
 #
 
-R CMD BATCH --no-save 2_simulation_1.R 2_simulation_1.Rout
+R CMD BATCH --no-save 2_simulations.R 2_simulations.Rout

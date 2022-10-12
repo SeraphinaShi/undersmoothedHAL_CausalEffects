@@ -1,14 +1,4 @@
----
-title: "Simulations of estimating causal effects using undersmoothed HAL"
-author: "Seraphina Shi"
-date: "2022-09-06"
-output:
-  html_document:
-    toc: true
-    toc_float: true
----
-
-```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
+## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE-----------------------------------------------
 library(here)
 library(data.table)
 library(dplyr)
@@ -24,9 +14,9 @@ library(tictoc)
 library(R.utils)
 
 library(pROC)
-```
 
-```{r setup, include = FALSE}
+
+## ----setup, include = FALSE--------------------------------------------------------------------------------------------
 plotFolder <- here("results","images")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
@@ -39,33 +29,9 @@ knitr::opts_chunk$set(
 
 source(here("scripts", "1_simu_functions_hal9001.R"))
 source(here("scripts", "1_simu_functions.R"))
-```
-
-# Simulation #1
-Data structure:  $O = (W, A, Z, Y)$ 
-
- * U - exogenous variables  
- * W - baseline covariate that is a measure of body condition  
- * A - treatment level based on W, continuous between 0 and 10  
- * Z - intermediate curve based on W and A
- * Y - outcome, indicator of an event ?  
-   
- Underlying data generating process, $P_{U,X}$
- 
-* Exogenous variables:  
-  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$  
-  + $U_A \sim Normal(\mu=0, \sigma^2 = 2^2)$  
-  + $U_Z \sim Uniform(min = 0, max = 1)$  
-  + $U_Y \sim Uniform(min = 0, max = 1)$  
-  
-* Structural equations F and endogenous variables:  
-  + $W =  U_W$  
-  + $A = bound(2 - 0.5W + U_A, min=0, max=5)$  
-  + $Z = \mathbf{I}[U_Z < expit(2-W-A)]$
-  + $y = \mathbf{I}[U_Y < expit(W + 2*A + Z - 0.5 * W * A)]$
 
 
-```{r}
+## ----------------------------------------------------------------------------------------------------------------------
 generate_data <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
@@ -128,10 +94,9 @@ y_preds <- predict(glm_fit, type = "response")
 mse <- sum((y_preds - obs$Y)^2)
 auc <- auc(obs$Y, y_preds)
 print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
-```
 
 
-```{r get_true_psis}
+## ----get_true_psis-----------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 a_vec <- seq(0.5,5,0.5)
 psi0_a_0 <- c()
@@ -150,69 +115,56 @@ for (i in 1:length(a_vec)) {
   data_a_1 <- generate_data(n=N, a=a, z=1)
   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
 }
-```
 
-## n = 500
-```{r simu_n500}
+
+## ----simu_n500---------------------------------------------------------------------------------------------------------
 set.seed(123)
 n=500
 B=1000
 results_500 = run_simu(generate_data = generate_data, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
-```
+save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
 
-### results
-```{r}
-load(here("data", "rdata", "02_simulation_2_500.RData"))
+
+## ----------------------------------------------------------------------------------------------------------------------
+load(here("data", "rdata", "02_simulation_1_500.RData"))
 
 results_500[[1]] <- results_500[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4)
 
 print(results_500)
-```
 
 
-
-## n = 1000
-```{r simu_n1000}
+## ----simu_n1000--------------------------------------------------------------------------------------------------------
 set.seed(234)
 n=1000
 B=1000
 results_1000 = run_simu(generate_data = generate_data, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_2_1000.RData"))
-```
+save.image(file=here("data", "rdata", "02_simulation_1_1000.RData"))
 
-### results
-```{r}
-load(here("data", "rdata", "02_simulation_2_1000.RData"))
+
+## ----------------------------------------------------------------------------------------------------------------------
+load(here("data", "rdata", "02_simulation_1_1000.RData"))
 
 results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4)
 
 print(results_1000)
-```
 
 
-
-## n = 5000
-```{r simu_n5000}
+## ----simu_n5000--------------------------------------------------------------------------------------------------------
 set.seed(345)
 n=5000
 B=1000
 results_5000 = run_simu(generate_data = generate_data, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_2_5000.RData"))
-```
+save.image(file=here("data", "rdata", "02_simulation_1_5000.RData"))
 
-### results
-```{r}
-load(here("data", "rdata", "02_simulation_2_5000.RData"))
+
+## ----------------------------------------------------------------------------------------------------------------------
+load(here("data", "rdata", "02_simulation_1_5000.RData"))
 
 results_5000[[1]] <- results_5000[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_5000[[2]] <- results_5000[[2]] %>% mutate_if(is.numeric, round, digits=4)
 
 print(results_5000)
-```
 
-```{r}
-knitr::purl(here("scripts", "2_simulation_2.Rmd"))
-```
+
