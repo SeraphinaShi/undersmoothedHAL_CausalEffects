@@ -1,0 +1,4153 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE-----------------------------------------------
+> library(here)
+here() starts at /home/seraphinashi/undersmoothedHAL_CausalEffects
+> library(data.table)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:data.table’:
+
+    between, first, last
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> library(foreach)
+> 
+> library(stringr)
+> library(glmnet)
+Loading required package: Matrix
+Loaded glmnet 4.1-3
+> 
+> library(origami)
+origami v1.0.5: Generalized Framework for Cross-Validation
+> library(hal9001)
+Loading required package: Rcpp
+hal9001 v0.4.3: The Scalable Highly Adaptive Lasso
+note: fit_hal defaults have changed. See ?fit_hal for details
+> library(tictoc)
+
+Attaching package: ‘tictoc’
+
+The following object is masked from ‘package:data.table’:
+
+    shift
+
+> 
+> library(R.utils)
+Loading required package: R.oo
+Loading required package: R.methodsS3
+R.methodsS3 v1.8.1 (2020-08-26 16:20:06 UTC) successfully loaded. See ?R.methodsS3 for help.
+R.oo v1.24.0 (2020-08-26 16:11:58 UTC) successfully loaded. See ?R.oo for help.
+
+Attaching package: ‘R.oo’
+
+The following object is masked from ‘package:R.methodsS3’:
+
+    throw
+
+The following objects are masked from ‘package:methods’:
+
+    getClasses, getMethods
+
+The following objects are masked from ‘package:base’:
+
+    attach, detach, load, save
+
+R.utils v2.12.0 (2022-06-28 03:20:05 UTC) successfully loaded. See ?R.utils for help.
+
+Attaching package: ‘R.utils’
+
+The following object is masked from ‘package:utils’:
+
+    timestamp
+
+The following objects are masked from ‘package:base’:
+
+    cat, commandArgs, getOption, isOpen, nullfile, parse, warnings
+
+> 
+> library(pROC)
+Type 'citation("pROC")' for a citation.
+
+Attaching package: ‘pROC’
+
+The following objects are masked from ‘package:stats’:
+
+    cov, smooth, var
+
+> 
+> 
+> ## ----setup, include = FALSE--------------------------------------------------------------------------------------------
+> plotFolder <- here("results","images")
+> if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
+> 
+> knitr::opts_chunk$set(
++   cache=FALSE, autodep=FALSE, warning=FALSE, message=FALSE, echo=FALSE,
++   results = 'markup', dev='png', dpi=150, fig.align = "center", fig.path=plotFolder,
++   cache.path=".cache/",
++   duplicate.label="allow"
++ )
+> 
+> source(here("scripts", "1_simu_functions_hal9001.R"))
+> source(here("scripts", "1_simu_functions.R"))
+> 
+> 
+> ## ----------------------------------------------------------------------------------------------------------------------
+> generate_data <- function(n, a=NA, z=NA){
++   # exogenous variables
++   U_W <- rnorm(n, 0, 1)
++   U_A <- rnorm(n, 0, 2)
++   U_Z <- runif(n, 0, 1)
++   U_Y <- runif(n, 0, 1)
++   
++   # endogenous variables
++   W <- U_W
++   
++   if(is.na(a)){
++     A <-  2 - 0.5*W + U_A
++     A[A<=0] = 0
++     A[A>=5] = 5
++   } else {
++     A <- rep(a, n)
++   }
++   
++   if(is.na(z)){
++     Z <- as.numeric(U_Z < plogis(2-W-A))
++   } else {
++     Z <- rep(z, n)
++   }
++   
++   Y <- as.numeric(U_Y < plogis(W + 5*A + Z - 0.5 * W * A - 8))
++   
++   # data frame
++   O <- data.frame(W, A, Z, Y)
++   return(O)
++ }
+> 
+> obs <- generate_data(n=10000)
+> print(summary(obs))
+       W                   A                Z                Y         
+ Min.   :-4.071052   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+ 1st Qu.:-0.676259   1st Qu.:0.5706   1st Qu.:0.0000   1st Qu.:0.0000  
+ Median :-0.013214   Median :1.9661   Median :0.0000   Median :1.0000  
+ Mean   :-0.007684   Mean   :2.0787   Mean   :0.4924   Mean   :0.5927  
+ 3rd Qu.: 0.658942   3rd Qu.:3.3386   3rd Qu.:1.0000   3rd Qu.:1.0000  
+ Max.   : 3.477803   Max.   :5.0000   Max.   :1.0000   Max.   :1.0000  
+>   
+> # check positivity violations
+> cat("Summary of A given W < -1:")
+Summary of A given W < -1:> summary(obs$A[obs$W < -1])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   1.356   2.705   2.659   4.092   5.000 
+> cat("Summary of A given -1 < W <= 0:")
+Summary of A given -1 < W <= 0:> summary(obs$A[-1 <= obs$W & obs$W < 0])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.8459  2.1987  2.2641  3.5489  5.0000 
+> cat("Summary of A given 0 < W <= 1:")
+Summary of A given 0 < W <= 1:> summary(obs$A[0 <= obs$W & obs$W < 1])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.4207  1.7672  1.8877  3.0081  5.0000 
+> cat("Summary of A given 1 < W:")
+Summary of A given 1 < W:> summary(obs$A[1 <= obs$W])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   0.000   1.174   1.500   2.485   5.000 
+> 
+> par(mfrow=c(2,3))
+> plot(obs$W,obs$A)
+> plot(obs$A,obs$Z)
+> plot(obs$Z,obs$Y)
+> plot(obs$W,obs$Z)
+> plot(obs$W,obs$Y)
+> plot(obs$A,obs$Y)
+> 
+> 
+> 
+> glm_fit <- glm(formula = Y ~ W + A + W*A + Z,
++                family = binomial,
++                data = obs)
+> summary(glm_fit)
+
+Call:
+glm(formula = Y ~ W + A + W * A + Z, family = binomial, data = obs)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-3.5255  -0.0637   0.0004   0.0594   3.6762  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept)  -8.2486     0.2711 -30.426  < 2e-16 ***
+W             1.3868     0.1906   7.277 3.40e-13 ***
+A             5.1799     0.1547  33.480  < 2e-16 ***
+Z             0.8467     0.1158   7.309 2.69e-13 ***
+W:A          -0.7313     0.1233  -5.932 2.99e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 13517.2  on 9999  degrees of freedom
+Residual deviance:  2548.2  on 9995  degrees of freedom
+AIC: 2558.2
+
+Number of Fisher Scoring iterations: 9
+
+> y_preds <- predict(glm_fit, type = "response")
+> mse <- sum((y_preds - obs$Y)^2)
+> auc <- auc(obs$Y, y_preds)
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+> print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
+[1] "    MSE: 382.1794, AUC: 0.9898"
+> 
+> 
+> ## ----get_true_psis-----------------------------------------------------------------------------------------------------
+> # Getting trul value of psi
+> a_vec <- seq(0.5,5,0.5)
+> psi0_a_0 <- c()
+> psi0_a_1 <- c()
+> 
+> N = 1e+07
+> data_0_0 <- generate_data(n=N, a=0, z=0)
+> data_0_1 <- generate_data(n=N, a=0, z=1)
+> 
+> for (i in 1:length(a_vec)) {
++   a <- a_vec[i]
++ 
++   data_a_0 <- generate_data(n=N, a=a, z=0)
++   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
++ 
++   data_a_1 <- generate_data(n=N, a=a, z=1)
++   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
++ }
+> 
+> 
+> ## ----simu_n500---------------------------------------------------------------------------------------------------------
+> set.seed(123)
+> n=500
+> B=1000
+> results_500 = run_simu(generate_data = generate_data, n=n, B=B)
+[1] "-----starting round 1-----"
+[1] "  Fitting initial HAL with lambda:       0.00577"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7043, AUC: 0.9919"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.8458, AUC: 0.9987"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34244.6331, AUC: 0.9916"
+[1] "-----starting round 2-----"
+[1] "  Fitting initial HAL with lambda:       0.00748"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.3231, AUC: 0.9888"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.0813, AUC: 0.9956"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 31446.1504, AUC: 0.9897"
+[1] "-----starting round 3-----"
+[1] "  Fitting initial HAL with lambda:       0.00629"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.401, AUC: 0.9902"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.8765, AUC: 0.9948"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 35018.1463, AUC: 0.9904"
+[1] "-----starting round 4-----"
+[1] "  Fitting initial HAL with lambda:       0.0035"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.8202, AUC: 0.9875"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.6951, AUC: 0.9972"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27133.7159, AUC: 0.9861"
+[1] "-----starting round 5-----"
+[1] "  Fitting initial HAL with lambda:       0.00266"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.8621, AUC: 0.9906"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.2724, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39336.2031, AUC: 0.9906"
+[1] "-----starting round 6-----"
+[1] "  Fitting initial HAL with lambda:       0.00556"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.9421, AUC: 0.9922"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.2641, AUC: 0.9988"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45518.1468, AUC: 0.9926"
+[1] "-----starting round 7-----"
+[1] "  Fitting initial HAL with lambda:       0.00434"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.22, AUC: 0.9864"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.6524, AUC: 0.9959"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29630.6464, AUC: 0.9877"
+[1] "-----starting round 8-----"
+[1] "  Fitting initial HAL with lambda:       0.00519"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.4121, AUC: 0.9911"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.7692, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 50149.2321, AUC: 0.9916"
+[1] "-----starting round 9-----"
+[1] "  Fitting initial HAL with lambda:       0.00265"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.707, AUC: 0.9927"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 59890.527, AUC: 0.9933"
+[1] "-----starting round 10-----"
+[1] "  Fitting initial HAL with lambda:       0.00263"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.0792, AUC: 0.9875"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.3616, AUC: 0.9967"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34008.975, AUC: 0.9874"
+[1] "-----starting round 11-----"
+[1] "  Fitting initial HAL with lambda:       0.00578"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.1613, AUC: 0.991"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.6804, AUC: 0.995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45953.8593, AUC: 0.9907"
+[1] "-----starting round 12-----"
+[1] "  Fitting initial HAL with lambda:       0.00509"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25.4435, AUC: 0.9822"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.0719, AUC: 0.9959"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28623.2461, AUC: 0.9828"
+[1] "-----starting round 13-----"
+[1] "  Fitting initial HAL with lambda:       0.00563"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.1632, AUC: 0.986"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7788, AUC: 0.9953"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27953.0278, AUC: 0.9867"
+[1] "-----starting round 14-----"
+[1] "  Fitting initial HAL with lambda:       0.00476"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.5483, AUC: 0.9926"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.006, AUC: 0.997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 95694.7465, AUC: 0.9937"
+[1] "-----starting round 15-----"
+[1] "  Fitting initial HAL with lambda:       0.00562"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.1917, AUC: 0.9897"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.0317, AUC: 0.9953"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 31531.2821, AUC: 0.9893"
+[1] "-----starting round 16-----"
+[1] "  Fitting initial HAL with lambda:       0.00584"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.188, AUC: 0.9902"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.4745, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34069.3557, AUC: 0.9907"
+[1] "-----starting round 17-----"
+[1] "  Fitting initial HAL with lambda:       0.00214"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.6834, AUC: 0.9938"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 48718.6869, AUC: 0.993"
+[1] "-----starting round 18-----"
+[1] "  Fitting initial HAL with lambda:       0.0043"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.6018, AUC: 0.9888"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.759, AUC: 0.9967"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 35247.2, AUC: 0.9894"
+[1] "-----starting round 19-----"
+[1] "  Fitting initial HAL with lambda:       0.00538"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.1498, AUC: 0.992"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.9125, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 46745.1118, AUC: 0.9923"
+[1] "-----starting round 20-----"
+[1] "  Fitting initial HAL with lambda:       0.00741"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.8025, AUC: 0.9888"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.1654, AUC: 0.9968"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37086.6601, AUC: 0.9887"
+[1] "-----starting round 21-----"
+[1] "  Fitting initial HAL with lambda:       0.00473"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.6877, AUC: 0.9895"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.9338, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 47799.545, AUC: 0.9898"
+[1] "-----starting round 22-----"
+[1] "  Fitting initial HAL with lambda:       0.00503"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.952, AUC: 0.9924"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.7512, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40293.303, AUC: 0.9916"
+[1] "-----starting round 23-----"
+[1] "  Fitting initial HAL with lambda:       0.00395"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.5085, AUC: 0.9885"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.8106, AUC: 0.9972"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30995.8562, AUC: 0.9888"
+[1] "-----starting round 24-----"
+[1] "  Fitting initial HAL with lambda:       0.00515"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.0908, AUC: 0.9893"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9564, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 47604.2478, AUC: 0.9899"
+[1] "-----starting round 25-----"
+[1] "  Fitting initial HAL with lambda:       0.00559"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.9888, AUC: 0.987"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.6224, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27567.9037, AUC: 0.9873"
+[1] "-----starting round 26-----"
+[1] "  Fitting initial HAL with lambda:       0.00627"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.6345, AUC: 0.9896"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.9854, AUC: 0.9966"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39397.6489, AUC: 0.991"
+[1] "-----starting round 27-----"
+[1] "  Fitting initial HAL with lambda:       0.00403"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.6408, AUC: 0.9891"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.1984, AUC: 0.997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32179.9684, AUC: 0.9893"
+[1] "-----starting round 28-----"
+[1] "  Fitting initial HAL with lambda:       0.00367"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.831, AUC: 0.993"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34545.4366, AUC: 0.9924"
+[1] "-----starting round 29-----"
+[1] "  Fitting initial HAL with lambda:       0.00411"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.8878, AUC: 0.9871"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.6646, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24429.5397, AUC: 0.9871"
+[1] "-----starting round 30-----"
+[1] "  Fitting initial HAL with lambda:       0.00407"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.3367, AUC: 0.9909"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.2247, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33204.179, AUC: 0.9903"
+[1] "-----starting round 31-----"
+[1] "  Fitting initial HAL with lambda:       0.004"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.0048, AUC: 0.9935"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.1541, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 52323.1443, AUC: 0.9939"
+[1] "-----starting round 32-----"
+[1] "  Fitting initial HAL with lambda:       0.00452"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5329, AUC: 0.9932"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9543, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 71724.4229, AUC: 0.9937"
+[1] "-----starting round 33-----"
+[1] "  Fitting initial HAL with lambda:       0.00341"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.4154, AUC: 0.9868"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.8007, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36350.8253, AUC: 0.9858"
+[1] "-----starting round 34-----"
+[1] "  Fitting initial HAL with lambda:       0.00232"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.4077, AUC: 0.9931"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.3824, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 58823.1594, AUC: 0.9932"
+[1] "-----starting round 35-----"
+[1] "  Fitting initial HAL with lambda:       0.00357"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.3195, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.0592, AUC: 0.9988"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26545.651, AUC: 0.9884"
+[1] "-----starting round 36-----"
+[1] "  Fitting initial HAL with lambda:       0.00254"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.8015, AUC: 0.9945"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.7671, AUC: 0.9996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 70041.6516, AUC: 0.9944"
+[1] "-----starting round 37-----"
+[1] "  Fitting initial HAL with lambda:       0.00421"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.6379, AUC: 0.9871"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.6958, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26089.0717, AUC: 0.9873"
+[1] "-----starting round 38-----"
+[1] "  Fitting initial HAL with lambda:       0.002"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.2058, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.1237, AUC: 0.9975"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33306.256, AUC: 0.9889"
+[1] "-----starting round 39-----"
+[1] "  Fitting initial HAL with lambda:       0.00364"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.9837, AUC: 0.9916"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.3504, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40987.5652, AUC: 0.9915"
+[1] "-----starting round 40-----"
+[1] "  Fitting initial HAL with lambda:       0.00517"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.7498, AUC: 0.9917"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.8453, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44222.6402, AUC: 0.9924"
+[1] "-----starting round 41-----"
+[1] "  Fitting initial HAL with lambda:       0.00546"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.7456, AUC: 0.9934"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.7526, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 65844.2959, AUC: 0.9941"
+[1] "-----starting round 42-----"
+[1] "  Fitting initial HAL with lambda:       0.00566"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.407, AUC: 0.9904"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.0764, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41601.326, AUC: 0.992"
+[1] "-----starting round 43-----"
+[1] "  Fitting initial HAL with lambda:       0.00562"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.9444, AUC: 0.9925"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.5683, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 63142.5367, AUC: 0.9933"
+[1] "-----starting round 44-----"
+[1] "  Fitting initial HAL with lambda:       0.00419"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.3717, AUC: 0.9862"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.015, AUC: 0.9952"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26072.277, AUC: 0.9857"
+[1] "-----starting round 45-----"
+[1] "  Fitting initial HAL with lambda:       0.00481"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.3909, AUC: 0.9933"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.8371, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45476.8034, AUC: 0.9931"
+[1] "-----starting round 46-----"
+[1] "  Fitting initial HAL with lambda:       0.00538"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.1637, AUC: 0.9924"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.2638, AUC: 0.9987"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 62295.8536, AUC: 0.9933"
+[1] "-----starting round 47-----"
+[1] "  Fitting initial HAL with lambda:       0.00487"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.3495, AUC: 0.9911"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.4041, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 42732.1473, AUC: 0.9917"
+[1] "-----starting round 48-----"
+[1] "  Fitting initial HAL with lambda:       0.00558"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.0991, AUC: 0.9913"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.8644, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 57028.5332, AUC: 0.9914"
+[1] "-----starting round 49-----"
+[1] "  Fitting initial HAL with lambda:       0.00461"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.433, AUC: 0.9855"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.6623, AUC: 0.9954"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 31651.2212, AUC: 0.9859"
+[1] "-----starting round 50-----"
+[1] "  Fitting initial HAL with lambda:       0.00525"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.9169, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.2303, AUC: 0.9953"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40941.5037, AUC: 0.9893"
+[1] "-----starting round 51-----"
+[1] "  Fitting initial HAL with lambda:       0.00414"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.4912, AUC: 0.9896"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.9654, AUC: 0.997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36838.0404, AUC: 0.9896"
+[1] "-----starting round 52-----"
+[1] "  Fitting initial HAL with lambda:       0.00482"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.2107, AUC: 0.9942"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.0986, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 51292.8979, AUC: 0.9942"
+[1] "-----starting round 53-----"
+[1] "  Fitting initial HAL with lambda:       0.00523"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.2356, AUC: 0.989"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.67, AUC: 0.9957"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28928.1423, AUC: 0.9893"
+[1] "-----starting round 54-----"
+[1] "  Fitting initial HAL with lambda:       0.00167"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.4454, AUC: 0.9894"
+[1] "  Fitting undersmoothed HAL with lambda: 1e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.6542, AUC: 0.9986"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33463.9445, AUC: 0.989"
+[1] "-----starting round 55-----"
+[1] "  Fitting initial HAL with lambda:       0.00522"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.8576, AUC: 0.9926"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.9323, AUC: 0.9971"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41072.2217, AUC: 0.9925"
+[1] "-----starting round 56-----"
+[1] "  Fitting initial HAL with lambda:       0.00466"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.7316, AUC: 0.9904"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.508, AUC: 0.9986"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32854.341, AUC: 0.9899"
+[1] "-----starting round 57-----"
+[1] "  Fitting initial HAL with lambda:       0.00573"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.7291, AUC: 0.9928"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.7771, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36056.6944, AUC: 0.9928"
+[1] "-----starting round 58-----"
+[1] "  Fitting initial HAL with lambda:       0.004"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.1589, AUC: 0.9909"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40976.834, AUC: 0.9912"
+[1] "-----starting round 59-----"
+[1] "  Fitting initial HAL with lambda:       0.00513"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.3946, AUC: 0.9865"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.034, AUC: 0.9968"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49738.7866, AUC: 0.9874"
+[1] "-----starting round 60-----"
+[1] "  Fitting initial HAL with lambda:       0.0048"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.3405, AUC: 0.991"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.5525, AUC: 0.9973"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44395.0243, AUC: 0.9911"
+[1] "-----starting round 61-----"
+[1] "  Fitting initial HAL with lambda:       0.00562"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.1565, AUC: 0.9859"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.4032, AUC: 0.9968"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27806.9524, AUC: 0.9862"
+[1] "-----starting round 62-----"
+[1] "  Fitting initial HAL with lambda:       0.00412"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26.0459, AUC: 0.983"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.3803, AUC: 0.9942"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17724.8032, AUC: 0.9828"
+[1] "-----starting round 63-----"
+[1] "  Fitting initial HAL with lambda:       0.00675"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25.0266, AUC: 0.9827"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.1691, AUC: 0.9926"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20990.8256, AUC: 0.9831"
+[1] "-----starting round 64-----"
+[1] "  Fitting initial HAL with lambda:       0.00317"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.0714, AUC: 0.9876"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.146, AUC: 0.9957"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34175.7381, AUC: 0.9881"
+[1] "-----starting round 65-----"
+[1] "  Fitting initial HAL with lambda:       0.00442"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.7998, AUC: 0.991"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.4824, AUC: 0.9962"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29208.6551, AUC: 0.9911"
+[1] "-----starting round 66-----"
+[1] "  Fitting initial HAL with lambda:       0.00177"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.6849, AUC: 0.9883"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.8421, AUC: 0.9972"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19241.2929, AUC: 0.9867"
+[1] "-----starting round 67-----"
+[1] "  Fitting initial HAL with lambda:       0.00293"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.2479, AUC: 0.9878"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.8058, AUC: 0.9949"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25830.411, AUC: 0.9873"
+[1] "-----starting round 68-----"
+[1] "  Fitting initial HAL with lambda:       0.00291"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.624, AUC: 0.9878"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.6941, AUC: 0.9972"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34506.8252, AUC: 0.9868"
+[1] "-----starting round 69-----"
+[1] "  Fitting initial HAL with lambda:       0.0053"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.2741, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.4745, AUC: 0.9956"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37098.0828, AUC: 0.9895"
+[1] "-----starting round 70-----"
+[1] "  Fitting initial HAL with lambda:       0.00466"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.7823, AUC: 0.9858"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.8693, AUC: 0.9951"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26936.2617, AUC: 0.9858"
+[1] "-----starting round 71-----"
+[1] "  Fitting initial HAL with lambda:       0.00259"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26.79, AUC: 0.9792"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.3699, AUC: 0.9928"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19023.7338, AUC: 0.9793"
+[1] "-----starting round 72-----"
+[1] "  Fitting initial HAL with lambda:       0.00391"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.5826, AUC: 0.9873"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7597, AUC: 0.9955"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24613.2665, AUC: 0.9872"
+[1] "-----starting round 73-----"
+[1] "  Fitting initial HAL with lambda:       0.00495"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.3579, AUC: 0.9932"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.0846, AUC: 0.9966"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 63358.002, AUC: 0.9938"
+[1] "-----starting round 74-----"
+[1] "  Fitting initial HAL with lambda:       0.00455"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.5071, AUC: 0.9893"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37987.8105, AUC: 0.9896"
+[1] "-----starting round 75-----"
+[1] "  Fitting initial HAL with lambda:       0.00612"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25.7546, AUC: 0.9822"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.4591, AUC: 0.9923"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19616.5337, AUC: 0.9827"
+[1] "-----starting round 76-----"
+[1] "  Fitting initial HAL with lambda:       0.00447"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.1686, AUC: 0.994"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.6695, AUC: 0.9986"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44751.9313, AUC: 0.9934"
+[1] "-----starting round 77-----"
+[1] "  Fitting initial HAL with lambda:       0.00595"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.872, AUC: 0.9845"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.5425, AUC: 0.994"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28579.1316, AUC: 0.9855"
+[1] "-----starting round 78-----"
+[1] "  Fitting initial HAL with lambda:       0.00613"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.2494, AUC: 0.9874"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.018, AUC: 0.9936"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24742.999, AUC: 0.9875"
+[1] "-----starting round 79-----"
+[1] "  Fitting initial HAL with lambda:       0.00538"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.7211, AUC: 0.9892"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7572, AUC: 0.9956"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32224.5913, AUC: 0.9898"
+[1] "-----starting round 80-----"
+[1] "  Fitting initial HAL with lambda:       0.00339"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.2688, AUC: 0.9931"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.7171, AUC: 0.9991"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49609.1165, AUC: 0.9928"
+[1] "-----starting round 81-----"
+[1] "  Fitting initial HAL with lambda:       0.00379"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.5283, AUC: 0.9918"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.9624, AUC: 0.9981"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44814.5041, AUC: 0.9911"
+[1] "-----starting round 82-----"
+[1] "  Fitting initial HAL with lambda:       0.00511"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.3457, AUC: 0.9851"
+[1] "  Fitting undersmoothed HAL with lambda: 0.00028"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.8234, AUC: 0.9883"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30451.2545, AUC: 0.9856"
+[1] "-----starting round 83-----"
+[1] "  Fitting initial HAL with lambda:       0.00574"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.233, AUC: 0.9877"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.4832, AUC: 0.9972"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40041.3969, AUC: 0.9886"
+[1] "-----starting round 84-----"
+[1] "  Fitting initial HAL with lambda:       0.00219"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7891, AUC: 0.9914"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.1333, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37281.9103, AUC: 0.9916"
+[1] "-----starting round 85-----"
+[1] "  Fitting initial HAL with lambda:       0.00671"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.9649, AUC: 0.9886"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.1793, AUC: 0.995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27863.3083, AUC: 0.989"
+[1] "-----starting round 86-----"
+[1] "  Fitting initial HAL with lambda:       0.00339"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.4266, AUC: 0.9923"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.4166, AUC: 0.9986"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39832.5359, AUC: 0.9919"
+[1] "-----starting round 87-----"
+[1] "  Fitting initial HAL with lambda:       0.00469"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.2601, AUC: 0.9931"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.7351, AUC: 0.9987"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38063.5147, AUC: 0.9929"
+[1] "-----starting round 88-----"
+[1] "  Fitting initial HAL with lambda:       0.00466"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.8843, AUC: 0.9906"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.3813, AUC: 0.9975"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29621.6231, AUC: 0.9901"
+[1] "-----starting round 89-----"
+[1] "  Fitting initial HAL with lambda:       0.00473"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.6105, AUC: 0.993"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.9041, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 53845.7419, AUC: 0.9931"
+[1] "-----starting round 90-----"
+[1] "  Fitting initial HAL with lambda:       0.00364"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7212, AUC: 0.9918"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.6888, AUC: 0.9982"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39972.4338, AUC: 0.9922"
+[1] "-----starting round 91-----"
+[1] "  Fitting initial HAL with lambda:       0.00385"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.2692, AUC: 0.9865"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.8572, AUC: 0.9949"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30743.1703, AUC: 0.9858"
+[1] "-----starting round 92-----"
+[1] "  Fitting initial HAL with lambda:       0.00362"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7008, AUC: 0.9942"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.0596, AUC: 0.9988"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 74330.8118, AUC: 0.9946"
+[1] "-----starting round 93-----"
+[1] "  Fitting initial HAL with lambda:       0.00388"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7569, AUC: 0.9906"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.5045, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49355.0654, AUC: 0.9909"
+[1] "-----starting round 94-----"
+[1] "  Fitting initial HAL with lambda:       0.0036"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.2919, AUC: 0.9875"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.7254, AUC: 0.9962"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25153.277, AUC: 0.9869"
+[1] "-----starting round 95-----"
+[1] "  Fitting initial HAL with lambda:       0.0049"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.2119, AUC: 0.9942"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.2267, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 46245.1569, AUC: 0.9944"
+[1] "-----starting round 96-----"
+[1] "  Fitting initial HAL with lambda:       0.00317"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.2589, AUC: 0.9882"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.9588, AUC: 0.9953"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37350.6446, AUC: 0.9888"
+[1] "-----starting round 97-----"
+[1] "  Fitting initial HAL with lambda:       0.00276"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.6661, AUC: 0.993"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.4948, AUC: 0.9996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34204.0566, AUC: 0.9924"
+[1] "-----starting round 98-----"
+[1] "  Fitting initial HAL with lambda:       0.00294"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.5615, AUC: 0.9886"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.9346, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25117.7991, AUC: 0.9885"
+[1] "-----starting round 99-----"
+[1] "  Fitting initial HAL with lambda:       0.00409"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7615, AUC: 0.9936"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.3203, AUC: 0.9991"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 55411.7819, AUC: 0.9934"
+[1] "-----starting round 100-----"
+[1] "  Fitting initial HAL with lambda:       0.00325"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1805, AUC: 0.9874"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.4102, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21492.1459, AUC: 0.9863"
+[1] "-----starting round 101-----"
+[1] "  Fitting initial HAL with lambda:       0.00473"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.4201, AUC: 0.992"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.3056, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 53227.9443, AUC: 0.9925"
+[1] "-----starting round 102-----"
+[1] "  Fitting initial HAL with lambda:       0.00698"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.6133, AUC: 0.9868"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.1015, AUC: 0.9958"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26927.2083, AUC: 0.9874"
+[1] "-----starting round 103-----"
+[1] "  Fitting initial HAL with lambda:       0.00576"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.218, AUC: 0.9898"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.0546, AUC: 0.9971"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34427.8887, AUC: 0.9901"
+[1] "-----starting round 104-----"
+[1] "  Fitting initial HAL with lambda:       0.00553"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1887, AUC: 0.9883"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.3886, AUC: 0.9961"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34451.4067, AUC: 0.9886"
+[1] "-----starting round 105-----"
+[1] "  Fitting initial HAL with lambda:       0.00475"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.529, AUC: 0.9882"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.0655, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28117.5453, AUC: 0.9889"
+[1] "-----starting round 106-----"
+[1] "  Fitting initial HAL with lambda:       0.00424"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.063, AUC: 0.9877"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.4864, AUC: 0.9967"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24677.4353, AUC: 0.9867"
+[1] "-----starting round 107-----"
+[1] "  Fitting initial HAL with lambda:       0.00522"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.31, AUC: 0.9871"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.3918, AUC: 0.9959"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39366.1048, AUC: 0.9875"
+[1] "-----starting round 108-----"
+[1] "  Fitting initial HAL with lambda:       0.00516"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.655, AUC: 0.9893"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.5847, AUC: 0.9973"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28244.4062, AUC: 0.9893"
+[1] "-----starting round 109-----"
+[1] "  Fitting initial HAL with lambda:       0.00509"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.5362, AUC: 0.9871"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24102.145, AUC: 0.9865"
+[1] "-----starting round 110-----"
+[1] "  Fitting initial HAL with lambda:       0.00522"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.5673, AUC: 0.9921"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.2534, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 46079.1276, AUC: 0.9922"
+[1] "-----starting round 111-----"
+[1] "  Fitting initial HAL with lambda:       0.00443"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.6256, AUC: 0.9922"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.1703, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45665.2304, AUC: 0.9923"
+[1] "-----starting round 112-----"
+[1] "  Fitting initial HAL with lambda:       0.00387"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.0863, AUC: 0.9898"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.8765, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34825.7561, AUC: 0.9896"
+[1] "-----starting round 113-----"
+[1] "  Fitting initial HAL with lambda:       0.00411"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.119, AUC: 0.9908"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.8092, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30211.5757, AUC: 0.991"
+[1] "-----starting round 114-----"
+[1] "  Fitting initial HAL with lambda:       0.0053"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.3554, AUC: 0.9899"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.7989, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37363.4717, AUC: 0.9901"
+[1] "-----starting round 115-----"
+[1] "  Fitting initial HAL with lambda:       0.0032"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.8317, AUC: 0.9914"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.9522, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36410.2868, AUC: 0.9917"
+[1] "-----starting round 116-----"
+[1] "  Fitting initial HAL with lambda:       0.00546"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.9867, AUC: 0.9919"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.7446, AUC: 0.999"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29834.2908, AUC: 0.9923"
+[1] "-----starting round 117-----"
+[1] "  Fitting initial HAL with lambda:       0.005"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.0325, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.8512, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27770.7525, AUC: 0.9889"
+[1] "-----starting round 118-----"
+[1] "  Fitting initial HAL with lambda:       0.00435"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.52, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.7888, AUC: 0.9981"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38875.1285, AUC: 0.9907"
+[1] "-----starting round 119-----"
+[1] "  Fitting initial HAL with lambda:       0.00426"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24.2432, AUC: 0.9851"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.631, AUC: 0.9949"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22113.7091, AUC: 0.9857"
+[1] "-----starting round 120-----"
+[1] "  Fitting initial HAL with lambda:       0.00552"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.1521, AUC: 0.9901"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.8885, AUC: 0.9958"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39009.1657, AUC: 0.9897"
+[1] "-----starting round 121-----"
+[1] "  Fitting initial HAL with lambda:       0.00475"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.8946, AUC: 0.9894"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.4865, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26099.403, AUC: 0.9894"
+[1] "-----starting round 122-----"
+[1] "  Fitting initial HAL with lambda:       0.00508"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1043, AUC: 0.988"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.5563, AUC: 0.9961"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 34341.3953, AUC: 0.9881"
+[1] "-----starting round 123-----"
+[1] "  Fitting initial HAL with lambda:       0.0044"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7804, AUC: 0.9921"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.3856, AUC: 0.9996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 79136.041, AUC: 0.9938"
+[1] "-----starting round 124-----"
+[1] "  Fitting initial HAL with lambda:       0.00441"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.5886, AUC: 0.9895"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36185.118, AUC: 0.9904"
+[1] "-----starting round 125-----"
+[1] "  Fitting initial HAL with lambda:       0.00388"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.6409, AUC: 0.9903"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.4576, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38692.5876, AUC: 0.9908"
+[1] "-----starting round 126-----"
+[1] "  Fitting initial HAL with lambda:       0.00549"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7145, AUC: 0.9922"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9291, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41164.4744, AUC: 0.9922"
+[1] "-----starting round 127-----"
+[1] "  Fitting initial HAL with lambda:       0.00438"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.4998, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.1991, AUC: 0.9981"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30674.881, AUC: 0.9912"
+[1] "-----starting round 128-----"
+[1] "  Fitting initial HAL with lambda:       0.00262"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.2037, AUC: 0.9946"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.0818, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45567.1694, AUC: 0.9945"
+[1] "-----starting round 129-----"
+[1] "  Fitting initial HAL with lambda:       0.00141"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.3522, AUC: 0.9936"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.4459, AUC: 0.9996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44270.627, AUC: 0.9927"
+[1] "-----starting round 130-----"
+[1] "  Fitting initial HAL with lambda:       0.00256"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.0873, AUC: 0.9943"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.8161, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45414.7646, AUC: 0.9939"
+[1] "-----starting round 131-----"
+[1] "  Fitting initial HAL with lambda:       0.00475"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.4599, AUC: 0.9881"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.6035, AUC: 0.9947"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25975.1613, AUC: 0.9881"
+[1] "-----starting round 132-----"
+[1] "  Fitting initial HAL with lambda:       0.00553"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.1963, AUC: 0.9923"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.301, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 42403.284, AUC: 0.9923"
+[1] "-----starting round 133-----"
+[1] "  Fitting initial HAL with lambda:       0.0048"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.5118, AUC: 0.9854"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.8341, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25331.8108, AUC: 0.9862"
+[1] "-----starting round 134-----"
+[1] "  Fitting initial HAL with lambda:       0.00645"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.9752, AUC: 0.9846"
+[1] "  Fitting undersmoothed HAL with lambda: 6e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.7069, AUC: 0.9951"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22999.9137, AUC: 0.985"
+[1] "-----starting round 135-----"
+[1] "  Fitting initial HAL with lambda:       0.00398"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.4734, AUC: 0.9922"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.1987, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 60880.708, AUC: 0.9927"
+[1] "-----starting round 136-----"
+[1] "  Fitting initial HAL with lambda:       0.00389"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.3131, AUC: 0.9845"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.4671, AUC: 0.9928"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23934.0238, AUC: 0.9843"
+[1] "-----starting round 137-----"
+[1] "  Fitting initial HAL with lambda:       0.00368"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.1038, AUC: 0.9945"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.1861, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45480.01, AUC: 0.9942"
+[1] "-----starting round 138-----"
+[1] "  Fitting initial HAL with lambda:       0.00507"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.9883, AUC: 0.9904"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.7892, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38006.2333, AUC: 0.9907"
+[1] "-----starting round 139-----"
+[1] "  Fitting initial HAL with lambda:       0.00549"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1654, AUC: 0.988"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9618, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 47752.1937, AUC: 0.9888"
+[1] "-----starting round 140-----"
+[1] "  Fitting initial HAL with lambda:       0.00474"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.3544, AUC: 0.9878"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.2077, AUC: 0.9944"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24038.3687, AUC: 0.9878"
+[1] "-----starting round 141-----"
+[1] "  Fitting initial HAL with lambda:       0.00641"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.2934, AUC: 0.9929"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.061, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 58280.4737, AUC: 0.9932"
+[1] "-----starting round 142-----"
+[1] "  Fitting initial HAL with lambda:       0.00491"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.9929, AUC: 0.9906"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.8727, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32867.5683, AUC: 0.9908"
+[1] "-----starting round 143-----"
+[1] "  Fitting initial HAL with lambda:       0.00423"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.3884, AUC: 0.9907"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.1403, AUC: 0.9987"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37465.1953, AUC: 0.9907"
+[1] "-----starting round 144-----"
+[1] "  Fitting initial HAL with lambda:       0.00582"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.3647, AUC: 0.9856"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.8578, AUC: 0.993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24678.0591, AUC: 0.986"
+[1] "-----starting round 145-----"
+[1] "  Fitting initial HAL with lambda:       0.00562"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1059, AUC: 0.9881"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.0287, AUC: 0.9954"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24483.5124, AUC: 0.9885"
+[1] "-----starting round 146-----"
+[1] "  Fitting initial HAL with lambda:       0.00674"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.4146, AUC: 0.9892"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.0426, AUC: 0.9968"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 60288.367, AUC: 0.9906"
+[1] "-----starting round 147-----"
+[1] "  Fitting initial HAL with lambda:       0.00324"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.8855, AUC: 0.9918"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.9217, AUC: 0.9986"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41050.9518, AUC: 0.9917"
+[1] "-----starting round 148-----"
+[1] "  Fitting initial HAL with lambda:       0.00529"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.7976, AUC: 0.987"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.0665, AUC: 0.9949"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21653.7166, AUC: 0.9866"
+[1] "-----starting round 149-----"
+[1] "  Fitting initial HAL with lambda:       0.0044"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.1803, AUC: 0.9874"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.0003, AUC: 0.9942"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26975.5589, AUC: 0.9873"
+[1] "-----starting round 150-----"
+[1] "  Fitting initial HAL with lambda:       0.00508"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.8267, AUC: 0.9838"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.1076, AUC: 0.9949"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24490.4676, AUC: 0.9844"
+[1] "-----starting round 151-----"
+[1] "  Fitting initial HAL with lambda:       0.00458"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.2852, AUC: 0.9905"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9212, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30433.8229, AUC: 0.9892"
+[1] "-----starting round 152-----"
+[1] "  Fitting initial HAL with lambda:       0.00429"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.4179, AUC: 0.9902"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.2529, AUC: 0.9969"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30466.4298, AUC: 0.9903"
+[1] "-----starting round 153-----"
+[1] "  Fitting initial HAL with lambda:       0.00447"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.9139, AUC: 0.9895"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.851, AUC: 0.9973"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29049.9779, AUC: 0.9895"
+[1] "-----starting round 154-----"
+[1] "  Fitting initial HAL with lambda:       0.00183"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.1599, AUC: 0.9932"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 3.2606, AUC: 0.9999"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 47640.581, AUC: 0.9924"
+[1] "-----starting round 155-----"
+[1] "  Fitting initial HAL with lambda:       0.00295"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.6868, AUC: 0.9903"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.06, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 46024.4223, AUC: 0.9906"
+[1] "-----starting round 156-----"
+[1] "  Fitting initial HAL with lambda:       0.00188"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.2389, AUC: 0.9938"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.344, AUC: 0.9988"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 65056.2656, AUC: 0.9939"
+[1] "-----starting round 157-----"
+[1] "  Fitting initial HAL with lambda:       0.00388"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.3773, AUC: 0.9909"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.6209, AUC: 0.9971"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38354.9057, AUC: 0.9912"
+[1] "-----starting round 158-----"
+[1] "  Fitting initial HAL with lambda:       0.00525"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.8099, AUC: 0.9885"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.4054, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30557.4905, AUC: 0.9891"
+[1] "-----starting round 159-----"
+[1] "  Fitting initial HAL with lambda:       0.00519"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.3159, AUC: 0.99"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.163, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36453.9909, AUC: 0.9901"
+[1] "-----starting round 160-----"
+[1] "  Fitting initial HAL with lambda:       0.00573"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.8622, AUC: 0.9895"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.0048, AUC: 0.997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36376.065, AUC: 0.9901"
+[1] "-----starting round 161-----"
+[1] "  Fitting initial HAL with lambda:       0.00511"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25.0371, AUC: 0.9845"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.4175, AUC: 0.9921"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26409.6386, AUC: 0.9844"
+[1] "-----starting round 162-----"
+[1] "  Fitting initial HAL with lambda:       0.00387"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7174, AUC: 0.9916"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.3929, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 69247.8062, AUC: 0.9918"
+[1] "-----starting round 163-----"
+[1] "  Fitting initial HAL with lambda:       0.00392"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1863, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.698, AUC: 0.9957"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32137.4708, AUC: 0.9886"
+[1] "-----starting round 164-----"
+[1] "  Fitting initial HAL with lambda:       0.00372"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.6213, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.029, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41864.3585, AUC: 0.9911"
+[1] "-----starting round 165-----"
+[1] "  Fitting initial HAL with lambda:       0.00426"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.9503, AUC: 0.9893"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.7275, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 31210.1039, AUC: 0.9894"
+[1] "-----starting round 166-----"
+[1] "  Fitting initial HAL with lambda:       0.00334"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.5231, AUC: 0.994"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.0829, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49486.4077, AUC: 0.9937"
+[1] "-----starting round 167-----"
+[1] "  Fitting initial HAL with lambda:       0.00589"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.7048, AUC: 0.9917"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.1954, AUC: 0.9974"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40735.6968, AUC: 0.9919"
+[1] "-----starting round 168-----"
+[1] "  Fitting initial HAL with lambda:       0.00532"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.6577, AUC: 0.9915"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.6193, AUC: 0.9966"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40978.0773, AUC: 0.9922"
+[1] "-----starting round 169-----"
+[1] "  Fitting initial HAL with lambda:       0.00608"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.2586, AUC: 0.9835"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.3616, AUC: 0.9939"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 35874.3726, AUC: 0.9852"
+[1] "-----starting round 170-----"
+[1] "  Fitting initial HAL with lambda:       0.00498"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.2059, AUC: 0.9924"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.4171, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 58903.5348, AUC: 0.9932"
+[1] "-----starting round 171-----"
+[1] "  Fitting initial HAL with lambda:       0.00182"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.9458, AUC: 0.9934"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 3.5574, AUC: 0.9997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 53772.9346, AUC: 0.9933"
+[1] "-----starting round 172-----"
+[1] "  Fitting initial HAL with lambda:       0.00435"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.619, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.5808, AUC: 0.9988"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44828.0158, AUC: 0.9919"
+[1] "-----starting round 173-----"
+[1] "  Fitting initial HAL with lambda:       0.00636"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.7688, AUC: 0.9897"
+[1] "  Fitting undersmoothed HAL with lambda: 0.00024"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.6787, AUC: 0.9935"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30086.8444, AUC: 0.9896"
+[1] "-----starting round 174-----"
+[1] "  Fitting initial HAL with lambda:       0.00515"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.1563, AUC: 0.992"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.6713, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49311.9007, AUC: 0.9925"
+[1] "-----starting round 175-----"
+[1] "  Fitting initial HAL with lambda:       0.00356"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.3439, AUC: 0.9907"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.4893, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37307.014, AUC: 0.9911"
+[1] "-----starting round 176-----"
+[1] "  Fitting initial HAL with lambda:       0.0061"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.0978, AUC: 0.9915"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.9118, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41470.3056, AUC: 0.9921"
+[1] "-----starting round 177-----"
+[1] "  Fitting initial HAL with lambda:       0.00618"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.08, AUC: 0.9905"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.9808, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 52813.5501, AUC: 0.992"
+[1] "-----starting round 178-----"
+[1] "  Fitting initial HAL with lambda:       0.00324"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.9713, AUC: 0.991"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.8019, AUC: 0.999"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28008.8177, AUC: 0.9911"
+[1] "-----starting round 179-----"
+[1] "  Fitting initial HAL with lambda:       0.00271"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.4363, AUC: 0.9894"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.5174, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28816.946, AUC: 0.9892"
+[1] "-----starting round 180-----"
+[1] "  Fitting initial HAL with lambda:       0.00689"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.4865, AUC: 0.9894"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.038, AUC: 0.9959"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29642.7318, AUC: 0.9891"
+[1] "-----starting round 181-----"
+[1] "  Fitting initial HAL with lambda:       0.00508"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.1454, AUC: 0.9883"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.5187, AUC: 0.9952"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29592.7609, AUC: 0.9886"
+[1] "-----starting round 182-----"
+[1] "  Fitting initial HAL with lambda:       0.00399"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.5548, AUC: 0.9899"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.7674, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37484.033, AUC: 0.9903"
+[1] "-----starting round 183-----"
+[1] "  Fitting initial HAL with lambda:       0.0041"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.2545, AUC: 0.9949"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.3698, AUC: 0.999"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 50386.681, AUC: 0.9945"
+[1] "-----starting round 184-----"
+[1] "  Fitting initial HAL with lambda:       0.00489"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24.552, AUC: 0.9841"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.835, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25061.6923, AUC: 0.9845"
+[1] "-----starting round 185-----"
+[1] "  Fitting initial HAL with lambda:       0.00475"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.8542, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.9292, AUC: 0.9959"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25447.4566, AUC: 0.989"
+[1] "-----starting round 186-----"
+[1] "  Fitting initial HAL with lambda:       0.00532"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5202, AUC: 0.9927"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.6018, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 53108.0535, AUC: 0.9931"
+[1] "-----starting round 187-----"
+[1] "  Fitting initial HAL with lambda:       0.0053"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.1179, AUC: 0.991"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.3767, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 40919.6569, AUC: 0.9921"
+[1] "-----starting round 188-----"
+[1] "  Fitting initial HAL with lambda:       0.00407"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.6507, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.7179, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 50278.6878, AUC: 0.9915"
+[1] "-----starting round 189-----"
+[1] "  Fitting initial HAL with lambda:       0.00464"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.1968, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.9956, AUC: 0.9956"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 35715.033, AUC: 0.9889"
+[1] "-----starting round 190-----"
+[1] "  Fitting initial HAL with lambda:       0.00328"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.6951, AUC: 0.9931"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.0902, AUC: 0.9989"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 42014.7617, AUC: 0.993"
+[1] "-----starting round 191-----"
+[1] "  Fitting initial HAL with lambda:       0.00435"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.8407, AUC: 0.9875"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32362.2564, AUC: 0.9879"
+[1] "-----starting round 192-----"
+[1] "  Fitting initial HAL with lambda:       0.00337"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.8054, AUC: 0.9931"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.7222, AUC: 0.9981"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39126.7238, AUC: 0.9929"
+[1] "-----starting round 193-----"
+[1] "  Fitting initial HAL with lambda:       0.00447"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26.0312, AUC: 0.9829"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.7027, AUC: 0.9945"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26689.1691, AUC: 0.9834"
+[1] "-----starting round 194-----"
+[1] "  Fitting initial HAL with lambda:       0.0071"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24.9285, AUC: 0.982"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.6637, AUC: 0.9947"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28791.7143, AUC: 0.9832"
+[1] "-----starting round 195-----"
+[1] "  Fitting initial HAL with lambda:       0.00677"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.5271, AUC: 0.9913"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.9831, AUC: 0.9967"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30488.8179, AUC: 0.9913"
+[1] "-----starting round 196-----"
+[1] "  Fitting initial HAL with lambda:       0.00403"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.3788, AUC: 0.9917"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.2532, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32186.0373, AUC: 0.9919"
+[1] "-----starting round 197-----"
+[1] "  Fitting initial HAL with lambda:       0.00577"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27.9917, AUC: 0.9795"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.1468, AUC: 0.9887"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21102.9199, AUC: 0.9798"
+[1] "-----starting round 198-----"
+[1] "  Fitting initial HAL with lambda:       0.00463"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.3696, AUC: 0.9877"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.1363, AUC: 0.9957"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29548.9932, AUC: 0.9882"
+[1] "-----starting round 199-----"
+[1] "  Fitting initial HAL with lambda:       0.00585"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.6854, AUC: 0.9913"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.1154, AUC: 0.9968"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45944.6493, AUC: 0.9915"
+[1] "-----starting round 200-----"
+[1] "  Fitting initial HAL with lambda:       0.00573"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.1739, AUC: 0.9928"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.6005, AUC: 0.999"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39053.6219, AUC: 0.9929"
+[1] "-----starting round 201-----"
+[1] "  Fitting initial HAL with lambda:       0.00564"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.648, AUC: 0.9856"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.2534, AUC: 0.9943"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28748.731, AUC: 0.9869"
+[1] "-----starting round 202-----"
+[1] "  Fitting initial HAL with lambda:       0.0075"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.6779, AUC: 0.9868"
+[1] "  Fitting undersmoothed HAL with lambda: 0.00028"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.5477, AUC: 0.9937"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39034.2637, AUC: 0.988"
+[1] "-----starting round 203-----"
+[1] "  Fitting initial HAL with lambda:       0.00403"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.6272, AUC: 0.9916"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.506, AUC: 0.999"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38978.5823, AUC: 0.9922"
+[1] "-----starting round 204-----"
+[1] "  Fitting initial HAL with lambda:       0.0043"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.6638, AUC: 0.9879"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.0039, AUC: 0.9968"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36921.6731, AUC: 0.9888"
+[1] "-----starting round 205-----"
+[1] "  Fitting initial HAL with lambda:       0.00433"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.9242, AUC: 0.9855"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.0842, AUC: 0.997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 29219.104, AUC: 0.9855"
+[1] "-----starting round 206-----"
+[1] "  Fitting initial HAL with lambda:       0.00601"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.7476, AUC: 0.9904"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39901.676, AUC: 0.9905"
+[1] "-----starting round 207-----"
+[1] "  Fitting initial HAL with lambda:       0.00501"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.0266, AUC: 0.9886"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.7994, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33535.3139, AUC: 0.9892"
+[1] "-----starting round 208-----"
+[1] "  Fitting initial HAL with lambda:       0.00564"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.986, AUC: 0.9882"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.6991, AUC: 0.9961"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37323.5926, AUC: 0.9886"
+[1] "-----starting round 209-----"
+[1] "  Fitting initial HAL with lambda:       0.00393"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.213, AUC: 0.9898"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.6471, AUC: 0.9961"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38827.1163, AUC: 0.99"
+[1] "-----starting round 210-----"
+[1] "  Fitting initial HAL with lambda:       0.00471"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5199, AUC: 0.992"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.8836, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 61926.6649, AUC: 0.9921"
+[1] "-----starting round 211-----"
+[1] "  Fitting initial HAL with lambda:       0.00352"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.6981, AUC: 0.9887"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.5665, AUC: 0.9969"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30604.7661, AUC: 0.9895"
+[1] "-----starting round 212-----"
+[1] "  Fitting initial HAL with lambda:       0.00457"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.7616, AUC: 0.9879"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.8987, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 31202.0697, AUC: 0.988"
+[1] "-----starting round 213-----"
+[1] "  Fitting initial HAL with lambda:       0.00425"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.1526, AUC: 0.9867"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9185, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30262.9669, AUC: 0.9867"
+[1] "-----starting round 214-----"
+[1] "  Fitting initial HAL with lambda:       0.00581"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.4218, AUC: 0.9921"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.5469, AUC: 0.9975"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37200.6123, AUC: 0.9923"
+[1] "-----starting round 215-----"
+[1] "  Fitting initial HAL with lambda:       0.00309"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.6314, AUC: 0.9904"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.3262, AUC: 0.9969"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38154.2382, AUC: 0.9895"
+[1] "-----starting round 216-----"
+[1] "  Fitting initial HAL with lambda:       0.00442"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5692, AUC: 0.9911"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.8841, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 48494.8056, AUC: 0.9917"
+[1] "-----starting round 217-----"
+[1] "  Fitting initial HAL with lambda:       0.00486"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.6766, AUC: 0.9928"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.7154, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 50116.0812, AUC: 0.9926"
+[1] "-----starting round 218-----"
+[1] "  Fitting initial HAL with lambda:       0.00591"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.4939, AUC: 0.9915"
+[1] "  Fitting undersmoothed HAL with lambda: 0.00032"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.1455, AUC: 0.9946"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 43077.2282, AUC: 0.9919"
+[1] "-----starting round 219-----"
+[1] "  Fitting initial HAL with lambda:       0.00523"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.394, AUC: 0.9902"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9277, AUC: 0.9975"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 47529.1248, AUC: 0.991"
+[1] "-----starting round 220-----"
+[1] "  Fitting initial HAL with lambda:       0.00511"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.9989, AUC: 0.9944"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.9179, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 59977.193, AUC: 0.9945"
+[1] "-----starting round 221-----"
+[1] "  Fitting initial HAL with lambda:       0.00541"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24.1113, AUC: 0.983"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.2996, AUC: 0.9958"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22624.1338, AUC: 0.9836"
+[1] "-----starting round 222-----"
+[1] "  Fitting initial HAL with lambda:       0.00328"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.2986, AUC: 0.9951"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.7931, AUC: 0.9989"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 50620.0835, AUC: 0.995"
+[1] "-----starting round 223-----"
+[1] "  Fitting initial HAL with lambda:       0.00302"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.6596, AUC: 0.9928"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.5968, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 43094.394, AUC: 0.9921"
+[1] "-----starting round 224-----"
+[1] "  Fitting initial HAL with lambda:       0.00581"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.7481, AUC: 0.9907"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.0645, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32501.1668, AUC: 0.9914"
+[1] "-----starting round 225-----"
+[1] "  Fitting initial HAL with lambda:       0.00483"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.278, AUC: 0.9926"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.8064, AUC: 0.9981"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49988.4651, AUC: 0.9923"
+[1] "-----starting round 226-----"
+[1] "  Fitting initial HAL with lambda:       0.00326"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.8574, AUC: 0.9911"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.6181, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 43350.2383, AUC: 0.9914"
+[1] "-----starting round 227-----"
+[1] "  Fitting initial HAL with lambda:       0.00331"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.9796, AUC: 0.9918"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.6868, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 35351.97, AUC: 0.9915"
+[1] "-----starting round 228-----"
+[1] "  Fitting initial HAL with lambda:       0.00339"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.173, AUC: 0.9947"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.6478, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 53231.7981, AUC: 0.9946"
+[1] "-----starting round 229-----"
+[1] "  Fitting initial HAL with lambda:       0.00612"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24.802, AUC: 0.9836"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5052, AUC: 0.9934"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24978.8114, AUC: 0.9841"
+[1] "-----starting round 230-----"
+[1] "  Fitting initial HAL with lambda:       0.00473"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5744, AUC: 0.9927"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 52611.9269, AUC: 0.9931"
+[1] "-----starting round 231-----"
+[1] "  Fitting initial HAL with lambda:       0.00426"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.5671, AUC: 0.99"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.0867, AUC: 0.9963"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44746.6391, AUC: 0.9897"
+[1] "-----starting round 232-----"
+[1] "  Fitting initial HAL with lambda:       0.00427"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.5048, AUC: 0.9885"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.0455, AUC: 0.9972"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24885.5912, AUC: 0.9888"
+[1] "-----starting round 233-----"
+[1] "  Fitting initial HAL with lambda:       0.00568"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.9992, AUC: 0.9876"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.7073, AUC: 0.9959"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32445.4468, AUC: 0.9884"
+[1] "-----starting round 234-----"
+[1] "  Fitting initial HAL with lambda:       0.00335"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.5164, AUC: 0.9907"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.4752, AUC: 0.9956"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41712.9009, AUC: 0.9911"
+[1] "-----starting round 235-----"
+[1] "  Fitting initial HAL with lambda:       0.00755"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.2608, AUC: 0.9887"
+[1] "  Fitting undersmoothed HAL with lambda: 0.00029"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.3429, AUC: 0.9925"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26792.0359, AUC: 0.9884"
+[1] "-----starting round 236-----"
+[1] "  Fitting initial HAL with lambda:       0.00414"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.4489, AUC: 0.9883"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.7101, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44695.1264, AUC: 0.9892"
+[1] "-----starting round 237-----"
+[1] "  Fitting initial HAL with lambda:       0.00368"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.7539, AUC: 0.9897"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.2561, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 47324.3158, AUC: 0.991"
+[1] "-----starting round 238-----"
+[1] "  Fitting initial HAL with lambda:       0.00442"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.5709, AUC: 0.9867"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.5192, AUC: 0.9935"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39812.7108, AUC: 0.9869"
+[1] "-----starting round 239-----"
+[1] "  Fitting initial HAL with lambda:       0.00233"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5679, AUC: 0.9927"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.5022, AUC: 0.9987"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32098.7996, AUC: 0.9918"
+[1] "-----starting round 240-----"
+[1] "  Fitting initial HAL with lambda:       0.00431"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.7215, AUC: 0.9908"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.5132, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41482.4368, AUC: 0.9912"
+[1] "-----starting round 241-----"
+[1] "  Fitting initial HAL with lambda:       0.00524"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.0974, AUC: 0.985"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.6463, AUC: 0.9932"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33916.6438, AUC: 0.9864"
+[1] "-----starting round 242-----"
+[1] "  Fitting initial HAL with lambda:       0.00458"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.616, AUC: 0.9866"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26946.4428, AUC: 0.9864"
+[1] "-----starting round 243-----"
+[1] "  Fitting initial HAL with lambda:       0.00232"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.4046, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.2716, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32465.0782, AUC: 0.9894"
+[1] "-----starting round 244-----"
+[1] "  Fitting initial HAL with lambda:       0.00423"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.0233, AUC: 0.9918"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.1625, AUC: 0.9969"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 54522.61, AUC: 0.992"
+[1] "-----starting round 245-----"
+[1] "  Fitting initial HAL with lambda:       0.00388"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21.9981, AUC: 0.9874"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.4071, AUC: 0.9956"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30178.6345, AUC: 0.9876"
+[1] "-----starting round 246-----"
+[1] "  Fitting initial HAL with lambda:       0.00428"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.3975, AUC: 0.9941"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.1161, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 51957.6567, AUC: 0.9941"
+[1] "-----starting round 247-----"
+[1] "  Fitting initial HAL with lambda:       0.00379"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.9968, AUC: 0.9896"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.3384, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26145.8155, AUC: 0.9894"
+[1] "-----starting round 248-----"
+[1] "  Fitting initial HAL with lambda:       0.00426"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.32, AUC: 0.9907"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.6016, AUC: 0.9977"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 31882.657, AUC: 0.9899"
+[1] "-----starting round 249-----"
+[1] "  Fitting initial HAL with lambda:       0.0063"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.3755, AUC: 0.9897"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.4287, AUC: 0.9967"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 49487.5071, AUC: 0.9904"
+[1] "-----starting round 250-----"
+[1] "  Fitting initial HAL with lambda:       0.00212"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.1964, AUC: 0.9946"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.8657, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 51782.5729, AUC: 0.9946"
+[1] "-----starting round 251-----"
+[1] "  Fitting initial HAL with lambda:       0.00468"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.0621, AUC: 0.9896"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.6958, AUC: 0.9965"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 58479.6749, AUC: 0.9901"
+[1] "-----starting round 252-----"
+[1] "  Fitting initial HAL with lambda:       0.00625"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.213, AUC: 0.9901"
+[1] "  Fitting undersmoothed HAL with lambda: 6e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.0805, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32486.2624, AUC: 0.9898"
+[1] "-----starting round 253-----"
+[1] "  Fitting initial HAL with lambda:       0.00409"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.5543, AUC: 0.9946"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.1254, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 81751.7849, AUC: 0.9945"
+[1] "-----starting round 254-----"
+[1] "  Fitting initial HAL with lambda:       0.00369"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.6637, AUC: 0.9942"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.0177, AUC: 0.9995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 43370.5155, AUC: 0.9943"
+[1] "-----starting round 255-----"
+[1] "  Fitting initial HAL with lambda:       0.00276"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.7408, AUC: 0.9857"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.343, AUC: 0.9946"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26047.7237, AUC: 0.9838"
+[1] "-----starting round 256-----"
+[1] "  Fitting initial HAL with lambda:       0.00578"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.5853, AUC: 0.9899"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.096, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30878.4727, AUC: 0.99"
+[1] "-----starting round 257-----"
+[1] "  Fitting initial HAL with lambda:       0.00302"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.8695, AUC: 0.9916"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.1828, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 48977.5998, AUC: 0.9919"
+[1] "-----starting round 258-----"
+[1] "  Fitting initial HAL with lambda:       0.00441"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.3252, AUC: 0.9927"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.2219, AUC: 0.9994"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44130.2092, AUC: 0.9928"
+[1] "-----starting round 259-----"
+[1] "  Fitting initial HAL with lambda:       0.0025"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.9179, AUC: 0.9895"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.4663, AUC: 0.9975"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26617.2078, AUC: 0.9895"
+[1] "-----starting round 260-----"
+[1] "  Fitting initial HAL with lambda:       0.00472"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.7219, AUC: 0.9922"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.4839, AUC: 0.9986"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 48437.0633, AUC: 0.9921"
+[1] "-----starting round 261-----"
+[1] "  Fitting initial HAL with lambda:       0.00248"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.1578, AUC: 0.9943"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.337, AUC: 0.9994"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 44630.6435, AUC: 0.9944"
+[1] "-----starting round 262-----"
+[1] "  Fitting initial HAL with lambda:       0.00512"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.4713, AUC: 0.9884"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.6233, AUC: 0.9971"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41075.4847, AUC: 0.9906"
+[1] "-----starting round 263-----"
+[1] "  Fitting initial HAL with lambda:       0.00523"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.2428, AUC: 0.99"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.3143, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38180.5467, AUC: 0.9901"
+[1] "-----starting round 264-----"
+[1] "  Fitting initial HAL with lambda:       0.00405"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.9789, AUC: 0.9968"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 130318.6768, AUC: 0.9965"
+[1] "-----starting round 265-----"
+[1] "  Fitting initial HAL with lambda:       0.00502"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.8878, AUC: 0.9838"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.173, AUC: 0.9951"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22770.7287, AUC: 0.9836"
+[1] "-----starting round 266-----"
+[1] "  Fitting initial HAL with lambda:       0.00445"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.8516, AUC: 0.9913"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.4619, AUC: 0.9983"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 71796.1637, AUC: 0.9918"
+[1] "-----starting round 267-----"
+[1] "  Fitting initial HAL with lambda:       0.00435"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.8783, AUC: 0.9914"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.8983, AUC: 0.998"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 36647.9441, AUC: 0.9908"
+[1] "-----starting round 268-----"
+[1] "  Fitting initial HAL with lambda:       0.00459"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.0124, AUC: 0.9869"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.3258, AUC: 0.995"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33648.59, AUC: 0.9869"
+[1] "-----starting round 269-----"
+[1] "  Fitting initial HAL with lambda:       0.00345"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.5351, AUC: 0.995"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.0676, AUC: 0.9996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 52295.3571, AUC: 0.9952"
+[1] "-----starting round 270-----"
+[1] "  Fitting initial HAL with lambda:       0.00462"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 25.1986, AUC: 0.9836"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.4742, AUC: 0.9918"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24993.6779, AUC: 0.984"
+[1] "-----starting round 271-----"
+[1] "  Fitting initial HAL with lambda:       0.00394"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.1799, AUC: 0.9869"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.2095, AUC: 0.9932"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22611.788, AUC: 0.9857"
+[1] "-----starting round 272-----"
+[1] "  Fitting initial HAL with lambda:       0.00636"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.0542, AUC: 0.9917"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9564, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 30855.3926, AUC: 0.992"
+[1] "-----starting round 273-----"
+[1] "  Fitting initial HAL with lambda:       0.00513"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.3005, AUC: 0.9849"
+[1] "  Fitting undersmoothed HAL with lambda: 7e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.0381, AUC: 0.9954"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21346.1181, AUC: 0.9842"
+[1] "-----starting round 274-----"
+[1] "  Fitting initial HAL with lambda:       0.00715"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.1494, AUC: 0.9893"
+[1] "  Fitting undersmoothed HAL with lambda: 0.00027"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 14.2904, AUC: 0.9943"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38928.0514, AUC: 0.991"
+[1] "-----starting round 275-----"
+[1] "  Fitting initial HAL with lambda:       0.0033"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.8756, AUC: 0.9901"
+[1] "  Fitting undersmoothed HAL with lambda: 1e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 6.0307, AUC: 0.9993"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 48407.1918, AUC: 0.9895"
+[1] "-----starting round 276-----"
+[1] "  Fitting initial HAL with lambda:       0.00428"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.7946, AUC: 0.992"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.1844, AUC: 0.9984"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45295.3498, AUC: 0.9918"
+[1] "-----starting round 277-----"
+[1] "  Fitting initial HAL with lambda:       0.00438"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.185, AUC: 0.9916"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.3774, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 39891.1507, AUC: 0.9918"
+[1] "-----starting round 278-----"
+[1] "  Fitting initial HAL with lambda:       0.00533"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.9752, AUC: 0.9916"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.054, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37836.0797, AUC: 0.9919"
+[1] "-----starting round 279-----"
+[1] "  Fitting initial HAL with lambda:       0.00568"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.5495, AUC: 0.9862"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.4218, AUC: 0.9926"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 24453.1268, AUC: 0.9865"
+[1] "-----starting round 280-----"
+[1] "  Fitting initial HAL with lambda:       0.00624"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.5846, AUC: 0.9856"
+[1] "  Fitting undersmoothed HAL with lambda: 6e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.0217, AUC: 0.9934"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21067.6658, AUC: 0.9857"
+[1] "-----starting round 281-----"
+[1] "  Fitting initial HAL with lambda:       0.00161"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.5747, AUC: 0.9959"
+[1] "  Fitting undersmoothed HAL with lambda: 1e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 5.7513, AUC: 0.9992"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 95767.7558, AUC: 0.9955"
+[1] "-----starting round 282-----"
+[1] "  Fitting initial HAL with lambda:       0.00623"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.7053, AUC: 0.9919"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.0948, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 35579.0484, AUC: 0.9921"
+[1] "-----starting round 283-----"
+[1] "  Fitting initial HAL with lambda:       0.00442"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.5456, AUC: 0.992"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 8.0543, AUC: 0.9985"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 41356.3271, AUC: 0.992"
+[1] "-----starting round 284-----"
+[1] "  Fitting initial HAL with lambda:       0.00509"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.4257, AUC: 0.9848"
+[1] "  Fitting undersmoothed HAL with lambda: 5e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.2661, AUC: 0.9964"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 26627.4877, AUC: 0.9854"
+[1] "-----starting round 285-----"
+[1] "  Fitting initial HAL with lambda:       0.00458"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 15.9011, AUC: 0.9932"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.1224, AUC: 0.9978"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 54649.2237, AUC: 0.9932"
+[1] "-----starting round 286-----"
+[1] "  Fitting initial HAL with lambda:       0.00438"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.5223, AUC: 0.9868"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.3885, AUC: 0.9975"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 21894.7595, AUC: 0.9869"
+[1] "-----starting round 287-----"
+[1] "  Fitting initial HAL with lambda:       0.0047"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.7819, AUC: 0.9913"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.1838, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 51565.3535, AUC: 0.9908"
+[1] "-----starting round 288-----"
+[1] "  Fitting initial HAL with lambda:       0.00351"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.5001, AUC: 0.9899"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.9668, AUC: 0.9963"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 32780.9418, AUC: 0.9893"
+[1] "-----starting round 289-----"
+[1] "  Fitting initial HAL with lambda:       0.00614"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 16.9994, AUC: 0.9912"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 10.3658, AUC: 0.997"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 45782.5274, AUC: 0.9918"
+[1] "-----starting round 290-----"
+[1] "  Fitting initial HAL with lambda:       0.00667"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 22.5421, AUC: 0.9867"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.4365, AUC: 0.996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 27394.5477, AUC: 0.9872"
+[1] "-----starting round 291-----"
+[1] "  Fitting initial HAL with lambda:       0.00144"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.6051, AUC: 0.9958"
+[1] "  Fitting undersmoothed HAL with lambda: 1e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 4.2788, AUC: 0.9996"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 94963.8137, AUC: 0.9955"
+[1] "-----starting round 292-----"
+[1] "  Fitting initial HAL with lambda:       0.00469"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.3684, AUC: 0.9853"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.9493, AUC: 0.9952"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19177.6364, AUC: 0.9853"
+[1] "-----starting round 293-----"
+[1] "  Fitting initial HAL with lambda:       0.00177"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 13.4779, AUC: 0.9954"
+[1] "  Fitting undersmoothed HAL with lambda: 2e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.1488, AUC: 0.9988"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 57537.5125, AUC: 0.995"
+[1] "-----starting round 294-----"
+[1] "  Fitting initial HAL with lambda:       0.00574"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.0296, AUC: 0.9888"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.4366, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 38327.9493, AUC: 0.99"
+[1] "-----starting round 295-----"
+[1] "  Fitting initial HAL with lambda:       0.00276"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 11.6605, AUC: 0.9956"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 125, AUC: 0.5"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 55296.0302, AUC: 0.9955"
+[1] "-----starting round 296-----"
+[1] "  Fitting initial HAL with lambda:       0.00349"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 19.9964, AUC: 0.9897"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.9427, AUC: 0.9976"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 33542.6977, AUC: 0.9892"
+[1] "-----starting round 297-----"
+[1] "  Fitting initial HAL with lambda:       0.00286"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 17.8356, AUC: 0.991"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 7.5689, AUC: 0.9987"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 63894.4747, AUC: 0.9911"
+[1] "-----starting round 298-----"
+[1] "  Fitting initial HAL with lambda:       0.00481"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 20.0807, AUC: 0.9889"
+[1] "  Fitting undersmoothed HAL with lambda: 4e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 12.395, AUC: 0.9963"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 28070.2713, AUC: 0.9893"
+[1] "-----starting round 299-----"
+[1] "  Fitting initial HAL with lambda:       0.00513"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 18.9968, AUC: 0.9901"
+[1] "  Fitting undersmoothed HAL with lambda: 3e-05"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 9.0913, AUC: 0.9979"
+[1] "  Fitting glm:       "
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 37487.4714, AUC: 0.9903"
+[1] "-----starting round 300-----"
+[1] "  Fitting initial HAL with lambda:       0.00299"
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+[1] "    MSE: 23.5746, AUC: 0.9832"
+[1] "  Fitting undersmoothed HAL with lambda: NA"
+Error in if (any(lambda < 0)) stop("lambdas should be non-negative") : 
+  missing value where TRUE/FALSE needed
+Calls: run_simu ... undersmooth_hal_fit -> fit_hal -> do.call -> <Anonymous>
+In addition: There were 50 or more warnings (use warnings() to see the first 50)
+Execution halted
