@@ -90,7 +90,7 @@ generate_data <- function(n, a=NA, z=NA){
     Z <- rep(z, n)
   }
   
-  Y <- as.numeric(U_Y < plogis(W + 2*A + Z - 0.5 * W * A))
+  Y <- as.numeric(U_Y < plogis(W + 5*A + Z - 0.5 * W * A - 8))
   
   # data frame
   O <- data.frame(W, A, Z, Y)
@@ -156,7 +156,7 @@ for (i in 1:length(a_vec)) {
 ```{r simu_n500}
 set.seed(123)
 n=500
-B=10
+B=1000
 results_500 = run_simu(generate_data = generate_data, n=n, B=B)
 save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
 ```
