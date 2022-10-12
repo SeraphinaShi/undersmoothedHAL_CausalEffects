@@ -91,7 +91,7 @@ generate_data1 <- function(n, a=NA, z=NA){
     Z <- rep(z, n)
   }
   
-  Y <- as.numeric(U_Z < plogis(0.05 * (-W + 5*A - 3 * W * A - Z)))
+  Y <- as.numeric(U_Y < plogis(0.05 * (-W + 5*A - 3 * W * A - Z)))
   
 
   # data frame
