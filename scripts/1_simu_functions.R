@@ -11,16 +11,20 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
                                      family = y_type)
   
   #if(is.na(hal_undersmooth$lambda_under)){browser()}
-  if(is.na(hal_undersmooth$lambda_under)){
+  while(is.na(hal_undersmooth$lambda_under)){
+    print(paste0("  lambda_init: ", round(hal_undersmooth$lambda_init,4),
+                 " lambda_under: ", hal_undersmooth$lambda_under))
+    print("  Since the learned undersmoothed lambda is NA, refitting lambdas.")
+    
     hal_init <- undersmooth_init(X, Y, family = y_type)
     hal_undersmooth <- undersmooth_hal(X, Y,
                                        fit_init = hal_init$fit_init,
                                        basis_mat = hal_init$basis_mat,
                                        family = y_type)
-    print("  (Since the learned undersmoothed lambda is NA, refitting lambdas.)")
   }
+
   
-  print(paste0("  Fitting initial HAL with lambda:       ", round(hal_undersmooth$lambda_init,5)))
+  print(paste0("  Fitting initial HAL with lambda:       ", round(hal_undersmooth$lambda_init,4)))
   dgd_hal_fit <- fit_hal(X = X,
                          Y = Y,
                          family = y_type,
