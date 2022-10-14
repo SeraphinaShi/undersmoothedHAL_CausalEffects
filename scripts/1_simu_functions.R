@@ -24,7 +24,7 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
   }
 
   
-  print(paste0("  Fitting initial HAL with lambda:       ", round(hal_undersmooth$lambda_init,4)))
+  print(paste0("=> Fitting initial HAL with lambda:       ", round(hal_undersmooth$lambda_init,4)))
   dgd_hal_fit <- fit_hal(X = X,
                          Y = Y,
                          family = y_type,
@@ -50,7 +50,7 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
   auc <- auc(Y, y_preds)
   print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
   
-  print(paste0("  Fitting undersmoothed HAL with lambda: ", round(hal_undersmooth$lambda_under,5)))
+  print(paste0("=> Fitting undersmoothed HAL with lambda: ", round(hal_undersmooth$lambda_under,5)))
   dgd_under_hal_fit <- fit_hal(X = X,
                                Y = Y,
                                family = y_type,
@@ -244,18 +244,18 @@ run_simu <- function(generate_data, n, B){
 
   
   for (b in 1:B) {
-    print(paste0("-----starting round ", b, "-----"))
+    print(paste0("---------------------starting round ", b, "---------------------"))
     
     Obs1_n <- generate_data(n)
     ate_hal_a_z <- ate_hal_avec0_z01(a_vec, obs_df=Obs1_n)
-    ate_glm_a_z <- ate_glm_avec0_z01(a_vec, obs_df=Obs1_n)
+    # ate_glm_a_z <- ate_glm_avec0_z01(a_vec, obs_df=Obs1_n)
     
     ate_hal_a_1_relts_ss_under_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_1_relts_ss_under_hal
     ate_hal_a_0_relts_ss_under_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_0_relts_ss_under_hal
     ate_hal_a_1_relts_ss_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_1_relts_ss_hal
     ate_hal_a_0_relts_ss_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_0_relts_ss_hal
-    ate_glm_a_1[[b]] = ate_glm_a_z$ate_glm_a_1
-    ate_glm_a_0[[b]] = ate_glm_a_z$ate_glm_a_0
+    # ate_glm_a_1[[b]] = ate_glm_a_z$ate_glm_a_1
+    # ate_glm_a_0[[b]] = ate_glm_a_z$ate_glm_a_0
   }
   
   ate_hal_a_1_relts_ss_under_hal_simu <- do.call("rbind", ate_hal_a_1_relts_ss_under_hal_simu)
@@ -274,26 +274,26 @@ run_simu <- function(generate_data, n, B){
   ate_hal_a_0_relts_ss_hal_simu_means <- colMeans(ate_hal_a_0_relts_ss_hal_simu)
   ate_hal_a_0_relts_ss_hal_simu_sd <- apply(ate_hal_a_0_relts_ss_hal_simu, 2, sd)
   
-  ate_glm_a_1 <- do.call("rbind", ate_glm_a_1)
-  ate_glm_a_1_relts_means <- colMeans(ate_glm_a_1)
-  ate_glm_a_1_relts_sd <- apply(ate_glm_a_1, 2, sd)
-  
-  ate_glm_a_0 <- do.call("rbind", ate_glm_a_0)
-  ate_glm_a_0_relts_means <- colMeans(ate_glm_a_0)
-  ate_glm_a_0_relts_sd <- apply(ate_glm_a_0, 2, sd)
+  # ate_glm_a_1 <- do.call("rbind", ate_glm_a_1)
+  # ate_glm_a_1_relts_means <- colMeans(ate_glm_a_1)
+  # ate_glm_a_1_relts_sd <- apply(ate_glm_a_1, 2, sd)
+  # 
+  # ate_glm_a_0 <- do.call("rbind", ate_glm_a_0)
+  # ate_glm_a_0_relts_means <- colMeans(ate_glm_a_0)
+  # ate_glm_a_0_relts_sd <- apply(ate_glm_a_0, 2, sd)
   
   results_z1 <- data.frame(targ_par = paste0("ATE(",a_vec,",0)"), 
                            psi0 = psi0_a_1,
-                           ss_glm_mean = ate_glm_a_1_relts_means,
-                           ss_glm_sd = ate_glm_a_1_relts_sd,
+                           # ss_glm_mean = ate_glm_a_1_relts_means,
+                           # ss_glm_sd = ate_glm_a_1_relts_sd,
                            ss_under_hal_mean = ate_hal_a_1_relts_ss_under_hal_simu_means,
                            ss_under_hal_sd = ate_hal_a_1_relts_ss_under_hal_simu_sd,
                            ss_hal_mean = ate_hal_a_1_relts_ss_hal_simu_means,
                            ss_hal_sd = ate_hal_a_1_relts_ss_hal_simu_sd)
   results_z0 <- data.frame(targ_par = paste0("ATE(",a_vec,",0)"), 
                            psi0 = psi0_a_0,
-                           ss_glm_mean = ate_glm_a_0_relts_means,
-                           ss_glm_sd = ate_glm_a_0_relts_sd,
+                           # ss_glm_mean = ate_glm_a_0_relts_means,
+                           # ss_glm_sd = ate_glm_a_0_relts_sd,
                            ss_under_hal_mean = ate_hal_a_0_relts_ss_under_hal_simu_means,
                            ss_under_hal_sd = ate_hal_a_0_relts_ss_under_hal_simu_sd,
                            ss_hal_mean = ate_hal_a_0_relts_ss_hal_simu_means,
