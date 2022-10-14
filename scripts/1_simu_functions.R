@@ -1,4 +1,6 @@
 
+options(scipen = n)
+
 ########################
 # fit undersmoothed HAL
 ########################
@@ -24,7 +26,7 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
   }
 
   
-  print(paste0("=> Fitting initial HAL with lambda:       ", round(hal_undersmooth$lambda_init,4)))
+  print(paste0("=> Fitting initial HAL with lambda:       ", round(hal_undersmooth$lambda_init,5)))
   dgd_hal_fit <- fit_hal(X = X,
                          Y = Y,
                          family = y_type,
@@ -79,7 +81,14 @@ undersmooth_hal_fit <- function(n, X, Y, y_type){
   hal_fit <- list(dgd_hal_fit, dgd_under_hal_fit)
   names(hal_fit) <- c("dgd_hal_fit", "dgd_under_hal_fit")
   
-  return(hal_fit)
+  lambdas <- list(hal_undersmooth$lambda_under,
+                  hal_undersmooth$lambda_init)
+  names(lambdas) <- c("lambda_under","lambda_init")
+  
+  output <- list(hal_fit, lambdas)
+  names(output) <- c("hal_fit", "lambdas")
+  
+  return(output)
 }
 
 ########################
@@ -113,10 +122,10 @@ cal_ate_hal <- function(dgd_hal_fit, dgd_under_hal_fit,
 # z =0 or 1
 ate_hal_avec0_z01 <- function(a_vec, obs_df){
   
-  ate_hal_a_0_relts_ss_under_hal <- rep(NA, length(a_vec))
-  ate_hal_a_1_relts_ss_under_hal <- rep(NA, length(a_vec))
-  ate_hal_a_0_relts_ss_hal <- rep(NA, length(a_vec))
-  ate_hal_a_1_relts_ss_hal <- rep(NA, length(a_vec))
+  ate_a_0_ss_under_hal <- rep(NA, length(a_vec))
+  ate_a_1_ss_under_hal <- rep(NA, length(a_vec))
+  ate_a_0_ss_hal <- rep(NA, length(a_vec))
+  ate_a_1_ss_hal <- rep(NA, length(a_vec))
   
   y_name = "Y"
   x_names = c("W", "A", "Z")
@@ -126,7 +135,8 @@ ate_hal_avec0_z01 <- function(a_vec, obs_df){
     select(all_of(x_names)) %>% 
     mutate_if(sapply(., is.factor), as.numeric)
   
-  hal_fit <- undersmooth_hal_fit(n, X, Y, y_type = "binomial")
+  undersmooth_hal_fit_rlts <-  undersmooth_hal_fit(n, X, Y, y_type = "binomial")
+  hal_fit <- undersmooth_hal_fit_rlts$hal_fit
   dgd_hal_fit <- hal_fit$dgd_hal_fit
   dgd_under_hal_fit <- hal_fit$dgd_under_hal_fit
 
@@ -147,21 +157,25 @@ ate_hal_avec0_z01 <- function(a_vec, obs_df){
       a1 = a, a0 = 0, z = 1
     )  
     
-    ate_hal_a_1_relts_ss_under_hal[i] = ate_hal_a_1_relts$psi_ss_under
-    ate_hal_a_0_relts_ss_under_hal[i] = ate_hal_a_0_relts$psi_ss_under
+    ate_a_1_ss_under_hal[i] = ate_hal_a_1_relts$psi_ss_under
+    ate_a_0_ss_under_hal[i] = ate_hal_a_0_relts$psi_ss_under
     
-    ate_hal_a_1_relts_ss_hal[i] = ate_hal_a_1_relts$psi_ss_init
-    ate_hal_a_0_relts_ss_hal[i] = ate_hal_a_0_relts$psi_ss_init  
+    ate_a_1_ss_hal[i] = ate_hal_a_1_relts$psi_ss_init
+    ate_a_0_ss_hal[i] = ate_hal_a_0_relts$psi_ss_init  
   }
   
-  ate_hal_results <- list(ate_hal_a_1_relts_ss_under_hal,
-                          ate_hal_a_1_relts_ss_hal,
-                          ate_hal_a_0_relts_ss_under_hal,
-                          ate_hal_a_0_relts_ss_hal)
-  names(ate_hal_results) <- c("ate_hal_a_1_relts_ss_under_hal",
-                              "ate_hal_a_1_relts_ss_hal",
-                              "ate_hal_a_0_relts_ss_under_hal",
-                              "ate_hal_a_0_relts_ss_hal")
+  ate_hal_results <- list(ate_a_1_ss_under_hal,
+                          ate_a_1_ss_hal,
+                          ate_a_0_ss_under_hal,
+                          ate_a_0_ss_hal,
+                          undersmooth_hal_fit_rlts$lambdas$lambda_under,
+                          undersmooth_hal_fit_rlts$lambdas$lambda_init)
+  names(ate_hal_results) <- c("ate_a_1_ss_under_hal",
+                              "ate_a_1_ss_hal",
+                              "ate_a_0_ss_under_hal",
+                              "ate_a_0_ss_hal",
+                              "lambda_under",
+                              "lambda_init")
   return(ate_hal_results)
 }
 
@@ -221,6 +235,15 @@ ate_glm_avec0_z01 <- function(a_vec, obs_df){
   return(ate_glm_results)
 }
 
+ci_cov_rate <- function(vals, sd, true_val){
+  cov_rate <- rep(NA, length(a_vec))
+  for (i in 1:length(a_vec)) {
+    ci_l <- vals[,i] - 1.96 * sd[i]
+    ci_u <- vals[,i] + 1.96 * sd[i]
+    cov_rate[i] <- mean(ci_l <= true_val[i] & true_val[i] <= ci_u)
+  }
+  return(cov_rate)
+}
 
 ##############################################################
 # This function runs the simulation for B rounds.
@@ -234,13 +257,15 @@ ate_glm_avec0_z01 <- function(a_vec, obs_df){
 ##############################################################
 run_simu <- function(generate_data, n, B){
   
-  ate_hal_a_1_relts_ss_under_hal_simu <- list()
-  ate_hal_a_1_relts_ss_hal_simu <- list()
-  ate_hal_a_0_relts_ss_under_hal_simu <- list()
-  ate_hal_a_0_relts_ss_hal_simu <- list()
+  ate_a_1_ss_under_hal_simu <- list()
+  ate_a_1_ss_hal_simu <- list()
+  ate_a_0_ss_under_hal_simu <- list()
+  ate_a_0_ss_hal_simu <- list()
   
-  ate_glm_a_1 <- list()
-  ate_glm_a_0 <- list()
+  lambda_under <- rep(NA, B)
+  lambda_init <- rep(NA, B)
+  # ate_glm_a_1 <- list()
+  # ate_glm_a_0 <- list()
 
   
   for (b in 1:B) {
@@ -250,29 +275,44 @@ run_simu <- function(generate_data, n, B){
     ate_hal_a_z <- ate_hal_avec0_z01(a_vec, obs_df=Obs1_n)
     # ate_glm_a_z <- ate_glm_avec0_z01(a_vec, obs_df=Obs1_n)
     
-    ate_hal_a_1_relts_ss_under_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_1_relts_ss_under_hal
-    ate_hal_a_0_relts_ss_under_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_0_relts_ss_under_hal
-    ate_hal_a_1_relts_ss_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_1_relts_ss_hal
-    ate_hal_a_0_relts_ss_hal_simu[[b]] = ate_hal_a_z$ate_hal_a_0_relts_ss_hal
+    ate_a_1_ss_under_hal_simu[[b]] = ate_hal_a_z$ate_a_1_ss_under_hal
+    ate_a_0_ss_under_hal_simu[[b]] = ate_hal_a_z$ate_a_0_ss_under_hal
+    ate_a_1_ss_hal_simu[[b]] = ate_hal_a_z$ate_a_1_ss_hal
+    ate_a_0_ss_hal_simu[[b]] = ate_hal_a_z$ate_a_0_ss_hal
     # ate_glm_a_1[[b]] = ate_glm_a_z$ate_glm_a_1
     # ate_glm_a_0[[b]] = ate_glm_a_z$ate_glm_a_0
+    
+    lambda_under[b] = ate_hal_a_z$lambda_under
+    lambda_init[b] = ate_hal_a_z$lambda_init
   }
   
-  ate_hal_a_1_relts_ss_under_hal_simu <- do.call("rbind", ate_hal_a_1_relts_ss_under_hal_simu)
-  ate_hal_a_1_relts_ss_under_hal_simu_means <- colMeans(ate_hal_a_1_relts_ss_under_hal_simu)
-  ate_hal_a_1_relts_ss_under_hal_simu_sd <- apply(ate_hal_a_1_relts_ss_under_hal_simu, 2, sd)
+  ate_a_1_ss_under_hal_simu <- do.call("rbind", ate_a_1_ss_under_hal_simu)
+  ate_a_1_ss_under_hal_simu_means <- colMeans(ate_a_1_ss_under_hal_simu)
+  ate_a_1_ss_under_hal_simu_sd <- apply(ate_a_1_ss_under_hal_simu, 2, sd)
+  ate_a_1_ss_under_hal_simu_coverage_rate <- ci_cov_rate(vals=ate_a_1_ss_under_hal_simu, 
+                                                                   sd = ate_a_1_ss_under_hal_simu_sd, 
+                                                                   true_val = psi0_a_1)
   
-  ate_hal_a_0_relts_ss_under_hal_simu <- do.call("rbind", ate_hal_a_0_relts_ss_under_hal_simu)
-  ate_hal_a_0_relts_ss_under_hal_simu_means <- colMeans(ate_hal_a_0_relts_ss_under_hal_simu)
-  ate_hal_a_0_relts_ss_under_hal_simu_sd <- apply(ate_hal_a_0_relts_ss_under_hal_simu, 2, sd)
+  ate_a_0_ss_under_hal_simu <- do.call("rbind", ate_a_0_ss_under_hal_simu)
+  ate_a_0_ss_under_hal_simu_means <- colMeans(ate_a_0_ss_under_hal_simu)
+  ate_a_0_ss_under_hal_simu_sd <- apply(ate_a_0_ss_under_hal_simu, 2, sd)
+  ate_a_0_ss_under_hal_simu_coverage_rate <- ci_cov_rate(vals=ate_a_0_ss_under_hal_simu, 
+                                                         sd = ate_a_0_ss_under_hal_simu_sd, 
+                                                         true_val = psi0_a_0)
   
-  ate_hal_a_1_relts_ss_hal_simu <- do.call("rbind", ate_hal_a_1_relts_ss_hal_simu)
-  ate_hal_a_1_relts_ss_hal_simu_means <- colMeans(ate_hal_a_1_relts_ss_hal_simu)
-  ate_hal_a_1_relts_ss_hal_simu_sd <- apply(ate_hal_a_1_relts_ss_hal_simu, 2, sd)
+  ate_a_1_ss_hal_simu <- do.call("rbind", ate_a_1_ss_hal_simu)
+  ate_a_1_ss_hal_simu_means <- colMeans(ate_a_1_ss_hal_simu)
+  ate_a_1_ss_hal_simu_sd <- apply(ate_a_1_ss_hal_simu, 2, sd)
+  ate_a_1_ss_hal_simu_coverage_rate <- ci_cov_rate(vals=ate_a_1_ss_hal_simu, 
+                                                         sd = ate_a_1_ss_hal_simu_sd, 
+                                                         true_val = psi0_a_1)
   
-  ate_hal_a_0_relts_ss_hal_simu <- do.call("rbind", ate_hal_a_0_relts_ss_hal_simu)
-  ate_hal_a_0_relts_ss_hal_simu_means <- colMeans(ate_hal_a_0_relts_ss_hal_simu)
-  ate_hal_a_0_relts_ss_hal_simu_sd <- apply(ate_hal_a_0_relts_ss_hal_simu, 2, sd)
+  ate_a_0_ss_hal_simu <- do.call("rbind", ate_a_0_ss_hal_simu)
+  ate_a_0_ss_hal_simu_means <- colMeans(ate_a_0_ss_hal_simu)
+  ate_a_0_ss_hal_simu_sd <- apply(ate_a_0_ss_hal_simu, 2, sd)
+  ate_a_0_ss_hal_simu_coverage_rate <- ci_cov_rate(vals=ate_a_0_ss_hal_simu, 
+                                                   sd = ate_a_0_ss_hal_simu_sd, 
+                                                   true_val = psi0_a_0)
   
   # ate_glm_a_1 <- do.call("rbind", ate_glm_a_1)
   # ate_glm_a_1_relts_means <- colMeans(ate_glm_a_1)
@@ -286,18 +326,28 @@ run_simu <- function(generate_data, n, B){
                            psi0 = psi0_a_1,
                            # ss_glm_mean = ate_glm_a_1_relts_means,
                            # ss_glm_sd = ate_glm_a_1_relts_sd,
-                           ss_under_hal_mean = ate_hal_a_1_relts_ss_under_hal_simu_means,
-                           ss_under_hal_sd = ate_hal_a_1_relts_ss_under_hal_simu_sd,
-                           ss_hal_mean = ate_hal_a_1_relts_ss_hal_simu_means,
-                           ss_hal_sd = ate_hal_a_1_relts_ss_hal_simu_sd)
+                           mean_under = ate_a_1_ss_under_hal_simu_means,
+                           sd_under = ate_a_1_ss_under_hal_simu_sd,
+                           cov_rate_under = ate_a_1_ss_under_hal_simu_coverage_rate,
+                           mean_init = ate_a_1_ss_hal_simu_means,
+                           sd_init = ate_a_1_ss_hal_simu_sd,
+                           cov_rate_init = ate_a_1_ss_hal_simu_coverage_rate)
   results_z0 <- data.frame(targ_par = paste0("ATE(",a_vec,",0)"), 
                            psi0 = psi0_a_0,
                            # ss_glm_mean = ate_glm_a_0_relts_means,
                            # ss_glm_sd = ate_glm_a_0_relts_sd,
-                           ss_under_hal_mean = ate_hal_a_0_relts_ss_under_hal_simu_means,
-                           ss_under_hal_sd = ate_hal_a_0_relts_ss_under_hal_simu_sd,
-                           ss_hal_mean = ate_hal_a_0_relts_ss_hal_simu_means,
-                           ss_hal_sd = ate_hal_a_0_relts_ss_hal_simu_sd)
-  results <- list("ATE_z=1"=results_z1, "ATE_z=0"=results_z0)
+                           mean_under = ate_a_0_ss_under_hal_simu_means,
+                           sd_under = ate_a_0_ss_under_hal_simu_sd,
+                           cov_rate_under = ate_a_1_ss_hal_simu_coverage_rate,
+                           mean_init = ate_a_0_ss_hal_simu_means,
+                           sd_init = ate_a_0_ss_hal_simu_sd,
+                           cov_rate_init = ate_a_0_ss_hal_simu_coverage_rate)
+
+  lambda_smry <- rbind(c(mean(lambda_under), sd(lambda_under)),
+                       c(mean(lambda_init), sd(lambda_init)))
+  colnames(lambda_smry) <- c("mean", "sd")
+  row.names(lambda_smry) <- c("undersmoothed", "initial")
+  
+  results <- list("ATE_z=1"=results_z1, "ATE_z=0"=results_z0, "lambda_summary" = lambda_smry)
   return(results)
 }
