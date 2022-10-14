@@ -252,10 +252,19 @@ for (i in 1:length(a_vec)) {
 
 ## ----simu_2_n200----------------------------------------------------------------------------------------------------------------------------------------------------
 set.seed(123)
-n=500
+n=200
 B=1000
-results_500 = run_simu(generate_data = generate_data_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
+results_200 = run_simu(generate_data = generate_data_2, n=n, B=B)
+save.image(file=here("data", "rdata", "02_simulation_2_200.RData"))
+
+
+## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+load(here("data", "rdata", "02_simulation_2_200.RData"))
+
+results_200[[1]] <- results_200[[1]] %>% mutate_if(is.numeric, round, digits=4)
+results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4)
+
+print(results_200)
 
 
 ## ----simu_2_n500----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -263,11 +272,11 @@ set.seed(123)
 n=500
 B=1000
 results_500 = run_simu(generate_data = generate_data_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
+save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
 
 
 ## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_1_500.RData"))
+load(here("data", "rdata", "02_simulation_2_500.RData"))
 
 results_500[[1]] <- results_500[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4)
@@ -275,23 +284,20 @@ results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4)
 print(results_500)
 
 
-## ----simu_n1000-----------------------------------------------------------------------------------------------------------------------------------------------------
+## ----simu_2_n1000---------------------------------------------------------------------------------------------------------------------------------------------------
 set.seed(234)
 n=1000
 B=1000
 results_1000 = run_simu(generate_data = generate_data_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_1000.RData"))
+save.image(file=here("data", "rdata", "02_simulation_2_1000.RData"))
 
 
 ## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_1_1000.RData"))
+load(here("data", "rdata", "02_simulation_2_1000.RData"))
 
 results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4)
 
 print(results_1000)
 
-
-## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-knitr::purl(here("scripts", "2_simulations.Rmd"))
 
