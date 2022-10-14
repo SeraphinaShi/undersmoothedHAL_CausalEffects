@@ -154,7 +154,7 @@ for (i in 1:length(a_vec)) {
 ```{r simu_1_n200}
 set.seed(123)
 n=200
-B=10
+B=1000
 results_200 = run_simu(generate_data = generate_data_1, n=n, B=B)
 save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
 ```
