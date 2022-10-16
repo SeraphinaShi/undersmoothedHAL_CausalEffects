@@ -1,4 +1,4 @@
-## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE--------------------------------------------------------------------------------------------
+## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE-----------------------------
 library(here)
 library(data.table)
 library(dplyr)
@@ -16,7 +16,7 @@ library(R.utils)
 library(pROC)
 
 
-## ----setup, include = FALSE-----------------------------------------------------------------------------------------------------------------------------------------
+## ----setup, include = FALSE--------------------------------------------------------------------------
 plotFolder <- here("results","images")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
@@ -32,11 +32,11 @@ source(here("scripts", "1_simu_functions.R"))
 
 
 
-## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## ----------------------------------------------------------------------------------------------------
 generate_data_2 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
-  U_A <- rnorm(n, 0, 1)
+  U_A <- rnorm(n, 0, 4)
   U_Z <- runif(n, 0, 1)
   U_Y <- runif(n, 0, 1)
   
@@ -68,14 +68,18 @@ obs <- generate_data_2(n=10000)
 print(summary(obs))
 
 # check positivity violations
-cat("Summary of A given W < -1:")
-summary(obs$A[obs$W < -1])
+cat("Summary of A given W < -2:")
+summary(obs$A[obs$W < -2])
+cat("Summary of A given -2 <= W < -1:")
+summary(obs$A[-2 <= obs$W & obs$W < -1])
 cat("Summary of A given -1 < W <= 0:")
 summary(obs$A[-1 <= obs$W & obs$W < 0])
 cat("Summary of A given 0 < W <= 1:")
 summary(obs$A[0 <= obs$W & obs$W < 1])
-cat("Summary of A given 1 < W:")
-summary(obs$A[1 <= obs$W])
+cat("Summary of A given 1 < W <= 2:")
+summary(obs$A[1 < obs$W & obs$W <=2])
+cat("Summary of A given 2 < W :")
+summary(obs$A[2 < obs$W ])
 
 par(mfrow=c(2,3))
 plot(obs$W,obs$A)
@@ -95,7 +99,7 @@ plot(obs$A,obs$Y)
 # print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
 
 
-## ----get_true_psis_2------------------------------------------------------------------------------------------------------------------------------------------------
+## ----get_true_psis_2---------------------------------------------------------------------------------
 # Getting trul value of psi
 a_vec <- seq(0.5, 10, 0.5)
 psi0_a_0 <- c()
@@ -116,16 +120,12 @@ for (i in 1:length(a_vec)) {
 }
 
 
-## ----simu_2_n200----------------------------------------------------------------------------------------------------------------------------------------------------
+## ----simu_2_n200-------------------------------------------------------------------------------------
 set.seed(123)
 n=200
 B=1000
 results_200 = run_simu(generate_data = generate_data_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_2_200.RData"))
-
-
-## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_2_200.RData"))
+save.image(file=here("data", "rdata", "generate_data_4_200.RData"))
 
 results_200[[1]] <- results_200[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4)
@@ -133,16 +133,12 @@ results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4)
 print(results_200)
 
 
-## ----simu_2_n500----------------------------------------------------------------------------------------------------------------------------------------------------
+## ----simu_2_n500-------------------------------------------------------------------------------------
 set.seed(123)
 n=500
 B=1000
 results_500 = run_simu(generate_data = generate_data_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_2_500.RData"))
-
-
-## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_2_500.RData"))
+save.image(file=here("data", "rdata", "generate_data_4_500.RData"))
 
 results_500[[1]] <- results_500[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4)
@@ -150,16 +146,12 @@ results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4)
 print(results_500)
 
 
-## ----simu_2_n1000---------------------------------------------------------------------------------------------------------------------------------------------------
+## ----simu_2_n1000------------------------------------------------------------------------------------
 set.seed(234)
 n=1000
 B=1000
 results_1000 = run_simu(generate_data = generate_data_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_2_1000.RData"))
-
-
-## -------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_2_1000.RData"))
+save.image(file=here("data", "rdata", "generate_data_4_1000.RData"))
 
 results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4)
 results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4)

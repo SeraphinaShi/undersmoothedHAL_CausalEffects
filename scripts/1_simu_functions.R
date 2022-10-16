@@ -1,5 +1,5 @@
 
-options(scipen = n)
+options(scipen = 999)
 
 ########################
 # fit undersmoothed HAL
