@@ -327,22 +327,29 @@ run_simu <- function(generate_data, n, B){
                            # ss_glm_mean = ate_glm_a_1_relts_means,
                            # ss_glm_sd = ate_glm_a_1_relts_sd,
                            mean_under = ate_a_1_ss_under_hal_simu_means,
-                           sd_under = ate_a_1_ss_under_hal_simu_sd,
-                           cov_rate_under = ate_a_1_ss_under_hal_simu_coverage_rate,
+                           sd_u = ate_a_1_ss_under_hal_simu_sd,
+                           cov_rate_u = ate_a_1_ss_under_hal_simu_coverage_rate,
                            mean_init = ate_a_1_ss_hal_simu_means,
-                           sd_init = ate_a_1_ss_hal_simu_sd,
-                           cov_rate_init = ate_a_1_ss_hal_simu_coverage_rate)
+                           sd_i = ate_a_1_ss_hal_simu_sd,
+                           cov_rate_i = ate_a_1_ss_hal_simu_coverage_rate)
+  results_z1 <- results_z1 %>%
+    mutate(bias_u = mean_under-psi0, bias_i = mean_init - psi0) %>% 
+    select(targ_par, psi0, mean_under, mean_init, bias_u, bias_i, sd_u, sd_i, cov_rate_u, cov_rate_i) 
+  
   results_z0 <- data.frame(targ_par = paste0("ATE(",a_vec,",0)"), 
                            psi0 = psi0_a_0,
                            # ss_glm_mean = ate_glm_a_0_relts_means,
                            # ss_glm_sd = ate_glm_a_0_relts_sd,
                            mean_under = ate_a_0_ss_under_hal_simu_means,
-                           sd_under = ate_a_0_ss_under_hal_simu_sd,
-                           cov_rate_under = ate_a_1_ss_hal_simu_coverage_rate,
+                           sd_u = ate_a_0_ss_under_hal_simu_sd,
+                           cov_rate_u = ate_a_1_ss_hal_simu_coverage_rate,
                            mean_init = ate_a_0_ss_hal_simu_means,
-                           sd_init = ate_a_0_ss_hal_simu_sd,
-                           cov_rate_init = ate_a_0_ss_hal_simu_coverage_rate)
-
+                           sd_i = ate_a_0_ss_hal_simu_sd,
+                           cov_rate_i = ate_a_0_ss_hal_simu_coverage_rate)
+  results_z0 <- results_z0 %>%
+    mutate(bias_u = mean_under-psi0, bias_i = mean_init - psi0) %>% 
+    select(targ_par, psi0, mean_under, mean_init, bias_u, bias_i, sd_u, sd_i, cov_rate_u, cov_rate_i) 
+  
   lambda_smry <- rbind(c(mean(lambda_under), sd(lambda_under)),
                        c(mean(lambda_init), sd(lambda_init)))
   colnames(lambda_smry) <- c("mean", "sd")
