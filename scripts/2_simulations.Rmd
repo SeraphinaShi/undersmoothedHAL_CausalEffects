@@ -29,7 +29,7 @@ library(pROC)
 library(ggplot2)
 ```
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE} 
 plotFolder <- here("results","images")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
@@ -159,8 +159,8 @@ plot(obs$A,obs$Y)
 set.seed(123)
 n=200
 B=1000
-# results_200 = run_simu(generate_data = generate_data_1, n=n, B=B)
-# save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
+results_200 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
+save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
 ```
 
 ### results
@@ -170,7 +170,7 @@ load(here("data", "rdata", "02_simulation_1_200.RData"))
 results_200[[1]] <- results_200[[1]] %>% mutate_if(is.numeric, round, digits=4) 
 results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4) 
 
-print(results_200)
+print(results_200[1:3])
 ```
 
 ```{r}
@@ -186,13 +186,61 @@ print(results_200)
 #   labs(x = "a", y = "ATE(a,0)")
 ```
 
+### View QQ plot of estimates 
+Checkout estimates of ATE(0.5,0) and ATE(5,0) with n =200
+```{r}
+ests <- results_200$ate_ests
+
+ests_0.5_0 <- data.frame(ests = c(ests$ate_a_1_ss_under_hal_simu[,1],
+                                  ests$ate_a_1_ss_hal_simu[,1],
+                                  ests$ate_a_0_ss_under_hal_simu[,1],
+                                  ests$ate_a_0_ss_hal_simu[,1]),
+                         HAL = c(rep("under",B), 
+                                 rep("init",B),
+                                 rep("under",B),
+                                 rep("init",B)),
+                         z = c(rep("z=1", 2*B), rep("z=0", 2*B)),
+                         target = "ATE(0.5, 0)")
+ests_5_0 <- data.frame(ests = c(ests$ate_a_1_ss_under_hal_simu[,10],
+                                  ests$ate_a_1_ss_hal_simu[,10],
+                                  ests$ate_a_0_ss_under_hal_simu[,10],
+                                  ests$ate_a_0_ss_hal_simu[,10]),
+                         HAL = c(rep("under",B), 
+                                 rep("init",B),
+                                 rep("under",B),
+                                 rep("init",B)),
+                         z = c(rep("z=1", 2*B), rep("z=0", 2*B)),
+                         target = "ATE(5, 0)")
+ests_df <- rbind(ests_0.5_0, ests_5_0)
+# z=1:
+# qqnorm(ests$ate_a_1_ss_under_hal_simu[,1])   
+ggplot(ests_df, aes(sample = ests, color = HAL)) +  # Create QQplot with ggplot2 package
+  stat_qq() +
+  stat_qq_line() + 
+  labs(title="QQplots of ATE estimations", 
+       subtitle = paste0("True values: \n     z=0:        ATE(0.5, 0) = ", round(psi0_a_0[1],4),  
+                         ",                                    ATE(5, 0) = ", round(psi0_a_0[10],4), 
+                         "\n     z=1:        ATE(0.5, 0) = ", round(psi0_a_1[1],4), 
+                         ",                                    ATE(5, 0) = ", round(psi0_a_1[10],4)),
+       x = "theoretical", y = "estimations") + 
+  theme(plot.title = element_text(hjust = 0.5))+
+  facet_grid(z~target, scales="free") 
+
+ggplot(ests_df, aes(x = ests, color = HAL, fill = HAL)) +  # Create QQplot with ggplot2 package
+  geom_histogram(alpha = 0.3) +
+  labs(title="Histgrams of ATE estimations") + 
+  theme(plot.title = element_text(hjust = 0.5))+
+  facet_grid(z~target, scales="free")   
+```
+
+
 ## n = 500
 ```{r simu_1_n500}
 set.seed(123)
 n=500
 B=1000
-# results_500 = run_simu(generate_data = generate_data_1, n=n, B=B)
-# save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
+results_500 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
+save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
 ```
 
 ### results
@@ -202,7 +250,7 @@ load(here("data", "rdata", "02_simulation_1_500.RData"))
 results_500[[1]] <- results_500[[1]] %>% mutate_if(is.numeric, round, digits=4) 
 results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4) 
 
-print(results_500)
+print(results_500[1:3])
 ```
 
 
@@ -212,8 +260,8 @@ print(results_500)
 set.seed(234)
 n=1000
 B=1000
-# results_1000 = run_simu(generate_data = generate_data_1, n=n, B=B)
-# save.image(file=here("data", "rdata", "02_simulation_1_1000.RData"))
+results_1000 = run_simu(generate_data = generate_data_1, n=n, B=B,  get_estimates = TRUE)
+save.image(file=here("data", "rdata", "02_simulation_1_1000.RData"))
 ```
 
 ### results
@@ -223,12 +271,60 @@ load(here("data", "rdata", "02_simulation_1_1000.RData"))
 results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4) 
 results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4) 
 
-print(results_1000)
+print(results_1000[1:3])
+```
+
+### View QQ plot of estimates 
+Checkout estimates of ATE(0.5,0) and ATE(5,0) with n =200
+```{r}
+ests <- results_1000$ate_ests
+
+ests_0.5_0 <- data.frame(ests = c(ests$ate_a_1_ss_under_hal_simu[,1],
+                                  ests$ate_a_1_ss_hal_simu[,1],
+                                  ests$ate_a_0_ss_under_hal_simu[,1],
+                                  ests$ate_a_0_ss_hal_simu[,1]),
+                         HAL = c(rep("under",B), 
+                                 rep("init",B),
+                                 rep("under",B),
+                                 rep("init",B)),
+                         z = c(rep("z=1", 2*B), rep("z=0", 2*B)),
+                         target = "ATE(0.5, 0)")
+ests_5_0 <- data.frame(ests = c(ests$ate_a_1_ss_under_hal_simu[,10],
+                                  ests$ate_a_1_ss_hal_simu[,10],
+                                  ests$ate_a_0_ss_under_hal_simu[,10],
+                                  ests$ate_a_0_ss_hal_simu[,10]),
+                         HAL = c(rep("under",B), 
+                                 rep("init",B),
+                                 rep("under",B),
+                                 rep("init",B)),
+                         z = c(rep("z=1", 2*B), rep("z=0", 2*B)),
+                         target = "ATE(5, 0)")
+ests_df <- rbind(ests_0.5_0, ests_5_0)
+# z=1:
+# qqnorm(ests$ate_a_1_ss_under_hal_simu[,1])   
+ggplot(ests_df, aes(sample = ests, color = HAL)) +  # Create QQplot with ggplot2 package
+  stat_qq() +
+  stat_qq_line() + 
+  labs(title="QQplots of ATE estimations", 
+       subtitle = paste0("True values: \n     z=0:        ATE(0.5, 0) = ", round(psi0_a_0[1],4),  
+                         ",                                    ATE(5, 0) = ", round(psi0_a_0[10],4), 
+                         "\n     z=1:        ATE(0.5, 0) = ", round(psi0_a_1[1],4), 
+                         ",                                    ATE(5, 0) = ", round(psi0_a_1[10],4)),
+       x = "theoretical", y = "estimations") + 
+  theme(plot.title = element_text(hjust = 0.5))+
+  facet_grid(z~target, scales="free") 
+  
+
+ggplot(ests_df, aes(x = ests, color = HAL, fill = HAL)) +  # Create QQplot with ggplot2 package
+  geom_histogram(alpha = 0.3) +
+  labs(title="Histgrams of ATE estimations") + 
+  theme(plot.title = element_text(hjust = 0.5))+
+  facet_grid(z~target, scales="free") 
 ```
 
 
-
 # Simulation #1_1
+[Same as Simulation #1, but with posibility violation as the variance of U_A decreased]    
 Data structure:  $O = (W, A, Z, Y)$ 
 
  * U - exogenous variables  
@@ -318,24 +414,24 @@ plot(obs$A,obs$Y)
 
 ```{r get_true_psis_1_1}
 # Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1_1(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_1(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1_1(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1_1(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1_1(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1_1(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1_1(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1_1(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
@@ -343,8 +439,8 @@ rm(data_0_0, data_0_1, data_a_0, data_a_1)
 set.seed(123)
 n=200
 B=1000
-results_200 = run_simu(generate_data = generate_data_1_1, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_1_200.RData"))
+# results_200 = run_simu(generate_data = generate_data_1_1, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_1_200.RData"))
 ```
 
 ### results
@@ -357,26 +453,14 @@ results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4)
 print(results_200)
 ```
 
-```{r}
-# results_200_plot_df <- 
-#   results_200[[1]] %>% 
-#   mutate(a_vec = a_vec, 
-#          z = 1)  
-#   
-# ggplot( data = results_200[[1]] %>% 
-#           mutate(a_vec = a_vec, z = 1)) +
-#   geom_point(aes(x = a_vec, y = psi0)) + 
-#   geom_line(aes(x = a_vec, y = results_200$`ATE_z=1`$psi0)) +
-#   labs(x = "a", y = "ATE(a,0)")
-```
 
 ## n = 500
 ```{r simu_1_1_n500}
 set.seed(123)
 n=500
 B=1000
-results_500 = run_simu(generate_data = generate_data_1_1, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_1_500.RData"))
+# results_500 = run_simu(generate_data = generate_data_1_1, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_1_500.RData"))
 ```
 
 ### results
@@ -396,8 +480,8 @@ print(results_500)
 set.seed(234)
 n=1000
 B=1000
-results_1000 = run_simu(generate_data = generate_data_1_1, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_1_1000.RData"))
+# results_1000 = run_simu(generate_data = generate_data_1_1, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_1_1000.RData"))
 ```
 
 ### results
@@ -413,6 +497,7 @@ print(results_1000)
 
 
 # Simulation #1_2
+[Same as Simulation #1, but with a 3-way interaction]    
 Data structure:  $O = (W, A, Z, Y)$ 
 
  * U - exogenous variables  
@@ -501,25 +586,25 @@ plot(obs$A,obs$Y)
 
 
 ```{r get_true_psis_1_2}
-# Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1_2(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_2(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1_2(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1_2(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# # Getting trul value of psi
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1_2(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1_2(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1_2(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1_2(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
@@ -527,8 +612,8 @@ rm(data_0_0, data_0_1, data_a_0, data_a_1)
 set.seed(123)
 n=200
 B=1000
-results_200 = run_simu(generate_data = generate_data_1_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_2_200.RData"))
+# results_200 = run_simu(generate_data = generate_data_1_2, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_2_200.RData"))
 ```
 
 ### results
@@ -541,26 +626,14 @@ results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4)
 print(results_200)
 ```
 
-```{r}
-# results_200_plot_df <- 
-#   results_200[[1]] %>% 
-#   mutate(a_vec = a_vec, 
-#          z = 1)  
-#   
-# ggplot( data = results_200[[1]] %>% 
-#           mutate(a_vec = a_vec, z = 1)) +
-#   geom_point(aes(x = a_vec, y = psi0)) + 
-#   geom_line(aes(x = a_vec, y = results_200$`ATE_z=1`$psi0)) +
-#   labs(x = "a", y = "ATE(a,0)")
-```
 
 ## n = 500
 ```{r simu_1_2_n500}
 set.seed(123)
 n=500
 B=1000
-results_500 = run_simu(generate_data = generate_data_1_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_2_500.RData"))
+# results_500 = run_simu(generate_data = generate_data_1_2, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_2_500.RData"))
 ```
 
 ### results
@@ -580,8 +653,8 @@ print(results_500)
 set.seed(234)
 n=1000
 B=1000
-results_1000 = run_simu(generate_data = generate_data_1_2, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_2_1000.RData"))
+# results_1000 = run_simu(generate_data = generate_data_1_2, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_2_1000.RData"))
 ```
 
 ### results
@@ -598,6 +671,8 @@ print(results_1000)
 
 
 # Simulation #1_3
+[Same as Simulation #1, but with a 3-way interaction and positivity violations]    
+
 Data structure:  $O = (W, A, Z, Y)$ 
 
  * U - exogenous variables  
@@ -686,25 +761,25 @@ plot(obs$A,obs$Y)
 
 
 ```{r get_true_psis_1_3}
-# Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1_3(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_3(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1_3(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1_3(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# # Getting trul value of psi
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1_3(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1_3(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1_3(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1_3(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
@@ -712,8 +787,8 @@ rm(data_0_0, data_0_1, data_a_0, data_a_1)
 set.seed(123)
 n=200
 B=1000
-results_200 = run_simu(generate_data = generate_data_1_3, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_3_200.RData"))
+# results_200 = run_simu(generate_data = generate_data_1_3, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_3_200.RData"))
 ```
 
 ### results
@@ -726,26 +801,14 @@ results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4)
 print(results_200)
 ```
 
-```{r}
-# results_200_plot_df <- 
-#   results_200[[1]] %>% 
-#   mutate(a_vec = a_vec, 
-#          z = 1)  
-#   
-# ggplot( data = results_200[[1]] %>% 
-#           mutate(a_vec = a_vec, z = 1)) +
-#   geom_point(aes(x = a_vec, y = psi0)) + 
-#   geom_line(aes(x = a_vec, y = results_200$`ATE_z=1`$psi0)) +
-#   labs(x = "a", y = "ATE(a,0)")
-```
 
 ## n = 500
 ```{r simu_1_3_n500}
 set.seed(123)
 n=500
 B=1000
-results_500 = run_simu(generate_data = generate_data_1_3, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_3_500.RData"))
+# results_500 = run_simu(generate_data = generate_data_1_3, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_3_500.RData"))
 ```
 
 ### results
@@ -765,8 +828,8 @@ print(results_500)
 set.seed(234)
 n=1000
 B=1000
-results_1000 = run_simu(generate_data = generate_data_1_3, n=n, B=B)
-save.image(file=here("data", "rdata", "02_simulation_1_3_1000.RData"))
+# results_1000 = run_simu(generate_data = generate_data_1_3, n=n, B=B)
+# save.image(file=here("data", "rdata", "02_simulation_1_3_1000.RData"))
 ```
 
 ### results

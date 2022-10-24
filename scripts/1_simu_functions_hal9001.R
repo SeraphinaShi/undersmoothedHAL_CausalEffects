@@ -101,7 +101,7 @@ undersmooth_hal <- function(X,
                               Nlam = Nlam, us_fit = us_fit)
     
     # get the first lambda that satisfies the criteria
-    lambda_under <- us_lambda[max_score <= 1/(sqrt(n)*log(n))][1]
+    lambda_under <- us_lambda[max_score <= 1/(sqrt(n)*log(n))][1] # over under-smoothing 
   }
   
   # collect results

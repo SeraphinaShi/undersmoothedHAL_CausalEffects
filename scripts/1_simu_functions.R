@@ -255,7 +255,7 @@ ci_cov_rate <- function(vals, sd, true_val){
 # the B rounds, using HAL (initial and undersmoothed). 
 # One with z=1, and one with z=0.
 ##############################################################
-run_simu <- function(generate_data, n, B){
+run_simu <- function(generate_data, n, B, get_estimates = FALSE){
   
   ate_a_1_ss_under_hal_simu <- list()
   ate_a_1_ss_hal_simu <- list()
@@ -333,8 +333,11 @@ run_simu <- function(generate_data, n, B){
                            sd_i = ate_a_1_ss_hal_simu_sd,
                            cov_rate_i = ate_a_1_ss_hal_simu_coverage_rate)
   results_z1 <- results_z1 %>%
-    mutate(bias_u = mean_under-psi0, bias_i = mean_init - psi0) %>% 
-    select(targ_par, psi0, mean_under, mean_init, bias_u, bias_i, sd_u, sd_i, cov_rate_u, cov_rate_i) 
+    mutate(bias_u = mean_under - psi0, 
+           bias_i = mean_init - psi0,
+           mse_u = bias_u^2 + sd_u^2,
+           mse_i = bias_i^2 + sd_i^2) %>% 
+    select(targ_par, psi0, mean_under, mean_init, bias_u, bias_i, sd_u, sd_i, mse_u, mse_i, cov_rate_u, cov_rate_i) 
   
   results_z0 <- data.frame(targ_par = paste0("ATE(",a_vec,",0)"), 
                            psi0 = psi0_a_0,
@@ -347,14 +350,29 @@ run_simu <- function(generate_data, n, B){
                            sd_i = ate_a_0_ss_hal_simu_sd,
                            cov_rate_i = ate_a_0_ss_hal_simu_coverage_rate)
   results_z0 <- results_z0 %>%
-    mutate(bias_u = mean_under-psi0, bias_i = mean_init - psi0) %>% 
-    select(targ_par, psi0, mean_under, mean_init, bias_u, bias_i, sd_u, sd_i, cov_rate_u, cov_rate_i) 
+    mutate(bias_u = mean_under - psi0, 
+           bias_i = mean_init - psi0,
+           mse_u = bias_u^2 + sd_u^2,
+           mse_i = bias_i^2 + sd_i^2) %>% 
+    select(targ_par, psi0, mean_under, mean_init, bias_u, bias_i, sd_u, sd_i, mse_u, mse_i, cov_rate_u, cov_rate_i) 
   
   lambda_smry <- rbind(c(mean(lambda_under), sd(lambda_under)),
                        c(mean(lambda_init), sd(lambda_init)))
   colnames(lambda_smry) <- c("mean", "sd")
   row.names(lambda_smry) <- c("undersmoothed", "initial")
   
-  results <- list("ATE_z=1"=results_z1, "ATE_z=0"=results_z0, "lambda_summary" = lambda_smry)
+  if(get_estimates){
+    ate_ests <- list(ate_a_1_ss_under_hal_simu,
+                     ate_a_0_ss_under_hal_simu,
+                     ate_a_1_ss_hal_simu,
+                     ate_a_0_ss_hal_simu)
+    names(ate_ests) <- c("ate_a_1_ss_under_hal_simu",
+                         "ate_a_0_ss_under_hal_simu",
+                         "ate_a_1_ss_hal_simu",
+                         "ate_a_0_ss_hal_simu")
+    results <- list("ATE_z=1"=results_z1, "ATE_z=0"=results_z0, "lambda_summary" = lambda_smry, "ate_ests" = ate_ests)
+  } else {
+    results <- list("ATE_z=1"=results_z1, "ATE_z=0"=results_z0, "lambda_summary" = lambda_smry)
+  }
   return(results)
 }
