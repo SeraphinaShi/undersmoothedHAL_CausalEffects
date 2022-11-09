@@ -1,4 +1,4 @@
-## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE----------------------------------------------------------------------------------------------------------
+## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE-------------------------------------------
 library(here)
 library(data.table)
 library(dplyr)
@@ -19,7 +19,7 @@ library(pROC)
 library(ggplot2)
 
 
-## ----setup, include = FALSE-------------------------------------------------------------------------------------------------------------------------------------------------------
+## ----setup, include = FALSE----------------------------------------------------------------------------------------
 plotFolder <- here("results","images")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
@@ -34,7 +34,7 @@ source(here("scripts", "1_simu_functions_hal9001.R"))
 source(here("scripts", "1_simu_functions.R"))
 
 
-## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------------------------------------------
 generate_data_1 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
@@ -97,7 +97,7 @@ plot(obs$A,obs$Y)
 # print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
 
 
-## ----get_true_psis_1--------------------------------------------------------------------------------------------------------------------------------------------------------------
+## ----get_true_psis_1-----------------------------------------------------------------------------------------------
 # Getting trul value of psi
 a_vec <- seq(0.5,5,0.5)
 psi0_a_0 <- c()
@@ -119,52 +119,72 @@ for (i in 1:length(a_vec)) {
 rm(data_0_0, data_0_1, data_a_0, data_a_1)
 
 
-## ----simu_1_n200------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## ----simu_1_n200---------------------------------------------------------------------------------------------------
 set.seed(123)
 n=200
 B=1000
+lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
 results_200 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
 save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
 
 
-## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_1_200.RData"))
+## ------------------------------------------------------------------------------------------------------------------
+# load(here("data", "rdata", "02_simulation_1_200.RData"))
+est_avg <- c()
+bias <- c()
+sd <- c()
+cr <- c()
+target <- c()
+z <- c()
+for(j in c(1,10)){
+  for(i in 1:length(lambda_scalers)){
+    est_avg <- c(est_avg, results_200[[i]]$`ATE_z=1`$mean_under[j])
+    bias <- c(bias, results_200[[i]]$`ATE_z=1`$bias_u[j])
+    sd <- c(sd, results_200[[i]]$`ATE_z=1`$sd_u[j])
+    cr <- c(cr, results_200[[i]]$`ATE_z=1`$cov_rate_u[j])
+    target <- c(target, ifelse(j==1, "ATE(0.5, 0)", "ATE(5, 0)"))
+    z <- c(z, 1)
+  }
+  for(i in 1:length(lambda_scalers)){
+    est_avg <- c(est_avg, results_200[[i]]$`ATE_z=0`$mean_under[j])
+    bias <- c(bias, results_200[[i]]$`ATE_z=0`$bias_u[j])
+    sd <- c(sd, results_200[[i]]$`ATE_z=0`$sd_u[j])
+    cr <- c(cr, results_200[[i]]$`ATE_z=0`$cov_rate_u[j])
+    target <- c(target, ifelse(j==1, "ATE(0.5, 0)", "ATE(5, 0)"))
+    z <- c(z, 1)
+  }
+}
 
-results_200[[1]] <- results_200[[1]] %>% mutate_if(is.numeric, round, digits=4) 
-results_200[[2]] <- results_200[[2]] %>% mutate_if(is.numeric, round, digits=4) 
+perform_df <- data.frame(lambda_scalers = lambda_scalers,
+                     target = target,
+                     z = z,
+                     est_avg = est_avg,
+                     bias = bias,
+                     sd = sd,
+                     cr = cr) %>%
+  mutate(bias_d_df = bias/sd)
 
-print(results_200[1:3])
+
+p_bias <- ggplot(perform_df %>% filter(target=="ATE(0.5, 0)", z==1), 
+                 aes(x = lambda_scalers, y = bias)) +  
+  geom_point() + 
+  labs(title="") 
 
 
-## ----simu_1_n500------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## ----simu_1_n500---------------------------------------------------------------------------------------------------
 set.seed(123)
 n=500
 B=1000
+lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
 results_500 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
 save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
 
 
-## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_1_500.RData"))
-
-results_500[[1]] <- results_500[[1]] %>% mutate_if(is.numeric, round, digits=4) 
-results_500[[2]] <- results_500[[2]] %>% mutate_if(is.numeric, round, digits=4) 
-
-print(results_500[1:3])
-
-
-## ----simu_1_n1000-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+## ----simu_1_n1000--------------------------------------------------------------------------------------------------
 set.seed(234)
 n=1000
 B=1000
 results_1000 = run_simu(generate_data = generate_data_1, n=n, B=B,  get_estimates = TRUE)
 save.image(file=here("data", "rdata", "02_simulation_1_1000.RData"))
 
-
-## ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simulation_1_1000.RData"))
-
-results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4) 
-results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4) 
-
-print(results_1000[1:3])

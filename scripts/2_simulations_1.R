@@ -34,11 +34,13 @@ source(here("scripts", "1_simu_functions_hal9001.R"))
 source(here("scripts", "1_simu_functions.R"))
 
 
+
+
 ## ------------------------------------------------------------------------------------------------------------------
-generate_data_1_2 <- function(n, a=NA, z=NA){
+generate_data_1_1 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
-  U_A <- rnorm(n, 0, 2)
+  U_A <- rnorm(n, 0, 1)
   U_Z <- runif(n, 0, 1)
   U_Y <- runif(n, 0, 1)
   
@@ -59,14 +61,14 @@ generate_data_1_2 <- function(n, a=NA, z=NA){
     Z <- rep(z, n)
   }
   
-  Y <- as.numeric(U_Y < plogis(W + 5*A + Z - 0.5 * W * A + 0.3 * W *A * (Z+1)- 8))
+  Y <- as.numeric(U_Y < plogis(W + 5*A + Z - 0.5 * W * A - 8))
   
   # data frame
   O <- data.frame(W, A, Z, Y)
   return(O)
 }
 
-obs <- generate_data_1_2(n=10000)
+obs <- generate_data_1_1(n=10000)
 print(summary(obs))
 
 # check positivity violations
@@ -87,7 +89,7 @@ plot(obs$W,obs$Z)
 plot(obs$W,obs$Y)
 plot(obs$A,obs$Y)
 
-# glm_fit <- glm(formula = Y ~ W + A + W*A + W*A*Z+ Z,
+# glm_fit <- glm(formula = Y ~ W + A + W*A + Z,
 #                family = binomial,
 #                data = obs)
 # summary(glm_fit)
@@ -97,49 +99,49 @@ plot(obs$A,obs$Y)
 # print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
 
 
-## ----get_true_psis_1_2---------------------------------------------------------------------------------------------
+## ----get_true_psis_1_1---------------------------------------------------------------------------------------------
 # Getting trul value of psi
 a_vec <- seq(0.5,5,0.5)
 psi0_a_0 <- c()
 psi0_a_1 <- c()
 
 N = 1e+07
-data_0_0 <- generate_data_1_2(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_2(n=N, a=0, z=1)
+data_0_0 <- generate_data_1_1(n=N, a=0, z=0)
+data_0_1 <- generate_data_1_1(n=N, a=0, z=1)
 
 for (i in 1:length(a_vec)) {
   a <- a_vec[i]
   
-  data_a_0 <- generate_data_1_2(n=N, a=a, z=0)
+  data_a_0 <- generate_data_1_1(n=N, a=a, z=0)
   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
   
-  data_a_1 <- generate_data_1_2(n=N, a=a, z=1)
+  data_a_1 <- generate_data_1_1(n=N, a=a, z=1)
   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
 }
 rm(data_0_0, data_0_1, data_a_0, data_a_1)
 
 
-## ----simu_1_2_n200-------------------------------------------------------------------------------------------------
+## ----simu_1_1_n200-------------------------------------------------------------------------------------------------
 set.seed(123)
 n=200
 B=1000
 lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-results_200 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_2_200.RData"))
+results_200 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
+save.image(file=here("data", "rdata", "02_simulation_1_1_200.RData"))
 
 
-## ----simu_1_2_n500-------------------------------------------------------------------------------------------------
+## ----simu_1_1_n500-------------------------------------------------------------------------------------------------
 set.seed(123)
 n=500
 B=1000
-results_500 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_2_500.RData"))
+results_500 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
+save.image(file=here("data", "rdata", "02_simulation_1_1_500.RData"))
 
 
-## ----simu_1_2_n1000------------------------------------------------------------------------------------------------
+## ----simu_1_1_n1000------------------------------------------------------------------------------------------------
 set.seed(234)
 n=1000
 B=1000
-results_1000 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_2_1000.RData"))
+results_1000 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
+save.image(file=here("data", "rdata", "02_simulation_1_1_1000.RData"))
 
