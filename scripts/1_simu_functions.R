@@ -357,3 +357,89 @@ run_simu <- function(generate_data, n, B, get_estimates = FALSE){
   names(results_list) <- paste0("lambda_scaler_", round(lambda_scalers, 4))
   return(results_list)
 }
+
+
+
+
+
+
+
+plot_perforences <- function(results_list, z_para, target_para){
+  est_avg <- c()
+  bias <- c()
+  sd <- c()
+  cr <- c()
+  target <- c()
+  z <- c()
+  
+  if(target_para == "ATE(0.5, 0)"){
+    j = 1
+  } else if (target_para == "ATE(5, 0)"){
+    j = 10
+  }
+  psi0 <- ifelse(z_para==1, psi0_a_1[j], psi0_a_0[j])
+  for(i in 1:length(lambda_scalers)){
+    if(z_para == 1){
+      est_avg <- c(est_avg, results_list[[i]]$`ATE_z=1`$mean_under[j])
+      bias <- c(bias, results_list[[i]]$`ATE_z=1`$bias_u[j])
+      sd <- c(sd, results_list[[i]]$`ATE_z=1`$sd_u[j])
+      cr <- c(cr, results_list[[i]]$`ATE_z=1`$cov_rate_u[j])
+      target <- c(target, target_para)
+      z <- c(z, 1)
+    } else {
+      est_avg <- c(est_avg, results_list[[i]]$`ATE_z=0`$mean_under[j])
+      bias <- c(bias, results_list[[i]]$`ATE_z=0`$bias_u[j])
+      sd <- c(sd, results_list[[i]]$`ATE_z=0`$sd_u[j])
+      cr <- c(cr, results_list[[i]]$`ATE_z=0`$cov_rate_u[j])
+      target <- c(target, target_para)
+      z <- c(z, 0)
+    }
+  }
+  
+  perform_df <- data.frame(lambda_scalers = lambda_scalers,
+                           target = target,
+                           z = z,
+                           est_avg = est_avg,
+                           bias = bias,
+                           sd = sd,
+                           cr = cr) %>%
+    mutate(bias_d_df = bias/sd)
+  
+  
+  p_est_avg <- ggplot(perform_df) +  
+    geom_point(aes(x = lambda_scalers, y = est_avg)) + 
+    geom_hline(aes(yintercept=psi0)) +
+    labs(title="Estimation average") +
+    theme()
+  
+  p_bias <- ggplot(perform_df, 
+                   aes(x = lambda_scalers, y = bias)) +  
+    geom_point() + 
+    labs(title="Bias") 
+  
+  p_sd <- ggplot(perform_df, 
+                 aes(x = lambda_scalers, y = sd)) +  
+    geom_point() + 
+    labs(title="Standard deviation") 
+  
+  p_bias_d_df <- ggplot(perform_df, 
+                        aes(x = lambda_scalers, y = bias_d_df)) +  
+    geom_point() + 
+    labs(title="Bias / Standard deviation") 
+  
+  p_cr <- ggplot(perform_df, 
+                 aes(x = lambda_scalers, y = cr)) +  
+    geom_point() + 
+    labs(title="Coverage rate") 
+  
+  p <- grid.arrange(p_est_avg, p_bias, p_sd, p_bias_d_df, p_cr,
+                    layout_matrix = rbind(c(NA,1,1,NA),
+                                          c(NA,1,1,NA),
+                                          c(2,2,3,3),
+                                          c(2,2,3,3),
+                                          c(4,4,5,5),
+                                          c(4,4,5,5)),
+                    top = textGrob(paste0("HAL-based plug in estimator performence for ", target), 
+                                   gp=gpar(fontsize=15, fontface = 'bold')))
+  return(p)
+}

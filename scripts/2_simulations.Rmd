@@ -27,6 +27,8 @@ library(R.utils)
 library(pROC)
 
 library(ggplot2)
+library(gridExtra)
+library(grid)
 ```
 
 ```{r setup, include = FALSE} 
@@ -165,48 +167,10 @@ save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
 ```
 
 ### results
-```{r}
+```{r, fig.height=5, fig.width=5}
 # load(here("data", "rdata", "02_simulation_1_200.RData"))
-est_avg <- c()
-bias <- c()
-sd <- c()
-cr <- c()
-target <- c()
-z <- c()
-for(j in c(1,10)){
-  for(i in 1:length(lambda_scalers)){
-    est_avg <- c(est_avg, results_200[[i]]$`ATE_z=1`$mean_under[j])
-    bias <- c(bias, results_200[[i]]$`ATE_z=1`$bias_u[j])
-    sd <- c(sd, results_200[[i]]$`ATE_z=1`$sd_u[j])
-    cr <- c(cr, results_200[[i]]$`ATE_z=1`$cov_rate_u[j])
-    target <- c(target, ifelse(j==1, "ATE(0.5, 0)", "ATE(5, 0)"))
-    z <- c(z, 1)
-  }
-  for(i in 1:length(lambda_scalers)){
-    est_avg <- c(est_avg, results_200[[i]]$`ATE_z=0`$mean_under[j])
-    bias <- c(bias, results_200[[i]]$`ATE_z=0`$bias_u[j])
-    sd <- c(sd, results_200[[i]]$`ATE_z=0`$sd_u[j])
-    cr <- c(cr, results_200[[i]]$`ATE_z=0`$cov_rate_u[j])
-    target <- c(target, ifelse(j==1, "ATE(0.5, 0)", "ATE(5, 0)"))
-    z <- c(z, 1)
-  }
-}
-
-perform_df <- data.frame(lambda_scalers = lambda_scalers,
-                     target = target,
-                     z = z,
-                     est_avg = est_avg,
-                     bias = bias,
-                     sd = sd,
-                     cr = cr) %>%
-  mutate(bias_d_df = bias/sd)
-
-
-p_bias <- ggplot(perform_df %>% filter(target=="ATE(0.5, 0)", z==1), 
-                 aes(x = lambda_scalers, y = bias)) +  
-  geom_point() + 
-  labs(title="") 
-
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(0.5, 0)")
+plot(p)
 ```
 
 
