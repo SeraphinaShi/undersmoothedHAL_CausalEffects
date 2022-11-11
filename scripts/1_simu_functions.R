@@ -371,11 +371,13 @@ plot_perforences <- function(results_list, z_para, target_para){
   cr <- c()
   target <- c()
   z <- c()
-  
+
   if(target_para == "ATE(0.5, 0)"){
     j = 1
   } else if (target_para == "ATE(5, 0)"){
     j = 10
+  } else if (target_para == "ATE(2.5, 0)") {
+    j = 5
   }
   psi0 <- ifelse(z_para==1, psi0_a_1[j], psi0_a_0[j])
   for(i in 1:length(lambda_scalers)){
@@ -403,7 +405,7 @@ plot_perforences <- function(results_list, z_para, target_para){
                            bias = bias,
                            sd = sd,
                            cr = cr) %>%
-    mutate(bias_d_df = bias/sd)
+    mutate(bias_d_df = abs(bias)/sd)
   
   
   p_est_avg <- ggplot(perform_df) +  
@@ -425,7 +427,7 @@ plot_perforences <- function(results_list, z_para, target_para){
   p_bias_d_df <- ggplot(perform_df, 
                         aes(x = lambda_scalers, y = bias_d_df)) +  
     geom_point() + 
-    labs(title="Bias / Standard deviation") 
+    labs(title="|Bias| / Standard deviation") 
   
   p_cr <- ggplot(perform_df, 
                  aes(x = lambda_scalers, y = cr)) +  
@@ -440,6 +442,6 @@ plot_perforences <- function(results_list, z_para, target_para){
                                           c(4,4,5,5),
                                           c(4,4,5,5)),
                     top = textGrob(paste0("HAL-based plug in estimator performence for ", target), 
-                                   gp=gpar(fontsize=15, fontface = 'bold')))
+                                   gp=gpar(fontsize=11, fontface = 'bold')))
   return(p)
 }

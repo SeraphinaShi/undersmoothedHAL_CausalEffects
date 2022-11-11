@@ -136,64 +136,77 @@ plot(obs$A,obs$Y)
 
 ```{r get_true_psis_1}
 # Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1(n=N, a=0, z=0)
-data_0_1 <- generate_data_1(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
 ```{r simu_1_n200}
-set.seed(123)
-n=200
-B=1000
-lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-results_200 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
+# set.seed(123)
+# n=200
+# B=1000
+# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+# results_200 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
+# save.image(file=here("data", "rdata", "02_simulation_1_200.RData"))
+```
+```{r}
+load(here("data", "rdata", "02_simulation_1_200.RData"))
 ```
 
 ### results
-```{r, fig.height=5, fig.width=5}
-# load(here("data", "rdata", "02_simulation_1_200.RData"))
+```{r}
+cat("Initial lamba mean:", results_200$lambda_scaler_1$lambda_summary[1,1])
+```
+#### psi(a=0.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
 p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(0.5, 0)")
-plot(p)
 ```
 
-
-## n = 500
-```{r simu_1_n500}
-set.seed(123)
-n=500
-B=1000
-lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-results_500 = run_simu(generate_data = generate_data_1, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_500.RData"))
+#### psi(a=2.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(2.5, 0)")
 ```
 
-
-
-## n = 1000
-```{r simu_1_n1000}
-set.seed(234)
-n=1000
-B=1000
-results_1000 = run_simu(generate_data = generate_data_1, n=n, B=B,  get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_1000.RData"))
+#### psi(a=5, z= 1)
+Estimating ATE(5, 0) with z  = 1
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(5, 0)")
 ```
+
+#### psi(a=0.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(0.5, 0)")
+```
+
+#### psi(a=2.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(2.5, 0)")
+```
+
+#### psi(a=5, z= 0)
+Estimating ATE(5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(5, 0)")
+```
+
 
 # Simulation #1_1
 [Same as Simulation #1, but with posibility violation as the variance of U_A decreased]    
@@ -285,60 +298,100 @@ plot(obs$A,obs$Y)
 
 
 ```{r get_true_psis_1_1}
-# Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1_1(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_1(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1_1(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1_1(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# # Getting trul value of psi
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1_1(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1_1(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1_1(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1_1(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
 ```{r simu_1_1_n200}
-set.seed(123)
-n=200
-B=1000
-lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-results_200 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_1_200.RData"))
+# set.seed(123)
+# n=200
+# B=1000
+# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+# results_200 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
+# save.image(file=here("data", "rdata", "02_simulation_1_1_200.RData"))
+```
+
+```{r}
+load(here("data", "rdata", "02_simulation_1_1_200.RData"))
+```
+
+### results
+```{r}
+cat("Initial lamba mean:", results_200$lambda_scaler_1$lambda_summary[1,1])
+```
+#### psi(a=0.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(0.5, 0)")
+```
+
+#### psi(a=2.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(2.5, 0)")
+```
+
+#### psi(a=5, z= 1)
+Estimating ATE(5, 0) with z  = 1
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(5, 0)")
+```
+
+#### psi(a=0.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(0.5, 0)")
+```
+
+#### psi(a=2.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(2.5, 0)")
+```
+
+#### psi(a=5, z= 0)
+Estimating ATE(5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(5, 0)")
 ```
 
 
-
-
-## n = 500
-```{r simu_1_1_n500}
-set.seed(123)
-n=500
-B=1000
-results_500 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_1_500.RData"))
-```
+<!-- ## n = 500 -->
+<!-- ```{r simu_1_1_n500} -->
+<!-- set.seed(123) -->
+<!-- n=500 -->
+<!-- B=1000 -->
+<!-- results_500 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE) -->
+<!-- save.image(file=here("data", "rdata", "02_simulation_1_1_500.RData")) -->
+<!-- ``` -->
 
 
 
 
-## n = 1000
-```{r simu_1_1_n1000}
-set.seed(234)
-n=1000
-B=1000
-results_1000 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_1_1000.RData"))
-```
+<!-- ## n = 1000 -->
+<!-- ```{r simu_1_1_n1000} -->
+<!-- set.seed(234) -->
+<!-- n=1000 -->
+<!-- B=1000 -->
+<!-- results_1000 = run_simu(generate_data = generate_data_1_1, n=n, B=B, get_estimates = TRUE) -->
+<!-- save.image(file=here("data", "rdata", "02_simulation_1_1_1000.RData")) -->
+<!-- ``` -->
 
 
 # Simulation #1_2
@@ -431,58 +484,100 @@ plot(obs$A,obs$Y)
 
 
 ```{r get_true_psis_1_2}
-# Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1_2(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_2(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1_2(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1_2(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# # Getting trul value of psi
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1_2(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1_2(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1_2(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1_2(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
 ```{r simu_1_2_n200}
-set.seed(123)
-n=200
-B=1000
-lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-results_200 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_2_200.RData"))
+# set.seed(123)
+# n=200
+# B=1000
+# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+# results_200 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
+# save.image(file=here("data", "rdata", "02_simulation_1_2_200.RData"))
+```
+
+```{r}
+load(here("data", "rdata", "02_simulation_1_2_200.RData"))
 ```
 
 
+### results
 
-## n = 500
-```{r simu_1_2_n500}
-set.seed(123)
-n=500
-B=1000
-results_500 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_2_500.RData"))
+```{r}
+cat("Initial lamba mean:", results_200$lambda_scaler_1$lambda_summary[1,1])
+```
+#### psi(a=0.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(0.5, 0)")
 ```
 
-
-
-## n = 1000
-```{r simu_1_2_n1000}
-set.seed(234)
-n=1000
-B=1000
-results_1000 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_2_1000.RData"))
+#### psi(a=2.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(2.5, 0)")
 ```
+
+#### psi(a=5, z= 1)
+Estimating ATE(5, 0) with z  = 1
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(5, 0)")
+```
+
+#### psi(a=0.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(0.5, 0)")
+```
+
+#### psi(a=2.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(2.5, 0)")
+```
+
+#### psi(a=5, z= 0)
+Estimating ATE(5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(5, 0)")
+```
+
+<!-- ## n = 500 -->
+<!-- ```{r simu_1_2_n500} -->
+<!-- set.seed(123) -->
+<!-- n=500 -->
+<!-- B=1000 -->
+<!-- results_500 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE) -->
+<!-- save.image(file=here("data", "rdata", "02_simulation_1_2_500.RData")) -->
+<!-- ``` -->
+
+
+
+<!-- ## n = 1000 -->
+<!-- ```{r simu_1_2_n1000} -->
+<!-- set.seed(234) -->
+<!-- n=1000 -->
+<!-- B=1000 -->
+<!-- results_1000 = run_simu(generate_data = generate_data_1_2, n=n, B=B, get_estimates = TRUE) -->
+<!-- save.image(file=here("data", "rdata", "02_simulation_1_2_1000.RData")) -->
+<!-- ``` -->
 
 
 
@@ -578,69 +673,113 @@ plot(obs$A,obs$Y)
 
 
 ```{r get_true_psis_1_3}
-# Getting trul value of psi
-a_vec <- seq(0.5,5,0.5)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_1_3(n=N, a=0, z=0)
-data_0_1 <- generate_data_1_3(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a_0 <- generate_data_1_3(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-
-  data_a_1 <- generate_data_1_3(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-rm(data_0_0, data_0_1, data_a_0, data_a_1)
+# # Getting trul value of psi
+# a_vec <- seq(0.5,5,0.5)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_1_3(n=N, a=0, z=0)
+# data_0_1 <- generate_data_1_3(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a_0 <- generate_data_1_3(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+# 
+#   data_a_1 <- generate_data_1_3(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# rm(data_0_0, data_0_1, data_a_0, data_a_1)
 ```
 
 ## n = 200
 ```{r simu_1_3_n200}
-set.seed(123)
-n=200
-B=1000
-lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-results_200 = run_simu(generate_data = generate_data_1_3, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_3_200.RData"))
+# set.seed(123)
+# n=200
+# B=1000
+# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+# results_200 = run_simu(generate_data = generate_data_1_3, n=n, B=B, get_estimates = TRUE)
+# save.image(file=here("data", "rdata", "02_simulation_1_3_200.RData"))
 ```
 
-
-
-## n = 500
-```{r simu_1_3_n500}
-set.seed(123)
-n=500
-B=1000
-results_500 = run_simu(generate_data = generate_data_1_3, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_3_500.RData"))
+```{r}
+load(here("data", "rdata", "02_simulation_1_3_200.RData"))
 ```
 
-
-
-## n = 1000
-```{r simu_1_3_n1000}
-set.seed(234)
-n=1000
-B=1000
-results_1000 = run_simu(generate_data = generate_data_1_3, n=n, B=B, get_estimates = TRUE)
-save.image(file=here("data", "rdata", "02_simulation_1_3_1000.RData"))
-```
 
 
 ### results
+
 ```{r}
-load(here("data", "rdata", "02_simulation_1_3_1000.RData"))
-
-results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4) 
-results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4) 
-
-print(results_1000)
+cat("Initial lamba mean:", results_200$lambda_scaler_1$lambda_summary[1,1])
 ```
+#### psi(a=0.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(0.5, 0)")
+```
+
+#### psi(a=2.5, z= 1)
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(2.5, 0)")
+```
+
+#### psi(a=5, z= 1)
+Estimating ATE(5, 0) with z  = 1
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 1, target_para = "ATE(5, 0)")
+```
+
+#### psi(a=0.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(0.5, 0)")
+```
+
+#### psi(a=2.5, z= 0)
+Estimating ATE(0.5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(2.5, 0)")
+```
+
+#### psi(a=5, z= 0)
+Estimating ATE(5, 0) with z  = 0
+```{r, fig.height=5.5, fig.width=5.5}
+p <- plot_perforences(results_200, z_para = 0, target_para = "ATE(5, 0)")
+```
+
+
+<!-- ## n = 500 -->
+<!-- ```{r simu_1_3_n500} -->
+<!-- set.seed(123) -->
+<!-- n=500 -->
+<!-- B=1000 -->
+<!-- results_500 = run_simu(generate_data = generate_data_1_3, n=n, B=B, get_estimates = TRUE) -->
+<!-- save.image(file=here("data", "rdata", "02_simulation_1_3_500.RData")) -->
+<!-- ``` -->
+
+
+
+<!-- ## n = 1000 -->
+<!-- ```{r simu_1_3_n1000} -->
+<!-- set.seed(234) -->
+<!-- n=1000 -->
+<!-- B=1000 -->
+<!-- results_1000 = run_simu(generate_data = generate_data_1_3, n=n, B=B, get_estimates = TRUE) -->
+<!-- save.image(file=here("data", "rdata", "02_simulation_1_3_1000.RData")) -->
+<!-- ``` -->
+
+
+<!-- ### results -->
+<!-- ```{r} -->
+<!-- load(here("data", "rdata", "02_simulation_1_3_1000.RData")) -->
+
+<!-- results_1000[[1]] <- results_1000[[1]] %>% mutate_if(is.numeric, round, digits=4)  -->
+<!-- results_1000[[2]] <- results_1000[[2]] %>% mutate_if(is.numeric, round, digits=4)  -->
+
+<!-- print(results_1000) -->
+<!-- ``` -->
 
 
 
