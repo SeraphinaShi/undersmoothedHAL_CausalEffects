@@ -75,10 +75,10 @@ undersmooth_hal <- function(X,
                             Nlam = 20,
                             family = "gaussian"){
   
-  preds_init <- predict(fit_init, new_data = X)
+  preds_init <- predict(fit_init, new_data = X) # need to change it to where A and Z have specific values 
   # estimates of sd in each direction using initial fit
   resid_init <- preds_init - Y
-  sd_est  <- apply(basis_mat, 2, function(u) sd(resid_init*u))
+  sd_est  <- apply(basis_mat, 2, function(u) sd(resid_init*u)) # sample variance of the EIC at a cv lambda
   
   # refit on new lambda sequence
   us_lambda <- fit_init$lambda_star*10^seq(from=0, to=-3, length=Nlam)
