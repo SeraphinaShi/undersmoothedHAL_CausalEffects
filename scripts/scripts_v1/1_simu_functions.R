@@ -364,7 +364,9 @@ run_simu <- function(generate_data, n, B, get_estimates = FALSE){
 
 
 
-plot_perforences <- function(results_list, z_para, target_para){
+plot_perforences <- function(results_list, z_para, target_para, 
+                             CI_forest_plot = F, scaler_picked = NA,
+                             return_perform_df=F){
   est_avg <- c()
   bias <- c()
   sd <- c()
@@ -372,13 +374,9 @@ plot_perforences <- function(results_list, z_para, target_para){
   target <- c()
   z <- c()
 
-  if(target_para == "ATE(0.5, 0)"){
-    j = 1
-  } else if (target_para == "ATE(5, 0)"){
-    j = 10
-  } else if (target_para == "ATE(2.5, 0)") {
-    j = 5
-  }
+  target_paras <- results_list$lambda_scaler_1$`ATE_z=1`$targ_par
+  j = match(target_para, target_paras )
+  
   psi0 <- ifelse(z_para==1, psi0_a_1[j], psi0_a_0[j])
   for(i in 1:length(lambda_scalers)){
     if(z_para == 1){
@@ -405,43 +403,77 @@ plot_perforences <- function(results_list, z_para, target_para){
                            bias = bias,
                            sd = sd,
                            cr = cr) %>%
-    mutate(bias_d_df = abs(bias)/sd)
+    mutate(bias_d_df = abs(bias)/sd,
+           ci_l = est_avg - 1.96*sd,
+           ci_u = est_avg + 1.96*sd)
   
+  if(return_perform_df){
+    return(perform_df)
+  }
   
-  p_est_avg <- ggplot(perform_df) +  
-    geom_point(aes(x = lambda_scalers, y = est_avg)) + 
-    geom_hline(aes(yintercept=psi0)) +
-    labs(title="Estimation average") +
-    theme()
-  
-  p_bias <- ggplot(perform_df, 
-                   aes(x = lambda_scalers, y = bias)) +  
-    geom_point() + 
-    labs(title="Bias") 
-  
-  p_sd <- ggplot(perform_df, 
-                 aes(x = lambda_scalers, y = sd)) +  
-    geom_point() + 
-    labs(title="Standard deviation") 
-  
-  p_bias_d_df <- ggplot(perform_df, 
-                        aes(x = lambda_scalers, y = bias_d_df)) +  
-    geom_point() + 
-    labs(title="|Bias| / Standard deviation") 
-  
-  p_cr <- ggplot(perform_df, 
-                 aes(x = lambda_scalers, y = cr)) +  
-    geom_point() + 
-    labs(title="Coverage rate") 
-  
-  p <- grid.arrange(p_est_avg, p_bias, p_sd, p_bias_d_df, p_cr,
-                    layout_matrix = rbind(c(NA,1,1,NA),
-                                          c(NA,1,1,NA),
-                                          c(2,2,3,3),
-                                          c(2,2,3,3),
-                                          c(4,4,5,5),
-                                          c(4,4,5,5)),
-                    top = textGrob(paste0("HAL-based plug in estimator performence for ", target_para, ", z=", z_para), 
-                                   gp=gpar(fontsize=11, fontface = 'bold')))
-  return(p)
+  if(!CI_forest_plot){
+    p_est_avg <- ggplot(perform_df) +  
+      geom_point(aes(x = lambda_scalers, y = est_avg)) + 
+      geom_hline(aes(yintercept=psi0)) +
+      labs(title="Estimation average") +
+      theme()
+    
+    p_bias <- ggplot(perform_df, 
+                     aes(x = lambda_scalers, y = bias)) +  
+      geom_point() + 
+      labs(title="Bias") 
+    
+    p_sd <- ggplot(perform_df, 
+                   aes(x = lambda_scalers, y = sd)) +  
+      geom_point() + 
+      labs(title="Standard deviation") 
+    
+    p_bias_d_df <- ggplot(perform_df, 
+                          aes(x = lambda_scalers, y = bias_d_df)) +  
+      geom_point() + 
+      labs(title="|Bias| / Standard deviation") 
+    
+    p_cr <- ggplot(perform_df, 
+                   aes(x = lambda_scalers, y = cr)) +  
+      geom_point() + 
+      labs(title="Coverage rate") 
+    
+    p <- grid.arrange(p_est_avg, p_bias, p_sd, p_bias_d_df, p_cr,
+                      layout_matrix = rbind(c(NA,1,1,NA),
+                                            c(NA,1,1,NA),
+                                            c(2,2,3,3),
+                                            c(2,2,3,3),
+                                            c(4,4,5,5),
+                                            c(4,4,5,5)),
+                      top = textGrob(paste0("HAL-based plug in estimator performence for ", target_para, ", z=", z_para), 
+                                     gp=gpar(fontsize=11, fontface = 'bold')))
+    return(p)
+  } else {
+    
+    p <- ggplot(data=perform_df, 
+                aes(x=lambda_scalers, 
+                    y=est_avg, ymin=ci_l, ymax=ci_u,
+                    color = lambda_scalers)) +
+      geom_point(shape=24, size=2) +
+      geom_errorbar(shape=24, width=0.3) +
+      geom_hline(aes(yintercept=psi0)) +
+      # ylim(c(-2,2)) +  # not working
+      # coord_flip() +  # flip coordinates (puts labels on y axis)
+      labs(x=paste0("Scalers on CV-lambda ", round(results_list$lambda_scaler_1$lambda_summary[1,1], 4)))+
+      labs(y="Estimations") +
+      ggtitle(paste0(target_para, " when Z = ", z_para))+
+      theme(plot.title = element_text(hjust = 0.5), #size=8.6, 
+            #axis.title.y = element_blank(),
+            panel.grid.major.x = element_blank(),
+            #axis.text.y = element_text(size=8),
+            #axis.title.x = element_text(size=8),
+            axis.text = element_text(size=7),
+            legend.position="none")  
+    if(! is.na(scaler_picked)){
+      p = p + geom_vline(aes(xintercept=scaler_picked), color = "gray") 
+    }
+    
+    return(p)
+  }
+
 }

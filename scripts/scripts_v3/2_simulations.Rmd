@@ -1,0 +1,116 @@
+---
+title: "Simulations of estimating causal effect curve using undersmoothed-HAL"
+author: "Seraphina Shi"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
+library(here)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(foreach)
+
+library(stringr)
+library(glmnet)
+
+library(ggplot2)
+library(gridExtra)
+library(grid)
+```
+
+
+# Data simulation 
+Data structure:  $O = (W, A, Z, Y)$ 
+
+ * U - exogenous variables  
+ * W - baseline covariate that is a measure of body condition  
+ * A - treatment level based on W, continuous between 0 and 5  
+ * Y - outcome, indicator of an event ?  
+   
+ Underlying data generating process, $P_{U,X}$
+ 
+* Exogenous variables:  
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$  
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 2^2)$  
+  + $U_Y \sim Uniform(min = 0, max = 1)$  
+  
+* Structural equations F and endogenous variables:  
+  + $W =  U_W$  
+  + $A = bound(2 - 0.5W + U_A, min=0, max=5)$  
+  + $Y = \mathbf{I}[U_Y < expit(W + 5*A  - 8)]$
+
+
+```{r}
+generate_data_1 <- function(n, a=NA){
+  # exogenous variables
+  U_W <- rnorm(n, 0, 1)
+  U_A <- rnorm(n, 0, 2)
+  U_Y <- runif(n, 0, 1)
+  
+  # endogenous variables
+  W <- U_W
+  
+  if(is.na(a)){
+    A <-  2 - 0.5*W + U_A
+    A[A<=0] = 0
+    A[A>=5] = 5
+  } else {
+    A <- rep(a, n)
+  }
+  
+  Y <- as.numeric(U_Y < plogis(W + 5*A  - 8))
+  
+  # data frame
+  O <- data.frame(W, A, Y)
+  return(O)
+}
+
+obs <- generate_data_1(n=10000)
+print(summary(obs))
+```
+
+
+# Calculate IC for beta
+```{r}
+set.seed(123)
+n = 100
+obs <- generate_data_1(n)
+
+glm_fit <- glm(formula = Y ~ W + A,
+               family = binomial,
+               data = obs)
+
+# 1. calculate score: X(Y - phi(X))
+X <- t(cbind(rep(1, n), as.matrix(obs %>% select(W,A)))) # dim: p * n
+Y <- t(as.matrix(obs %>% select(Y))) # dim: 1 * n
+Y_hat <- t(as.matrix(predict(glm_fit, type = "response")))  # dim: 1 * n
+score <- sweep(X, 2, (Y-Y_hat), `*`)
+
+# 2. calculate first derivative of phi:
+beta_n <- glm_fit$coef
+d_phi_scaler <- as.vector(exp(- beta_n %*% X) / ((1 - exp(- beta_n %*% X))^2))
+d_phi <- sweep(t(X), 1, d_phi_scaler, `*`)
+
+# 3. calculate fisher information: 
+fish_inf <- 1/(X %*% d_phi / n) # dim: p * p, same for every observation
+fish_inf
+
+# 4. calculate influence curves
+ICs <- fish_inf %*% score
+beta_var_hat <- apply(ICs, 1, var)/n
+beta_se_hat <- sqrt(beta_var_hat)
+
+# compare estimated se from calculated ICs and from glm_fit. 
+print(beta_se_hat)
+
+summary(glm_fit)
+```
+
+
+# Calculate IC for phi
+
+
