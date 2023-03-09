@@ -76,6 +76,44 @@ undersmooth_hal_fit <- function(n, X, Y, y_type, lambda_scaler){
 
 
 ########################
+# calculating efficient influence curves
+########################
+cal_IC_for_beta <- function(X, Y, Y_hat, beta_n){
+  n <- dim(X)[1] 
+  p <- length(beta_n)
+  if (!is.matrix(X)) X <- as.matrix(X)
+  
+  # 1. calculate score: X(Y - phi(X))
+  res <- Y-Y_hat
+  score <- sweep(X, 1, res, `*`)
+  
+  # 2. calculate the derivative of phi:
+  d_phi_scaler <- as.vector(exp(- beta_n %*% t(X)) / ((1 + exp(- beta_n %*% t(X)))^2))
+  d_phi <- sweep(X, 1, d_phi_scaler, `*`)
+  
+  # 3. E_{P_n}(X d_phi)^(-1)
+  tmat <- solve(t(X) %*% d_phi / n)
+  
+  # 4. calculate influence curves
+  IC <- t(tmat %*% t(score))
+  
+  return(IC)
+}
+
+cal_IC_for_phi <- function(X_new, beta_n, IC_beta){
+  
+  if (!is.matrix(X_new)) X_new <- as.matrix(X_new)
+  
+  d_phi_scaler_new <- as.vector(exp(- beta_n %*% t(X_new)) / ((1 + exp(- beta_n %*% t(X_new)))^2))
+  d_phi_new <- sweep(X_new, 1, d_phi_scaler_new, `*`)
+  
+  IC = diag(d_phi_new %*% t(IC_beta))
+  
+  return(IC)
+}
+
+
+########################
 # calculating ate
 ########################
 cal_ate_hal <- function(dgd_hal_fit, dgd_under_hal_fit,
