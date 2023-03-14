@@ -68,7 +68,6 @@ undersmooth_init <- function(X, Y, family = "gaussian"){
 #'  family for a generalized linear model. See more details in \code{fit_hal}.
 
 undersmooth_hal <- function(X,
-                            X_new = NULL,
                             Y,
                             fit_init,
                             basis_mat,
