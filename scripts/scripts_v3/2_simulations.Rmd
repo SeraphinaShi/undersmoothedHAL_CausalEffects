@@ -178,7 +178,7 @@ save.image(file=here("data", "rdata", "02_simulation_V3_1_200_psi0.RData"))
 
 ## n = 200
 ### CV HAL
-```{r simu_1_n200}
+```{r simu_1_1_n200}
 set.seed(123)
 nn=200
 
@@ -188,7 +188,7 @@ psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("
 
 
 #### results
-```{r simu_1_n200_rslt, fig.width=6, fig.height=4}
+```{r simu_sys1_1_n200_rslt, fig.width=6, fig.height=4}
 p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
 p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
@@ -200,7 +200,7 @@ p <- grid.arrange(p1, p0, nrow=1,
 ```
 
 #### 1000 repetition 
-```{r simu_B_n200_rslt, fig.width=6, fig.height=7}
+```{r simu_sys1_B_n200_rslt, fig.width=6, fig.height=7}
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
 cat("z=1:")
@@ -214,7 +214,7 @@ save.image(file=here("data", "rdata", "02_simulation_V3_1_200_CV.RData"))
 
 
 #### Undersmoothed HAL
-```{r simu_1_n200_u}
+```{r simu_sys1_1_n200_u}
 set.seed(123)
 n=200
 
@@ -223,7 +223,7 @@ psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), 
 ```
 
 #### results
-```{r simu_1_n200_rslt_u, fig.width=6, fig.height=4}
+```{r simu_sys1_1_n200_rslt_u, fig.width=6, fig.height=4}
 p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
 p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
@@ -235,7 +235,7 @@ p <- grid.arrange(p1, p0, nrow=1,
 ```
 
 #### 1000 repetition 
-```{r simu_B_n200_rslt_u, fig.width=6, fig.height=7}
+```{r simu_sys1_B_n200_rslt_u, fig.width=6, fig.height=7}
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
 cat("z=1:")
@@ -247,7 +247,7 @@ save.image(file=here("data", "rdata", "02_simulation_V3_1_200_U.RData"))
 
 
 ### Oevr a grid of lamba scalers
-```{r simu_B_n200_rslt_grid}
+```{r simu_sys1_B_n200_rslt_grid}
 set.seed(123)
 lambda_scalers <- c(1.2, 1.1, seq(from=1, to=0.02, length=28))
 simu_results_lists <- list()
@@ -260,7 +260,7 @@ simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
 save.image(file=here("data", "rdata", "02_simulation_V3_1_200_grid.RData"))
 ```
 
-```{r simu_B_n200_rslt_grid_05_1}
+```{r simu_sys1_B_n200_rslt_grid_05_1}
 plot_perforences_alllambda_1a(simu_results_all, a = 0.5, z = 1)
 ```
 
