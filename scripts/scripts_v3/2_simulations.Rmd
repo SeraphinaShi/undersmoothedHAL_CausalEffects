@@ -32,7 +32,7 @@ library(grid)
 ```
 
 ```{r setup, include = FALSE} 
-plotFolder <- here("results","images", "v2")
+plotFolder <- here("results","images", "v3", "i")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
 knitr::opts_chunk$set(
