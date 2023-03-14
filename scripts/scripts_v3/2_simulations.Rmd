@@ -32,12 +32,12 @@ library(grid)
 ```
 
 ```{r setup, include = FALSE} 
-plotFolder <- here("results","images", "v3", "i")
+plotFolder <- here("results","images", "v3")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
 knitr::opts_chunk$set(
   cache=FALSE, autodep=FALSE, warning=FALSE, message=FALSE, echo=FALSE,
-  results = 'markup', dev='png', dpi=150, fig.align = "center", fig.path=plotFolder,
+  results = 'markup', dev='png', dpi=150, fig.align = "center", fig.path=paste0(plotFolder, "/"),
   cache.path=".cache/",
   duplicate.label="allow"
 )
