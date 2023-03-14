@@ -171,7 +171,7 @@ p <- ggplot() +
 
 p
 
-save.image(file=here("data", "rdata", "02_simulation_V3_1_200_psi0.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_psi0.RData"))
 ```
 
 
@@ -208,7 +208,7 @@ p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, 
 cat("z=0:")
 p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F)
 
-save.image(file=here("data", "rdata", "02_simulation_V3_1_200_CV.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
 ```
 
 
@@ -242,7 +242,7 @@ cat("z=1:")
 p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F)
 cat("z=0:")
 p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F)
-save.image(file=here("data", "rdata", "02_simulation_V3_1_200_U.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
 ```
 
 
@@ -257,7 +257,7 @@ for(i in 1:length(lambda_scalers)){
 }
 simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
 
-save.image(file=here("data", "rdata", "02_simulation_V3_1_200_grid.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
 ```
 
 ```{r simu_sys1_B_n200_rslt_grid_05_1}
