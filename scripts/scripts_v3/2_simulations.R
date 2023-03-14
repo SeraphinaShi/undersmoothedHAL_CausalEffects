@@ -1,14 +1,4 @@
----
-title: "Simulations of estimating causal effects using undersmoothed HAL"
-author: "Seraphina Shi"
-date: "2022-09-06"
-output:
-  html_document:
-    toc: true
-    toc_float: true
----
-
-```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
+## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE----------------------------------------------------
 library(here)
 library(data.table)
 library(dplyr)
@@ -29,9 +19,9 @@ library(pROC)
 library(ggplot2)
 library(gridExtra)
 library(grid)
-```
 
-```{r setup, include = FALSE} 
+
+## ----setup, include = FALSE-------------------------------------------------------------------------------------------------
 plotFolder <- here("results","images", "v3")
 if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
 
@@ -44,33 +34,9 @@ knitr::opts_chunk$set(
 
 source(here("scripts", "scripts_v3", "1_simu_functions_hal9001.R"))
 source(here("scripts", "scripts_v3", "1_simu_functions.R"))
-```
-
-# Simulation #1
-Data structure:  $O = (W, A, Z, Y)$ 
-
- * U - exogenous variables  
- * W - baseline covariate that is a measure of body condition  
- * A - treatment level based on W, continuous between 0 and 5  
- * Z - intermediate curve based on W and A
- * Y - outcome, indicator of an event ?  
-   
- Underlying data generating process, $P_{U,X}$
- 
-* Exogenous variables:  
-  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$  
-  + $U_A \sim Normal(\mu=0, \sigma^2 = 2^2)$  
-  + $U_Z \sim Uniform(min = 0, max = 1)$  
-  + $U_Y \sim Uniform(min = 0, max = 1)$  
-  
-* Structural equations F and endogenous variables:  
-  + $W =  U_W$  
-  + $A = bound(2 - 0.5W + U_A, min=0, max=5)$  
-  + $Z = \mathbf{I}[U_Z < expit(2-W-A)]$
-  + $Y = \mathbf{I}[U_Y < expit(W + 5*A + Z - 0.5 * W * A - 8)]$
 
 
-```{r}
+## ---------------------------------------------------------------------------------------------------------------------------
 generate_data_1 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
@@ -131,10 +97,9 @@ y_preds <- predict(glm_fit, type = "response")
 mse <- sum((y_preds - obs$Y)^2)
 auc <- auc(obs$Y, y_preds)
 print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
-```
 
 
-```{r get_true_psis_1}
+## ----get_true_psis_1--------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 a_vec <- seq(0,5,0.1)
 psi0_a_0 <- c()
@@ -172,23 +137,17 @@ p <- ggplot() +
 p
 
 save.image(file=here("data", "rdata", "02_simulation_V3_1_200_psi0.RData"))
-```
 
 
-
-## n = 200
-### CV HAL
-```{r simu_1_n200}
+## ----simu_1_n200------------------------------------------------------------------------------------------------------------
 set.seed(123)
 nn=200
 
 results_200 <- run_simu_1round(generate_data_1, n=nn)
 psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
-```
 
 
-#### results
-```{r simu_1_n200_rslt, fig.width=6, fig.height=4}
+## ----simu_1_n200_rslt, fig.width=6, fig.height=4----------------------------------------------------------------------------
 p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
 p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
@@ -197,10 +156,9 @@ p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
 p <- grid.arrange(p1, p0, nrow=1,
                   top = textGrob(paste0("Average Treatment Effect,  E[Y|a,z] - E[Y|0,z]",
                                          gp=gpar(fontface = 'bold')))) # gp=gpar(fontsize=11, fontface = 'bold')
-```
 
-#### 1000 repetition 
-```{r simu_B_n200_rslt, fig.width=6, fig.height=7}
+
+## ----simu_B_n200_rslt, fig.width=6, fig.height=7----------------------------------------------------------------------------
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
 cat("z=1:")
@@ -209,21 +167,17 @@ cat("z=0:")
 p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F)
 
 save.image(file=here("data", "rdata", "02_simulation_V3_1_200_CV.RData"))
-```
 
 
-
-#### Undersmoothed HAL
-```{r simu_1_n200_u}
+## ----simu_1_n200_u----------------------------------------------------------------------------------------------------------
 set.seed(123)
 n=200
 
 results_200_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
 psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), by=c("a", "z"))
-```
 
-#### results
-```{r simu_1_n200_rslt_u, fig.width=6, fig.height=4}
+
+## ----simu_1_n200_rslt_u, fig.width=6, fig.height=4--------------------------------------------------------------------------
 p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
 p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
@@ -232,10 +186,9 @@ p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
 p <- grid.arrange(p1, p0, nrow=1,
                   top = textGrob(paste0("Average Treatment Effect,  E[Y|a,z] - E[Y|0,z]",
                                          gp=gpar(fontface = 'bold')))) # gp=gpar(fontsize=11, fontface = 'bold')
-```
 
-#### 1000 repetition 
-```{r simu_B_n200_rslt_u, fig.width=6, fig.height=7}
+
+## ----simu_B_n200_rslt_u, fig.width=6, fig.height=7--------------------------------------------------------------------------
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
 cat("z=1:")
@@ -243,11 +196,9 @@ p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, 
 cat("z=0:")
 p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F)
 save.image(file=here("data", "rdata", "02_simulation_V3_1_200_U.RData"))
-```
 
 
-### Oevr a grid of lamba scalers
-```{r simu_B_n200_rslt_grid}
+## ----simu_B_n200_rslt_grid--------------------------------------------------------------------------------------------------
 set.seed(123)
 lambda_scalers <- c(1.2, 1.1, seq(from=1, to=0.02, length=28))
 simu_results_lists <- list()
@@ -258,13 +209,12 @@ for(i in 1:length(lambda_scalers)){
 simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
 
 save.image(file=here("data", "rdata", "02_simulation_V3_1_200_grid.RData"))
-```
 
-```{r simu_B_n200_rslt_grid_05_1}
+
+## ----simu_B_n200_rslt_grid_05_1---------------------------------------------------------------------------------------------
 plot_perforences_alllambda_1a(simu_results_all, a = 0.5, z = 1)
-```
 
 
-```{r}
+## ---------------------------------------------------------------------------------------------------------------------------
 knitr::purl("2_simulations.Rmd")
-```
+
