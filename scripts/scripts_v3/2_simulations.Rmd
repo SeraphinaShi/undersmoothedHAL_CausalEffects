@@ -42,8 +42,8 @@ knitr::opts_chunk$set(
   duplicate.label="allow"
 )
 
-source(here("scripts", "scripts_v1", "1_simu_functions_hal9001.R"))
-source(here("scripts", "scripts_v1", "1_simu_functions.R"))
+source(here("scripts", "scripts_v3", "1_simu_functions_hal9001.R"))
+source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 ```
 
 # Simulation #1
@@ -170,50 +170,96 @@ p <- ggplot() +
               axis.text = element_text(size=7)) 
 
 p
+
+save.image(file=here("data", "rdata", "02_simulation_V3_1_200_psi0.RData"))
 ```
 
 
 
 ## n = 200
+### CV HAL
 ```{r simu_1_n200}
 set.seed(123)
-n=200
+nn=200
 
-results_200 <- run_simu_1round(generate_data_1, n=200)
-psi_10pnts <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
+results_200 <- run_simu_1round(generate_data_1, n=nn)
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
 ```
 
 
-### results
-```{r fig.width=8, fig.height=5}
-p <- ggplot(data=psi_10pnts %>% mutate(z = as.factor(z)), 
-            aes(x=a, y=psi_hat, ymin=CI_lwr, ymax=CI_upr,
-                  color=z, group=z),
-            alpha = 0.7) +
-      geom_line(data=psi0_pnt %>% mutate(z = as.factor(z)), 
-                aes(x=a, y=psi0, color=z, group=z),
-                alpha = 0.5) +
-      geom_errorbar(shape=24, width=0.7) +
-        geom_point(data=psi0_10pnt %>% mutate(z = as.factor(z)), 
-                 aes(x=a, y=psi0), color = "black") +
-        geom_point(shape=17, size=2) +
-      labs(x="a", y="ATE",
-          title = "Average Treatment Effect \n  E[Y|a,z] - E[Y|0,z]") +
-        theme(plot.title = element_text(hjust = 0.5), #size=8.6, 
-              #axis.title.y = element_blank(),
-              panel.grid.major.x = element_blank(),
-              #axis.text.y = element_text(size=8),
-              #axis.title.x = element_text(size=8),
-              axis.text = element_text(size=7),
-              legend.position="none")  +
-  facet_grid(~z)
+#### results
+```{r simu_1_n200_rslt, fig.width=6, fig.height=4}
+p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
+  labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
+p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
+  labs(title = "z=0") + theme(plot.title = element_text(hjust = 0.5))
 
-p
+p <- grid.arrange(p1, p0, nrow=1,
+                  top = textGrob(paste0("Average Treatment Effect,  E[Y|a,z] - E[Y|0,z]",
+                                         gp=gpar(fontface = 'bold')))) # gp=gpar(fontsize=11, fontface = 'bold')
 ```
 
 #### 1000 repetition 
-```{r}
+```{r simu_B_n200_rslt, fig.width=6, fig.height=7}
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
+cat("z=1:")
+p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F)
+cat("z=0:")
+p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F)
 
+save.image(file=here("data", "rdata", "02_simulation_V3_1_200_CV.RData"))
 ```
 
 
+
+#### Undersmoothed HAL
+```{r simu_1_n200_u}
+set.seed(123)
+n=200
+
+results_200_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), by=c("a", "z"))
+```
+
+#### results
+```{r simu_1_n200_rslt_u, fig.width=6, fig.height=4}
+p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
+  labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
+p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
+  labs(title = "z=0") + theme(plot.title = element_text(hjust = 0.5))
+
+p <- grid.arrange(p1, p0, nrow=1,
+                  top = textGrob(paste0("Average Treatment Effect,  E[Y|a,z] - E[Y|0,z]",
+                                         gp=gpar(fontface = 'bold')))) # gp=gpar(fontsize=11, fontface = 'bold')
+```
+
+#### 1000 repetition 
+```{r simu_B_n200_rslt_u, fig.width=6, fig.height=7}
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+cat("z=1:")
+p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F)
+cat("z=0:")
+p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F)
+save.image(file=here("data", "rdata", "02_simulation_V3_1_200_U.RData"))
+```
+
+
+### Oevr a grid of lamba scalers
+```{r simu_B_n200_rslt_grid}
+set.seed(123)
+lambda_scalers <- c(1.2, 1.1, seq(from=1, to=0.02, length=28))
+simu_results_lists <- list()
+for(i in 1:length(lambda_scalers)){
+  scaler = lambda_scalers[i]
+  simu_results_lists[[i]] <- run_simu_rep(generate_data_1, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
+}
+simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
+
+save.image(file=here("data", "rdata", "02_simulation_V3_1_200_grid.RData"))
+```
+
+```{r simu_B_n200_rslt_grid_05_1}
+plot_perforences_alllambda_1a(simu_results_all, a = 0.5, z = 1)
+```

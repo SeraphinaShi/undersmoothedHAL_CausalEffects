@@ -15,7 +15,11 @@ cal_IC_for_beta <- function(X, Y, Y_hat, beta_n){
   d_phi <- sweep(X, 1, d_phi_scaler, `*`)
   
   # 3. -E_{P_n}(X d_phi)^(-1)
-  tmat <- -solve(t(X) %*% d_phi / n)
+  tmat <- t(X) %*% d_phi / n
+  if(! is.matrix(try(solve(tmat), silent = TRUE))){
+    return(NA)
+  }
+  tmat <- -solve(tmat)
   
   # 4. calculate influence curves
   IC <- t(tmat %*% t(score))
@@ -64,7 +68,7 @@ cal_IC_for_ATE <- function(X_new_a, X_new_0, beta_n, IC_beta){
 
 # returns the estimated ATE and empirical 95% CI
 ##############################################################
-run_simu_1round <- function(gen_data_functions, n){
+run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmooth=F){
   obs <- gen_data_functions(n)
   
   y_name = "Y"
@@ -80,7 +84,20 @@ run_simu_1round <- function(gen_data_functions, n){
   CV_hal <- undersmooth_init(X, Y, family = y_type) # get CV_lambda from HAL_fit with 0 smoothness order
   CV_lambda <- CV_hal$fit_init$lambda_star
   
-  CV_hal_fit <- fit_hal(X = X,
+  if(undersmooth){
+    hal_undersmooth <- undersmooth_hal(X, Y,
+                                       fit_init = CV_hal$fit_init,
+                                       basis_mat = CV_hal$basis_mat,
+                                       family = y_type)
+    # print(paste0("CV lambda: ", round(CV_lambda,4), ";   undersmoothed lambda: ", hal_undersmooth$lambda_under))    
+    lambda = hal_undersmooth$lambda_under
+    lambda_scaler = lambda/CV_lambda
+  } else {
+    lambda = lambda_scaler * CV_lambda
+  }
+  
+  
+  hal_fit <- fit_hal(X = X,
                         Y = Y,
                         family = y_type,
                         return_x_basis = TRUE,
@@ -99,21 +116,26 @@ run_simu_1round <- function(gen_data_functions, n){
                           lambda.min.ratio = 1e-4,
                           prediction_bounds = "default"
                         ),
-                        lambda = CV_lambda
+                        lambda = lambda
   )
   
-  CV_coef <- CV_hal_fit$coefs
-  basis_mat <- cbind(1, as.matrix(CV_hal_fit$x_basis))
+  coef <- hal_fit$coefs
+  basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
   
-  nonzero_idx <- which(CV_coef != 0)
-  CV_coef_nonzero <- CV_coef[nonzero_idx]
+  nonzero_idx <- which(coef != 0)
+  coef_nonzero <- coef[nonzero_idx]
   basis_mat_nonzero <- as.matrix(basis_mat[, nonzero_idx])
   
   IC_beta <- cal_IC_for_beta(X = basis_mat_nonzero, 
                              Y = Y, 
-                             Y_hat = predict(CV_hal_fit, new_data = X, type = "response"),
-                             beta_n = CV_coef_nonzero
+                             Y_hat = predict(hal_fit, new_data = X, type = "response"),
+                             beta_n = coef_nonzero
   )
+  
+  if(any(is.na(IC_beta))){
+    # print("failed to calculate IC_beta because of the given basis matrix is not invertible")
+    return(NA)
+  }
   
   # calculate ATE
   psi_hat_10pnt = matrix(ncol = 6)
@@ -126,32 +148,34 @@ run_simu_1round <- function(gen_data_functions, n){
       X_new_0 <- X_new
       X_new_0$A = 0
       
-      Ya_hat <- predict(CV_hal_fit, new_data = X_new)
-      Y0_hat <- predict(CV_hal_fit, new_data = X_new_0)
+      Ya_hat <- predict(hal_fit, new_data = X_new)
+      Y0_hat <- predict(hal_fit, new_data = X_new_0)
       psi_hat <- mean(Ya_hat - Y0_hat)
       
       # efficient influence curve
-      x_basis_a <- make_design_matrix(as.matrix(X_new), CV_hal_fit$basis_list, p_reserve = 0.75)
+      x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
       x_basis_a_nonzero <- as.matrix(cbind(1, x_basis_a)[, nonzero_idx])
       
-      x_basis_0 <- make_design_matrix(as.matrix(X_new_0), CV_hal_fit$basis_list, p_reserve = 0.75)
+      x_basis_0 <- make_design_matrix(as.matrix(X_new_0), hal_fit$basis_list, p_reserve = 0.75)
       x_basis_0_nonzero <- as.matrix(cbind(1, x_basis_0)[, nonzero_idx])
       
       IC_ATE <- cal_IC_for_ATE(X_new_a = x_basis_a_nonzero, 
                                X_new_0 = x_basis_0_nonzero, 
-                               beta_n = CV_coef_nonzero, IC_beta = IC_beta)
+                               beta_n = coef_nonzero, IC_beta = IC_beta)
       
       # empirical SE and 95% confidence interval
       
       SE <- sqrt(var(IC_ATE)/n)
-      CI_lwr <- psi_hat - 1.96 * SE
-      CI_upr <- psi_hat + 1.96 * SE
+      ci_lwr <- psi_hat - 1.96 * SE
+      ci_upr <- psi_hat + 1.96 * SE
       
-      psi_hat_10pnt <- rbind(psi_hat_10pnt, matrix(c(a, z, psi_hat, SE, CI_lwr, CI_upr), nrow = 1))
+      psi_hat_10pnt <- rbind(psi_hat_10pnt, matrix(c(a, z, psi_hat, SE, ci_lwr, ci_upr), nrow = 1))
     }   
   }
   psi_hat_10pnt <- psi_hat_10pnt[-1, ]
-  colnames(psi_hat_10pnt) <- c("a", "z", "psi_hat", "SE", "CI_lwr", "CI_upr")
+  colnames(psi_hat_10pnt) <- c("a", "z", "psi_hat", "SE", "ci_lwr", "ci_upr")
+  
+  psi_hat_10pnt <- cbind(psi_hat_10pnt, lambda, CV_lambda, lambda_scaler)
   
   return(psi_hat_10pnt)
 }
@@ -161,7 +185,137 @@ run_simu_1round <- function(gen_data_functions, n){
 # This function runs the simulation for B rounds with given:
 #       - data generating function
 #       - sample size n
+#       - number of simulations: B
 
-# returns the estimated ATE and empirical 95% CI
+# returns the estimated ATE, empirical 95% CI, and coverage rates
 ##############################################################
-run_simu_Bround
+run_simu_rep <- function(gen_data_functions, n, B, lambda_scaler=1, undersmooth=F, return_all_rslts = F){
+  result_list <- list()
+  for(b in 1:B){
+    result_list[[b]] <- run_simu_1round(gen_data_functions, n=n, lambda_scaler, undersmooth)
+  }
+  result_all <-  do.call("rbind", result_list) %>% as.data.frame()
+  result_all <- merge(as.data.frame(psi0_10pnt), result_all, by=c("a", "z"))
+  result_summary <- result_all %>% 
+    mutate(bias = abs(psi_hat - psi0),
+           bias_se_ratio = bias / SE,
+           cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+    group_by(a, z) %>% 
+    summarise(across(everything(), mean)) %>% 
+    ungroup()
+  
+  if(return_all_rslts){
+    return(list(result_summary = result_summary,
+                all_results = result_list))
+  } else {
+    return(result_summary)
+  }
+}
+
+
+
+##############################################################
+# This function runs the simulation for B rounds with given:
+#       - data generating function
+#       - sample size n
+#       - number of simulations: B
+
+# returns the estimated ATE, empirical 95% CI, and coverage rates
+##############################################################
+plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_list=F){
+  
+  df <- df %>% filter(z==z_para)
+  
+  color = ifelse(z_para==1, "#F8766D", "#00BFC4")
+  p_est_avg <- ggplot(data=df, aes(x=a)) +
+    geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
+    geom_errorbar(aes(ymin=ci_lwr, ymax=ci_upr), width=0.7, color=color) +
+    geom_point(aes(y=psi0), color = "black") +
+    geom_point(aes(y=psi_hat), shape=17, size=2, color=color) +
+    labs(x="a", y="ATE", title = "Estimation") 
+
+  
+  if(est_plot_only){
+    return(p_est_avg + labs(title=""))
+  } else {
+    p_bias <- ggplot(df, aes(x = a, y = bias)) +  
+      geom_line(color=color) +
+      geom_point(color=color) + 
+      labs(title="|Bias|") 
+    
+    p_se <- ggplot(df, aes(x = a, y = SE)) +  
+      geom_line(color=color) +
+      geom_point(color=color) + 
+      labs(title="Standard Error") 
+    
+    p_bias_d_df <- ggplot(df, aes(x = a, y = bias_se_ratio)) +  
+      geom_line(color=color) + 
+      geom_point(color=color) + 
+      labs(title="|Bias| / Standard Error") 
+    
+    p_cr <- ggplot(df, aes(x = a, y = cover_rate)) +  
+      geom_line(color=color) + 
+      geom_point(color=color) +
+      labs(title="95% CI Coverage Rate")
+    
+    if(plot_list){
+      return(list(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr))
+    } else {
+      p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr,
+                        layout_matrix = rbind(c(NA,1,1,NA),
+                                              c(NA,1,1,NA),
+                                              c(2,2,3,3),
+                                              c(2,2,3,3),
+                                              c(4,4,5,5),
+                                              c(4,4,5,5)),
+                        top = textGrob(paste0("HAL-based plug in estimator performence for ATE"), 
+                                       gp=gpar(fontsize=11, fontface = 'bold')))
+      return(p)
+    }
+  }
+
+}
+
+
+
+
+plot_perforences_alllambda_1a <- function(df, a_para, z_para){
+  df <- df %>% filter(a == a_para, z == z_para)
+  
+  p_est_avg <- ggplot(df) +  
+    geom_point(aes(x = lambda_scaler, y = psi_hat)) + 
+    geom_hline(aes(yintercept=psi0)) +
+    labs(title="Estimation average") +
+    theme()
+  
+  p_bias <- ggplot(df, aes(x = lambda_scaler, y = bias)) +  
+    geom_point() + 
+    labs(title="Bias") 
+  
+  p_se <- ggplot(df, aes(x = lambda_scaler, y = SE)) +  
+    geom_point() + 
+    labs(title="Standard Error") 
+  
+  p_bias_d_df <- ggplot(df, 
+                        aes(x = lambda_scaler, y = bias_se_ratio)) +  
+    geom_point() + 
+    labs(title="|Bias| / Standard Error") 
+  
+  p_cr <- ggplot(df, 
+                 aes(x = lambda_scaler, y = cover_rate)) +  
+    geom_point() + 
+    geom_line() + 
+    labs(title="Coverage rate") 
+  
+  p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr,
+                    layout_matrix = rbind(c(NA,1,1,NA),
+                                          c(NA,1,1,NA),
+                                          c(2,2,3,3),
+                                          c(2,2,3,3),
+                                          c(4,4,5,5),
+                                          c(4,4,5,5)),
+                    top = textGrob(paste0("HAL-based plug in estimator performence for a=", a_para, ", z=", z_para), 
+                                   gp=gpar(fontsize=11, fontface = 'bold')))
+  return(p)
+}
+
