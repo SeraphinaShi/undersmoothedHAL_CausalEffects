@@ -244,16 +244,17 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
   
   color = ifelse(z_para==1, "#F8766D", "#00BFC4")
   oracal_color = ifelse(z_para==1, "#F564E3", "#00BA38")
-  
+
   p_est_avg <- ggplot(data=df, aes(x=a)) +
     geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
     geom_errorbar(aes(ymin=ci_lwr, ymax=ci_upr, color='Empirical'), width=0.7) +
     geom_point(aes(y=psi0), color = "black") +
     geom_point(aes(y=psi_hat, color='Empirical'), shape=17, size=2) +
     labs(x="a", y="ATE", title = "Estimation") +
-    scale_color_manual(# name='Color',
+    scale_color_manual(name='Method',
       breaks=c('Empirical', 'Oracal'),
-      values=c('Empirical'=color, 'Oracal'=oracal_color))
+      values=c('Empirical'=color, 'Oracal'=oracal_color)) +
+    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
 
   if(add_oracal){
     p_est_avg <- p_est_avg + 
@@ -292,7 +293,7 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
         geom_point(aes(y = SE, color='Empirical'),alpha=0.7) + 
         geom_line(aes(y = oracal_SE, color='Oracal'),alpha=0.7) +
         geom_point(aes(y = oracal_SE, color='Oracal'),alpha=0.7) + 
-        scale_color_manual(# name='Color',
+        scale_color_manual(name='Method',
           breaks=c('Empirical', 'Oracal'),
           values=c('Empirical'=color, 'Oracal'=oracal_color)) + 
         theme(legend.position='none') +
@@ -304,7 +305,7 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
         geom_point(aes(y = bias_se_ratio, color='Empirical'), alpha=0.7) + 
         geom_line(aes(y = oracal_bias_se_ratio, color='Oracal'), alpha=0.7) +
         geom_point(aes(y = oracal_bias_se_ratio, color='Oracal'), alpha=0.7) + 
-        scale_color_manual(# name='Color',
+        scale_color_manual(name='Method',
           breaks=c('Empirical', 'Oracal'),
           values=c('Empirical'=color, 'Oracal'=oracal_color)) + 
         theme(legend.position='none') +
@@ -315,7 +316,7 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
         geom_point(aes(y = cover_rate, color='Empirical'), alpha=0.7) + 
         geom_line(aes(y = oracal_cover_rate, color='Oracal'), alpha=0.7) +
         geom_point(aes(y = oracal_cover_rate, color='Oracal'), alpha=0.7) + 
-        scale_color_manual(# name='Color',
+        scale_color_manual(name='Method',
           breaks=c('Empirical', 'Oracal'),
           values=c('Empirical'=color, 'Oracal'=oracal_color)) + 
         theme(legend.position='none') +
@@ -326,16 +327,16 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
     if(plot_list){
       return(list(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr))
     } else {
-      p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr,
-                        layout_matrix = rbind(c(NA,1,1,NA),
-                                              c(NA,1,1,NA),
-                                              c(2,2,3,3),
-                                              c(2,2,3,3),
-                                              c(4,4,5,5),
-                                              c(4,4,5,5)),
-                        top = textGrob(paste0("HAL-based plug in estimator performence for ATE"), 
-                                       gp=gpar(fontsize=11, fontface = 'bold')))
-      return(p)
+      p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr, legend,
+                          layout_matrix = rbind(c(NA,1,1,NA),
+                                                c(NA,1,1,6),
+                                                c(2,2,3,3),
+                                                c(2,2,3,3),
+                                                c(4,4,5,5),
+                                                c(4,4,5,5)),
+                          top = textGrob(paste0("HAL-based plug in estimator performence for ATE"), 
+                                         gp=gpar(fontsize=11, fontface = 'bold')))
+        return(p)
     }
   }
 
@@ -364,19 +365,56 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     geom_point() + 
     labs(title="Standard Error") 
   
-  p_bias_d_df <- ggplot(df, aes(x = lambda_scaler, y = bias_se_ratio)) + 
-    geom_line(color = "grey") + 
-    geom_point() + 
-    labs(title="|Bias| / Standard Error") 
+  p_se <- ggplot(df, aes(x = lambda_scaler)) +  
+    geom_line(aes(y = SE), color = "grey") + 
+    geom_point(aes(y = SE, color = "Empirical")) + 
+    labs(title="Standard Error") + 
+    scale_color_manual(name='method',
+                       breaks=c('Empirical', 'Oracal'),
+                       values=c('Empirical'='black', 'Oracal'='#8B6508'))
+
   
-  p_cr <- ggplot(df, aes(x = lambda_scaler, y = cover_rate)) +  
-    geom_line(color = "grey") + 
-    geom_point() + 
-    labs(title="Coverage rate") 
+  p_bias_d_df <- ggplot(df, aes(x = lambda_scaler)) + 
+    geom_line(aes(y = bias_se_ratio), color = "grey") + 
+    geom_point(aes(y = bias_se_ratio, color = "Empirical")) + 
+    labs(title="|Bias| / Standard Error") + 
+    scale_color_manual(name='method',
+                       breaks=c('Empirical', 'Oracal'),
+                       values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
+    theme(legend.position='none') 
   
-  p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr,
+  p_cr <- ggplot(df, aes(x = lambda_scaler)) +  
+    geom_line(aes(y = cover_rate), color = "grey") + 
+    geom_point(aes(y = cover_rate, color = "Empirical")) + 
+    labs(title="Coverage rate") + 
+    scale_color_manual(name='method',
+                       breaks=c('Empirical', 'Oracal'),
+                       values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
+    theme(legend.position='none')  
+  
+  if(!add_oracal){
+    legend <- get_legend(p_se)
+    p_se <- p_se + theme(legend.position='none')
+  } else {
+    p_se <- p_se + 
+      geom_line(aes(y = oracal_SE), color = "#EEC591") + 
+      geom_point(aes(y = oracal_SE, color = "Oracal")) 
+    
+    legend <- get_legend(p_se)
+    p_se <- p_se + theme(legend.position='none')
+    
+    p_bias_d_df <- p_bias_d_df +  
+      geom_line(aes(y = oracal_bias_se_ratio), color = "#EEC591") + 
+      geom_point(aes(y = oracal_bias_se_ratio, color = "Oracal")) 
+    
+    p_cr <- p_cr +  
+      geom_line(aes(y = oracal_cover_rate), color = "#EEC591") + 
+      geom_point(aes(y = oracal_cover_rate, color = "Oracal")) 
+  }
+  
+  p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr, legend, 
                     layout_matrix = rbind(c(NA,1,1,NA),
-                                          c(NA,1,1,NA),
+                                          c(NA,1,1,6),
                                           c(2,2,3,3),
                                           c(2,2,3,3),
                                           c(4,4,5,5),

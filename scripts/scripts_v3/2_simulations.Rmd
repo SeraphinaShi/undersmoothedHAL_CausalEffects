@@ -71,7 +71,7 @@ Data structure:  $O = (W, A, Z, Y)$
   + $Y = \mathbf{I}[U_Y < expit(W + 5*A + Z - 0.5 * W * A - 8)]$
 
 
-```{r simu_sys1_check}
+```{r check_sys1}
 generate_data_1 <- function(n, a=NA, z=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
@@ -135,7 +135,7 @@ print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
 ```
 
 
-```{r get_true_psis_1}
+```{r true_psi_sys1}
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 a_vec <- seq(0,5,0.1)
@@ -184,22 +184,26 @@ p
 
 
 ## n = 200
-### CV HAL
-```{r simu_1_1_n200}
-set.seed(123)
+```{r simu_sys1_n200}
 nn=200
-
-# load(here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
-results_200 <- run_simu_1round(generate_data_1, n=nn)
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
 ```
 
+
+### CV HAL
 ```{r}
-cat(paste0("CV selected lambda (from one sample): ", unique(psi_10pnt$lambda)))
+# load(here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
 ```
 
 #### results
-```{r simu_sys1_1_n200_rslt, fig.width=6, fig.height=4}
+```{r simu_sys1_n200_1_cv, fig.width=6, fig.height=4}
+set.seed(123)
+results_200 <- run_simu_1round(generate_data_1, n=nn)
+
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
+
+cat(paste0("CV selected lambda (from one sample): ", unique(psi_10pnt$lambda)))
+
+
 p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
 p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
@@ -211,13 +215,13 @@ p <- grid.arrange(p1, p0, nrow=1,
 ```
 
 #### 1000 repetition 
-```{r}
-cat(paste0("The average of CV selected lambdas (from 1000 sample): ", unique(simu_results$result_summary$lambda)))
-```
 
-```{r simu_sys1_B_n200_rslt, fig.width=6, fig.height=7}
+```{r simu_sys1_n200_B_cv, fig.width=6, fig.height=7}
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
+cat(paste0("The average of CV selected lambdas (from 1000 sample): ", unique(simu_results$result_summary$lambda)))
+
+
 cat("z=1:")
 p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F, add_oracal=T)
 cat("z=0:")
@@ -228,22 +232,20 @@ save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
 
 
 
-#### Undersmoothed HAL
-```{r simu_sys1_1_n200_u}
-set.seed(123)
-n=200
-# load(here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
-results_200_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), by=c("a", "z"))
-```
-
-
+### Globally Undersmoothed HAL
 ```{r}
-cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
+# load(here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
 ```
 
 #### results
-```{r simu_sys1_1_n200_rslt_u, fig.width=6, fig.height=4}
+```{r simu_sys1_n200_1_u, fig.width=6, fig.height=4}
+set.seed(123)
+results_200_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), by=c("a", "z"))
+cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
+
+
 p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
 p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
@@ -255,16 +257,12 @@ p <- grid.arrange(p1, p0, nrow=1,
 ```
 
 #### 1000 repetition 
-```{r}
+```{r simu_sys1_n200_B_u, fig.width=6, fig.height=7}
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
 cat(paste0("The average of unsersmoothed lambda (from 1000 sample): ", unique(simu_results$result_summary$lambda),
            "\n which is ", unique(simu_results$result_summary$lambda_scaler), " * the average of 1000 lambda_CV"))
 
-```
-
-
-```{r simu_sys1_B_n200_rslt_u, fig.width=6, fig.height=7}
-set.seed(123)
-simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
 cat("z=1:")
 p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F, add_oracal=T)
 cat("z=0:")
@@ -273,11 +271,13 @@ save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
 ```
 
 
-### Oevr a grid of lamba scalers
-```{r simu_sys1_B_n200_rslt_grid}
+### Oevr a grid of lambda scalers
+```{r simu_sys1_n200_B_grid}
 set.seed(123)
+
 lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
 # lambda_scalers <- c(1.2, 1.1, seq(from=1, to=0.001, length=28))
+
 simu_results_lists <- list()
 for(i in 1:length(lambda_scalers)){
   scaler = lambda_scalers[i]
@@ -289,22 +289,22 @@ save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
 ```
 
 
-<!-- ```{r simu_sys1_B_n200_rslt_grid_05_1, fig.height=5.5, fig.width=5.5} -->
-<!-- # load(here("data", "rdata", "02_simu_V3_sys1_200_grid.RData")) -->
-<!-- plot_perforences_alllambda_1a(simu_results_all, a = 0.5, z = 1) -->
-<!-- ``` -->
+```{r simu_sys1_n200_B_grid_05_1, fig.height=5.5, fig.width=5.5}
+# load(here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
+plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T)
+```
 
-<!-- ```{r simu_sys1_B_n200_rslt_grid_05_0, fig.height=5.5, fig.width=5.5} -->
-<!-- plot_perforences_alllambda_1a(simu_results_all, a = 0.5, z = 0) -->
-<!-- ``` -->
+```{r simu_sys1_n200_B_grid_05_0, fig.height=5.5, fig.width=5.5}
+plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 0, add_oracal=T)
+```
 
-<!-- ```{r simu_sys1_B_n200_rslt_grid_5_1, fig.height=5.5, fig.width=5.5} -->
-<!-- plot_perforences_alllambda_1a(simu_results_all, a = 5, z = 1) -->
-<!-- ``` -->
+```{r simu_sys1_n200_B_grid_5_1, fig.height=5.5, fig.width=5.5}
+plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 1, add_oracal=T)
+```
 
-<!-- ```{r simu_sys1_B_n200_rslt_grid_5_0, fig.height=5.5, fig.width=5.5} -->
-<!-- plot_perforences_alllambda_1a(simu_results_all, a = 5, z = 0) -->
-<!-- ``` -->
+```{r simu_sys1_n200_B_grid_5_0, fig.height=5.5, fig.width=5.5}
+plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 0, add_oracal=T)
+```
 
 ```{r}
 # knitr::purl("2_simulations.Rmd")
