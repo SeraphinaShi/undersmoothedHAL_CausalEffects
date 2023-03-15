@@ -183,23 +183,23 @@ p
 
 
 
-## n = 200
-```{r simu_sys1_n200}
-nn=200
+## n = 50
+```{r simu_sys1_n50}
+nn=50
 ```
 
 
 ### CV HAL
 ```{r}
-# load(here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
+# load(here("data", "rdata", "02_simu_V3_sys1_50_CV.RData"))
 ```
 
 #### results
-```{r simu_sys1_n200_1_cv, fig.width=6, fig.height=4}
+```{r simu_sys1_n50_1_cv, fig.width=6, fig.height=4}
 set.seed(123)
-results_200 <- run_simu_1round(generate_data_1, n=nn)
+results_50 <- run_simu_1round(generate_data_1, n=nn)
 
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_50), by=c("a", "z"))
 
 cat(paste0("CV selected lambda (from one sample): ", unique(psi_10pnt$lambda)))
 
@@ -216,7 +216,7 @@ p <- grid.arrange(p1, p0, nrow=1,
 
 #### 1000 repetition 
 
-```{r simu_sys1_n200_B_cv, fig.width=6, fig.height=7}
+```{r simu_sys1_n50_B_cv, fig.width=6, fig.height=7}
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
 cat(paste0("The average of CV selected lambdas (from 1000 sample): ", unique(simu_results$result_summary$lambda)))
@@ -227,22 +227,22 @@ p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, 
 cat("z=0:")
 p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F, add_oracal=T)
 
-save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_50_CV.RData"))
 ```
 
 
 
 ### Globally Undersmoothed HAL
 ```{r}
-# load(here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
+# load(here("data", "rdata", "02_simu_V3_sys1_50_U.RData"))
 ```
 
 #### results
-```{r simu_sys1_n200_1_u, fig.width=6, fig.height=4}
+```{r simu_sys1_n50_1_u, fig.width=6, fig.height=4}
 set.seed(123)
-results_200_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+results_50_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
 
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), by=c("a", "z"))
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_50_under), by=c("a", "z"))
 cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
 
 
@@ -257,7 +257,7 @@ p <- grid.arrange(p1, p0, nrow=1,
 ```
 
 #### 1000 repetition 
-```{r simu_sys1_n200_B_u, fig.width=6, fig.height=7}
+```{r simu_sys1_n50_B_u, fig.width=6, fig.height=7}
 set.seed(123)
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
 cat(paste0("The average of unsersmoothed lambda (from 1000 sample): ", unique(simu_results$result_summary$lambda),
@@ -267,12 +267,12 @@ cat("z=1:")
 p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F, add_oracal=T)
 cat("z=0:")
 p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F, add_oracal=T)
-save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_50_U.RData"))
 ```
 
 
 ### Oevr a grid of lambda scalers
-```{r simu_sys1_n200_B_grid}
+```{r simu_sys1_n50_B_grid}
 set.seed(123)
 
 lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
@@ -285,24 +285,24 @@ for(i in 1:length(lambda_scalers)){
 }
 simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
 
-save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_50_grid.RData"))
 ```
 
 
-```{r simu_sys1_n200_B_grid_05_1, fig.height=5.5, fig.width=5.5}
-# load(here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
+```{r simu_sys1_n50_B_grid_05_1, fig.height=5.5, fig.width=5.5}
+# load(here("data", "rdata", "02_simu_V3_sys1_50_grid.RData"))
 plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T)
 ```
 
-```{r simu_sys1_n200_B_grid_05_0, fig.height=5.5, fig.width=5.5}
+```{r simu_sys1_n50_B_grid_05_0, fig.height=5.5, fig.width=5.5}
 plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 0, add_oracal=T)
 ```
 
-```{r simu_sys1_n200_B_grid_5_1, fig.height=5.5, fig.width=5.5}
+```{r simu_sys1_n50_B_grid_5_1, fig.height=5.5, fig.width=5.5}
 plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 1, add_oracal=T)
 ```
 
-```{r simu_sys1_n200_B_grid_5_0, fig.height=5.5, fig.width=5.5}
+```{r simu_sys1_n50_B_grid_5_0, fig.height=5.5, fig.width=5.5}
 plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 0, add_oracal=T)
 ```
 
