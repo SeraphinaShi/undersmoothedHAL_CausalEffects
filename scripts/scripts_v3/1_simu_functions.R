@@ -243,7 +243,7 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
   df <- df %>% filter(z==z_para)
   
   color = ifelse(z_para==1, "#F8766D", "#00BFC4")
-  oracal_color = ifelse(z_para==1, "#F564E3", "#00BA38")
+  oracal_color = ifelse(z_para==1,"#00BA38", "#F564E3")
 
   p_est_avg <- ggplot(data=df, aes(x=a)) +
     geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
@@ -353,17 +353,14 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     geom_point(aes(x = lambda_scaler, y = psi_hat)) + 
     geom_hline(aes(yintercept=psi0)) +
     labs(title="Estimation average") +
-    theme()
+    theme()+
+    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
   
   p_bias <- ggplot(df, aes(x = lambda_scaler, y = bias)) +  
     geom_line(color = "grey") + 
     geom_point() + 
-    labs(title="Bias") 
-  
-  p_se <- ggplot(df, aes(x = lambda_scaler, y = SE)) +  
-    geom_line(color = "grey") + 
-    geom_point() + 
-    labs(title="Standard Error") 
+    labs(title="Bias") +
+    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
   
   p_se <- ggplot(df, aes(x = lambda_scaler)) +  
     geom_line(aes(y = SE), color = "grey") + 
@@ -371,7 +368,8 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     labs(title="Standard Error") + 
     scale_color_manual(name='method',
                        breaks=c('Empirical', 'Oracal'),
-                       values=c('Empirical'='black', 'Oracal'='#8B6508'))
+                       values=c('Empirical'='black', 'Oracal'='#8B6508'))+
+    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
 
   
   p_bias_d_df <- ggplot(df, aes(x = lambda_scaler)) + 
@@ -381,7 +379,8 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     scale_color_manual(name='method',
                        breaks=c('Empirical', 'Oracal'),
                        values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
-    theme(legend.position='none') 
+    theme(legend.position='none') +
+    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
   
   p_cr <- ggplot(df, aes(x = lambda_scaler)) +  
     geom_line(aes(y = cover_rate), color = "grey") + 
@@ -390,7 +389,8 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     scale_color_manual(name='method',
                        breaks=c('Empirical', 'Oracal'),
                        values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
-    theme(legend.position='none')  
+    theme(legend.position='none')  +
+    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
   
   if(!add_oracal){
     legend <- get_legend(p_se)
