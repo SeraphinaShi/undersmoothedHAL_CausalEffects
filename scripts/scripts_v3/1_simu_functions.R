@@ -81,43 +81,55 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
     mutate_if(sapply(., is.factor), as.numeric)
   
   # fitting HAL
-  CV_hal <- undersmooth_init(X, Y, family = y_type) # get CV_lambda from HAL_fit with 0 smoothness order
-  CV_lambda <- CV_hal$fit_init$lambda_star
-  
-  if(undersmooth){
-    hal_undersmooth <- undersmooth_hal(X, Y,
-                                       fit_init = CV_hal$fit_init,
-                                       basis_mat = CV_hal$basis_mat,
-                                       family = y_type)
-    # print(paste0("CV lambda: ", round(CV_lambda,4), ";   undersmoothed lambda: ", hal_undersmooth$lambda_under))    
-    lambda = hal_undersmooth$lambda_under
-    lambda_scaler = lambda/CV_lambda
-  } else {
-    lambda = lambda_scaler * CV_lambda
-  }
-  
-  
-  hal_fit <- fit_hal(X = X,
-                        Y = Y,
-                        family = y_type,
-                        return_x_basis = TRUE,
-                        num_knots = hal9001:::num_knots_generator(
-                          max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                          smoothness_orders = 1,
-                          base_num_knots_0 = 20,
-                          base_num_knots_1 = 20
-                          #ceiling(sqrt(n))
-                        ),
-                        fit_control = list(
-                          cv_select = FALSE,
-                          n_folds = 10,
-                          foldid = NULL,
-                          use_min = TRUE,
-                          lambda.min.ratio = 1e-4,
-                          prediction_bounds = "default"
-                        ),
-                        lambda = lambda
+  CV_hal <- fit_hal(X = X, Y = Y, family = y_type,
+                    return_x_basis = TRUE,
+                    num_knots = hal9001:::num_knots_generator(
+                      max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                      smoothness_orders = 1,
+                      base_num_knots_0 = 20,
+                      base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                      )
   )
+  
+  if((!undersmooth) & lambda_scaler == 1){
+    hal_fit <- CV_hal
+    lambda = CV_hal$lambda_star
+  } else {
+    if(undersmooth){
+      
+      CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
+      CV_basis_mat <- as.matrix(CV_hal$x_basis)
+      CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+      
+      hal_undersmooth <- undersmooth_hal(X, Y,
+                                         fit_init = CV_hal,
+                                         basis_mat = CV_basis_mat,
+                                         family = y_type)
+      lambda = hal_undersmooth$lambda_under
+    } else {
+      lambda = lambda_scaler * CV_hal$lambda_star
+    }
+    
+    hal_fit <- fit_hal(X = X, Y = Y, family = y_type,
+                       return_x_basis = TRUE,
+                       num_knots = hal9001:::num_knots_generator(
+                         max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                         smoothness_orders = 1,
+                         base_num_knots_0 = 20, #200
+                         base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                       ),
+                       fit_control = list(
+                         cv_select = FALSE,
+                         n_folds = 10,
+                         foldid = NULL,
+                         use_min = TRUE,
+                         lambda.min.ratio = 1e-4,
+                         prediction_bounds = "default"
+                       ),
+                       lambda = lambda
+    )
+
+  } 
   
   coef <- hal_fit$coefs
   basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
