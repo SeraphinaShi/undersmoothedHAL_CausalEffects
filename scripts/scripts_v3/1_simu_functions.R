@@ -90,10 +90,11 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
                       base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
                       )
   )
+  CV_lambda <- CV_hal$lambda_star
   
   if((!undersmooth) & lambda_scaler == 1){
     hal_fit <- CV_hal
-    lambda = CV_hal$lambda_star
+    lambda = CV_lambda
   } else {
     if(undersmooth){
       
@@ -107,7 +108,7 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
                                          family = y_type)
       lambda = hal_undersmooth$lambda_under
     } else {
-      lambda = lambda_scaler * CV_hal$lambda_star
+      lambda = lambda_scaler * CV_lambda
     }
     
     hal_fit <- fit_hal(X = X, Y = Y, family = y_type,
@@ -222,15 +223,6 @@ run_simu_rep <- function(gen_data_functions, n, B, lambda_scaler=1, undersmooth=
            oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
     summarise(across(everything(), mean)) %>% 
     ungroup()
-    
-  # result_summary <- result_all %>% 
-  #   filter(SE != 0) %>% 
-  #   mutate(bias = abs(psi_hat - psi0),
-  #          bias_se_ratio = bias / SE,
-  #          cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-  #   group_by(a, z) %>% 
-  #   summarise(across(everything(), mean)) %>% 
-  #   ungroup()
   
   if(return_all_rslts){
     return(list(result_summary = result_summary,
