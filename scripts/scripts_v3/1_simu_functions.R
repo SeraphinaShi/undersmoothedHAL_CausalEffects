@@ -107,6 +107,33 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
                                          basis_mat = CV_basis_mat,
                                          family = y_type)
       lambda = hal_undersmooth$lambda_under
+      
+      while(is.na(lambda)){
+        print("  Since the learned undersmoothed lambda is NA, refitting lambdas.")
+        
+        CV_hal <- fit_hal(X = X, Y = Y, family = y_type,
+                          return_x_basis = TRUE,
+                          num_knots = hal9001:::num_knots_generator(
+                            max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                            smoothness_orders = 1,
+                            base_num_knots_0 = 20,
+                            base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                          )
+        )
+        CV_lambda <- CV_hal$lambda_star
+        
+        CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
+        CV_basis_mat <- as.matrix(CV_hal$x_basis)
+        CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+        
+        hal_undersmooth <- undersmooth_hal(X, Y,
+                                           fit_init = CV_hal,
+                                           basis_mat = CV_basis_mat,
+                                           family = y_type)
+        lambda = hal_undersmooth$lambda_under
+      }
+      
+      
     } else {
       lambda = lambda_scaler * CV_lambda
     }

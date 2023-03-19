@@ -1,7 +1,7 @@
 ---
 title: "Simulations of estimating causal effects using undersmoothed HAL"
 author: "Seraphina Shi"
-date: "2022-09-06"
+date: "2023-03-17"
 output:
   html_document:
     toc: true
@@ -262,7 +262,10 @@ p <- grid.arrange(p1, p0, nrow=1,
 #### 1000 repetition 
 ```{r simu_sys1_n50_B_u, fig.width=6, fig.height=7}
 set.seed(123)
+
 simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+
+
 cat(paste0("The average of unsersmoothed lambda (from 1000 sample): ", unique(simu_results$result_summary$lambda),
            "\n which is ", unique(simu_results$result_summary$lambda_scaler), " * the average of 1000 lambda_CV"))
 

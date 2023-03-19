@@ -1,7 +1,7 @@
 ---
 title: "Simulations of estimating causal effects using undersmoothed HAL"
 author: "Seraphina Shi"
-date: "2022-09-06"
+date: "2023-03-17"
 output:
   html_document:
     toc: true
