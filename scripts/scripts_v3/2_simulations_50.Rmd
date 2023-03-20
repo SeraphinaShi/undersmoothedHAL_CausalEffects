@@ -192,7 +192,7 @@ nn=50
 ### CV HAL
 ```{r}
 # load(here("data", "rdata", "02_simu_V3_sys1_50_CV.RData"))
-source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 ```
 
 #### results
@@ -231,7 +231,12 @@ p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, 
 save.image(file=here("data", "rdata", "02_simu_V3_sys1_50_CV.RData"))
 ```
 
-
+```{r simu_sys1_n50_B_cv_qq, fig.width=6, fig.height=4}
+p1 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 1)
+p1
+p0 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 0)
+p0
+```
 
 ### Globally Undersmoothed HAL
 ```{r}
@@ -276,11 +281,17 @@ p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, 
 save.image(file=here("data", "rdata", "02_simu_V3_sys1_50_U.RData"))
 ```
 
+```{r simu_sys1_n50_B_u_qq, fig.width=6, fig.height=4}
+p1 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 1)
+p1
+p0 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 0)
+p0
+```
 
 ### Oevr a grid of lambda scalers
 ```{r}
-load(here("data", "rdata", "02_simu_V3_sys1_50_grid.RData"))
-source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+# load(here("data", "rdata", "02_simu_V3_sys1_50_grid.RData"))
+# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 ```
 
 ```{r simu_sys1_n50_B_grid}
@@ -307,7 +318,7 @@ plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_or
 
 
 ```{r simu_sys1_n50_B_grid_15_1, fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 1.5, z_para = 1, add_oracal=T)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 2.5, z_para = 1, add_oracal=T)
 ```
 
 ```{r simu_sys1_n50_B_grid_5_1, fig.height=5.5, fig.width=5.5}

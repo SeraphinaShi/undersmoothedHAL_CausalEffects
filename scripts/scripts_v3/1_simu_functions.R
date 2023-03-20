@@ -232,7 +232,11 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
 run_simu_rep <- function(gen_data_functions, n, B, lambda_scaler=1, undersmooth=F, return_all_rslts = F){
   result_list <- list()
   for(b in 1:B){
-    result_list[[b]] <- run_simu_1round(gen_data_functions, n=n, lambda_scaler, undersmooth)
+    result <- run_simu_1round(gen_data_functions, n=n, lambda_scaler, undersmooth)
+    while(any(is.na(result))){
+      result <- run_simu_1round(gen_data_functions, n=n, lambda_scaler, undersmooth)
+    }
+    result_list[[b]] <- result
   }
   result_all <-  do.call("rbind", result_list) %>% as.data.frame()
   result_all <- merge(as.data.frame(psi0_10pnt), result_all, by=c("a", "z"))
@@ -374,6 +378,22 @@ plot_perforences_1lambda_alla <- function(df, z_para=1, est_plot_only=F, plot_li
 }
 
 
+estimation_qqplot <- function(results_list, z_para){
+  df <- do.call("rbind", results_list) %>% 
+    as.data.frame() %>% filter(z == z_para)
+  
+  p <- ggplot(df, aes(sample = psi_hat)) + 
+    stat_qq() + stat_qq_line() +
+    # theme(axis.title.x=element_blank(), 
+    #       axis.title.y=element_blank()) +
+    labs(x = "Theoretical Quantiles",
+         y = "Sample Quantiles",
+         title = paste0("Normal Q-Q Plot for Estimated ATE when z=",z_para)) +
+    facet_wrap(~a, nrow=2) 
+  
+  return(p)
+}
+
 
 
 plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
@@ -384,14 +404,12 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     geom_point(aes(x = lambda_scaler, y = psi_hat)) + 
     geom_hline(aes(yintercept=psi0)) +
     labs(title="Estimation average") +
-    theme()+
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
+    theme()
   
   p_bias <- ggplot(df, aes(x = lambda_scaler, y = bias)) +  
     geom_line(color = "grey") + 
     geom_point() + 
-    labs(title="Bias") +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
+    labs(title="Bias") 
   
   p_se <- ggplot(df, aes(x = lambda_scaler)) +  
     geom_line(aes(y = SE), color = "grey") + 
@@ -399,8 +417,7 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     labs(title="Standard Error") + 
     scale_color_manual(name='method',
                        breaks=c('Empirical', 'Oracal'),
-                       values=c('Empirical'='black', 'Oracal'='#8B6508'))+
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
+                       values=c('Empirical'='black', 'Oracal'='#8B6508'))
 
   
   p_bias_d_df <- ggplot(df, aes(x = lambda_scaler)) + 
@@ -410,8 +427,7 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     scale_color_manual(name='method',
                        breaks=c('Empirical', 'Oracal'),
                        values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
-    theme(legend.position='none') +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
+    theme(legend.position='none') 
   
   p_cr <- ggplot(df, aes(x = lambda_scaler)) +  
     geom_line(aes(y = cover_rate), color = "grey") + 
@@ -420,8 +436,7 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
     scale_color_manual(name='method',
                        breaks=c('Empirical', 'Oracal'),
                        values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
-    theme(legend.position='none')  +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5)
+    theme(legend.position='none')  
   
   if(!add_oracal){
     legend <- get_legend(p_se)
