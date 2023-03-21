@@ -105,30 +105,30 @@ print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
 ## ----true_psi_sys1-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
-# a_vec <- seq(0,5,0.1)
-# psi0_a_0 <- c()
-# psi0_a_1 <- c()
-# 
-# N = 1e+07
-# data_0_0 <- generate_data_1(n=N, a=0, z=0)
-# data_0_1 <- generate_data_1(n=N, a=0, z=1)
-# 
-# for (i in 1:length(a_vec)) {
-#   a <- a_vec[i]
-# 
-#   data_a_0 <- generate_data_1(n=N, a=a, z=0)
-#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-# 
-#   data_a_1 <- generate_data_1(n=N, a=a, z=1)
-#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-# }
-# 
-# psi0_pnt <- data.frame(a=rep(a_vec, 2), z=c(rep(1,length(a_vec)), rep(0,length(a_vec))), psi0 = c(psi0_a_1,psi0_a_0))
-# psi0_10pnt <- psi0_pnt[psi0_pnt$a %in% seq(0.5,5,0.5),]
-# save.image(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
+a_vec <- seq(0,5,0.1)
+psi0_a_0 <- c()
+psi0_a_1 <- c()
+
+N = 1e+07
+data_0_0 <- generate_data_1(n=N, a=0, z=0)
+data_0_1 <- generate_data_1(n=N, a=0, z=1)
+
+for (i in 1:length(a_vec)) {
+  a <- a_vec[i]
+
+  data_a_0 <- generate_data_1(n=N, a=a, z=0)
+  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+
+  data_a_1 <- generate_data_1(n=N, a=a, z=1)
+  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+}
+
+psi0_pnt <- data.frame(a=rep(a_vec, 2), z=c(rep(1,length(a_vec)), rep(0,length(a_vec))), psi0 = c(psi0_a_1,psi0_a_0))
+psi0_10pnt <- psi0_pnt[psi0_pnt$a %in% seq(0.5,5,0.5),]
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
 #------------------------------------------------------------------------------------
-load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
-source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+# load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
+# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 #------------------------------------------------------------------------------------
 
 
