@@ -7,4 +7,4 @@
 #$ -M junming_shi@berkeley.edu
 #$ -m base
 
-R CMD BATCH --no-save 02_simulations.R 02_simulations.Rout
+R CMD BATCH --no-save scripts/scripts_v3/2_simulations.R scripts/scripts_v3/2_simulations.Rout
