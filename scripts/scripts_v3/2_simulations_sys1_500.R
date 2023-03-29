@@ -132,88 +132,19 @@ load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
 #------------------------------------------------------------------------------------
 
 
-p <- ggplot() +
-    geom_line(data=psi0_pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) + 
-    geom_point(data=psi0_10pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) + 
-    labs(x="a", y="ATE",
-         title = "True Average Treatment Effect \n  P_0(E[Y|a,z] - E[Y|0,z])") +
-        theme(plot.title = element_text(hjust = 0.5), #size=8.6, 
-              #axis.title.y = element_blank(),
-              panel.grid.major.x = element_blank(),
-              #axis.text.y = element_text(size=8),
-              #axis.title.x = element_text(size=8),
-              axis.text = element_text(size=7)) 
-
-p
-
-
-
-## ----simu_sys1_n500-------------------------------------------------------------------------------------------------------------------
-nn=500
-
-
-## ------------------------------------------------------------------------------------------------------------------------------------
-# load(here("data", "rdata", "02_simu_V3_sys1_500_CV.RData"))
-# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
-
-
-## ----simu_sys1_n500_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
-set.seed(123)
-results_500 <- run_simu_1round(generate_data_1, n=nn)
-
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_500), by=c("a", "z"))
-
-
-
-## ----simu_sys1_n500_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
-set.seed(123)
-simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
-
-save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_CV.RData"))
-
-
-
-
-## ------------------------------------------------------------------------------------------------------------------------------------
-# load(here("data", "rdata", "02_simu_V3_sys1_500_U.RData"))
-# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
-
-
-## ----simu_sys1_n500_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
-set.seed(123)
-n = nn
-results_500_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
-
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_500_under), by=c("a", "z"))
-cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
-
-
-
-## ----simu_sys1_n500_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
-set.seed(123)
-
-simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
-
-save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_U.RData"))
-
-
-## ------------------------------------------------------------------------------------------------------------------------------------
-# load(here("data", "rdata", "02_simu_V3_sys1_500_grid.RData"))
-# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
-
+nn <- 500 
 
 ## ----simu_sys1_n500_B_grid------------------------------------------------------------------------------------------------------------
-# set.seed(123)
-# 
-# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-# # lambda_scalers <- c(1.2, 1.1, seq(from=1, to=0.001, length=28))
-# 
-# simu_results_lists <- list()
-# for(i in 1:length(lambda_scalers)){
-#   scaler = lambda_scalers[i]
-#   simu_results_lists[[i]] <- run_simu_rep(generate_data_1, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
-# }
-# simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
-# 
-# save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_grid.RData"))
+set.seed(123)
+
+lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+
+simu_results_lists <- list()
+for(i in 1:length(lambda_scalers)){
+  scaler = lambda_scalers[i]
+  simu_results_lists[[i]] <- run_simu_rep(generate_data_1, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
+}
+simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
+
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_grid.RData"))
 
