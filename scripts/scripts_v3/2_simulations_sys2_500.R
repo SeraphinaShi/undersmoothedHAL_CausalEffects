@@ -70,31 +70,6 @@ generate_data_2 <- function(n, a=NA, z=NA){
   return(O)
 }
 
-obs <- generate_data_2(n=10000)
-print(summary(obs))
-  
-# check positivity violations
-cat("Summary of A given W < -1:")
-summary(obs$A[obs$W < -1])
-cat("Summary of A given -1 < W <= 0:")
-summary(obs$A[-1 <= obs$W & obs$W < 0])
-cat("Summary of A given 0 < W <= 1:")
-summary(obs$A[0 <= obs$W & obs$W < 1])
-cat("Summary of A given 1 < W:")
-summary(obs$A[1 <= obs$W])
-
-
-par(mfrow=c(2,4))
-hist(obs$W)
-hist(obs$A)
-plot(obs$W,obs$A)
-plot(obs$A,obs$Z)
-plot(obs$Z,obs$Y)
-plot(obs$W,obs$Z)
-plot(obs$W,obs$Y)
-plot(obs$A,obs$Y)
-
-
 ## ----true_psi_sys2-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
@@ -126,10 +101,36 @@ load(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
 #------------------------------------------------------------------------------------
 
 
-
-
 ## ----simu_sys2_n500-------------------------------------------------------------------------------------------------------------------
 nn=500
+
+## ----simu_sys2_n500_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
+set.seed(123)
+results <- run_simu_1round(generate_data_2, n=nn)
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
+
+
+## ----simu_sys2_n500_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_CV.RData"))
+
+## ----simu_sys2_n500_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+set.seed(123)
+n = nn
+results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth=T)
+
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
+
+
+## ----simu_sys2_n500_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+
+save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_U.RData"))
+
 
 
 ## ----simu_sys2_n500_B_grid------------------------------------------------------------------------------------------------------------
@@ -145,4 +146,3 @@ for(i in 1:length(lambda_scalers)){
 simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
 
 save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_grid.RData"))
-

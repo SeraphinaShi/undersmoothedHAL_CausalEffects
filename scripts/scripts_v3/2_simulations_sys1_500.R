@@ -69,39 +69,6 @@ generate_data_1 <- function(n, a=NA, z=NA){
   return(O)
 }
 
-obs <- generate_data_1(n=10000)
-print(summary(obs))
-  
-# check positivity violations
-cat("Summary of A given W < -1:")
-summary(obs$A[obs$W < -1])
-cat("Summary of A given -1 < W <= 0:")
-summary(obs$A[-1 <= obs$W & obs$W < 0])
-cat("Summary of A given 0 < W <= 1:")
-summary(obs$A[0 <= obs$W & obs$W < 1])
-cat("Summary of A given 1 < W:")
-summary(obs$A[1 <= obs$W])
-
-par(mfrow=c(2,4))
-hist(obs$W)
-hist(obs$A)
-plot(obs$W,obs$A)
-plot(obs$A,obs$Z)
-plot(obs$Z,obs$Y)
-plot(obs$W,obs$Z)
-plot(obs$W,obs$Y)
-plot(obs$A,obs$Y)
-
-glm_fit <- glm(formula = Y ~ W + A + W*A + Z,
-               family = binomial,
-               data = obs)
-summary(glm_fit)
-y_preds <- predict(glm_fit, type = "response")
-mse <- sum((y_preds - obs$Y)^2)
-auc <- auc(obs$Y, y_preds)
-print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
-
-
 ## ----true_psi_sys1-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
@@ -132,7 +99,39 @@ load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
 #------------------------------------------------------------------------------------
 
 
-nn <- 500 
+
+## ----simu_sys1_n500-------------------------------------------------------------------------------------------------------------------
+nn=500
+
+
+
+## ----simu_sys1_n500_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
+set.seed(123)
+results <- run_simu_1round(generate_data_1, n=nn)
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
+
+
+## ----simu_sys1_n500_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_CV.RData"))
+
+
+## ----simu_sys1_n500_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+set.seed(123)
+n = nn
+results_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+
+
+## ----simu_sys1_n500_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+
+save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_U.RData"))
+
+
 
 ## ----simu_sys1_n500_B_grid------------------------------------------------------------------------------------------------------------
 set.seed(123)
