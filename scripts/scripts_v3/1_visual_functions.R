@@ -129,7 +129,7 @@ estimation_qqplot <- function(results_list, z_para){
 
 
 
-plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F){
+plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_scaler=NA){
   df <- df %>% filter(a == a_para, z == z_para)
   
   p_est_avg <- ggplot(df) +  
