@@ -64,7 +64,7 @@ generate_data_3 <- function(n, a=NA, z=NA){
     Z <- rep(z, n)
   }
   
-  Y <- as.numeric(U_Y < plogis(-10 - 3*W + 2*A + Z * (5 + 2*sin(A^2) -20*as.numeric(a > 4)) ))
+  Y <- as.numeric(U_Y < plogis(-10 - 3*W + 2*A + Z * (5 + 2*sin(A^2) -20*as.numeric(A > 4)) ))
   
   # data frame
   O <- data.frame(W, A, Z, Y)
@@ -74,31 +74,31 @@ generate_data_3 <- function(n, a=NA, z=NA){
 ## ----true_psi_sys3-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
-
-a_vec <- seq(0,5,0.1)
-psi0_a_0 <- c()
-psi0_a_1 <- c()
-
-N = 1e+07
-data_0_0 <- generate_data_3(n=N, a=0, z=0)
-data_0_1 <- generate_data_3(n=N, a=0, z=1)
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-  
-  data_a_0 <- generate_data_3(n=N, a=a, z=0)
-  psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-  
-  data_a_1 <- generate_data_3(n=N, a=a, z=1)
-  psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-}
-
-psi0_pnt <- data.frame(a=rep(a_vec, 2), z=c(rep(1,length(a_vec)), rep(0,length(a_vec))), psi0 = c(psi0_a_1,psi0_a_0))
-psi0_10pnt <- psi0_pnt[psi0_pnt$a %in% seq(0.5,5,0.5),]
-
-save.image(file=here("data", "rdata", "02_simu_V3_sys3_psi0.RData"))
+# 
+# a_vec <- seq(0,5,0.1)
+# psi0_a_0 <- c()
+# psi0_a_1 <- c()
+# 
+# N = 1e+07
+# data_0_0 <- generate_data_3(n=N, a=0, z=0)
+# data_0_1 <- generate_data_3(n=N, a=0, z=1)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+#   
+#   data_a_0 <- generate_data_3(n=N, a=a, z=0)
+#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+#   
+#   data_a_1 <- generate_data_3(n=N, a=a, z=1)
+#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+# }
+# 
+# psi0_pnt <- data.frame(a=rep(a_vec, 2), z=c(rep(1,length(a_vec)), rep(0,length(a_vec))), psi0 = c(psi0_a_1,psi0_a_0))
+# psi0_10pnt <- psi0_pnt[psi0_pnt$a %in% seq(0.5,5,0.5),]
+# 
+# save.image(file=here("data", "rdata", "02_simu_V3_sys3_psi0.RData"))
 #------------------------------------------------------------------------------------ 
-# load(file=here("data", "rdata", "02_simu_V3_sys3_psi0.RData"))
+load(file=here("data", "rdata", "02_simu_V3_sys3_psi0.RData"))
 #------------------------------------------------------------------------------------
 
 

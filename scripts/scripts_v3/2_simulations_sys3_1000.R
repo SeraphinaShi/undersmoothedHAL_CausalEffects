@@ -64,7 +64,7 @@ generate_data_3 <- function(n, a=NA, z=NA){
     Z <- rep(z, n)
   }
   
-  Y <- as.numeric(U_Y < plogis(-10 - 3*W + 2*A + Z * (5 + 2*sin(A^2) -20*as.numeric(a > 4)) ))
+  Y <- as.numeric(U_Y < plogis(-10 - 3*W + 2*A + Z * (5 + 2*sin(A^2) -20*as.numeric(A > 4)) ))
   
   # data frame
   O <- data.frame(W, A, Z, Y)

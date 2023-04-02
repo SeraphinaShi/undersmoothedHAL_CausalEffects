@@ -64,7 +64,7 @@ generate_data_3 <- function(n, a=NA, z=NA){
     Z <- rep(z, n)
   }
   
-  Y <- as.numeric(U_Y < plogis(-10 - 3*W + 2*A + Z * (5 + 2*sin(A^2) -20*as.numeric(a > 4)) ))
+  Y <- as.numeric(U_Y < plogis(-10 - 3*W + 2*A + Z * (5 + 2*sin(A^2) -20*as.numeric(A > 4)) ))
   
   # data frame
   O <- data.frame(W, A, Z, Y)
@@ -123,7 +123,6 @@ n = nn
 results_under <- run_simu_1round(generate_data_3, n=nn, undersmooth=T)
 
 psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
-cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
 
 
 ## ----simu_sys3_n200_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
