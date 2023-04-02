@@ -109,5 +109,47 @@ sn = 1
 ```
 
 ```{r child = '2_1_Simu_results_template.Rmd'}
-knitr::include_graphics("./images/example_image.png")
+```
+
+
+
+
+# Simulation 2
+```{r check_sys2}
+generate_data_2 <- function(n, a=NA, z=NA){
+  # exogenous variables
+  U_W <- rnorm(n, 0, 1)
+  U_A <- rnorm(n, 0, 2)
+  U_Z <- runif(n, 0, 1)
+  U_Y <- runif(n, 0, 1)
+  
+  # endogenous variables
+  W <- U_W
+  
+  if(is.na(a)){
+    A <-  2 - 0.5*W + U_A
+    A[A<=0] = 0
+    A[A>=5] = 5
+  } else {
+    A <- rep(a, n)
+  }
+  
+  if(is.na(z)){
+    Z <- as.numeric(U_Z < plogis(2-W-A))
+  } else {
+    Z <- rep(z, n)
+  }
+  
+  Y <- as.numeric(U_Y < plogis(-4 * W + 5*A + 10*Z + 5*W*Z + 2 * A * Z * W - 15))
+  
+  # data frame
+  O <- data.frame(W, A, Z, Y)
+  return(O)
+}
+
+DGS <- generate_data_2
+sn = 2
+```
+
+```{r child = '2_1_Simu_results_template.Rmd'}
 ```
