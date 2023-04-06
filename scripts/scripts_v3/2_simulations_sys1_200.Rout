@@ -1,0 +1,506 @@
+
+R version 4.1.3 (2022-03-10) -- "One Push-Up"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## ----load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE-------------------------------------------------------------
+> library(here)
+here() starts at /home/seraphinashi/undersmoothedHAL_CausalEffects
+> library(data.table)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:data.table’:
+
+    between, first, last
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> library(tidyr)
+> library(foreach)
+> 
+> library(stringr)
+> library(glmnet)
+Loading required package: Matrix
+
+Attaching package: ‘Matrix’
+
+The following objects are masked from ‘package:tidyr’:
+
+    expand, pack, unpack
+
+Loaded glmnet 4.1-3
+> 
+> library(origami)
+origami v1.0.5: Generalized Framework for Cross-Validation
+> library(hal9001)
+Loading required package: Rcpp
+hal9001 v0.4.3: The Scalable Highly Adaptive Lasso
+note: fit_hal defaults have changed. See ?fit_hal for details
+> library(tictoc)
+
+Attaching package: ‘tictoc’
+
+The following object is masked from ‘package:data.table’:
+
+    shift
+
+> 
+> library(R.utils)
+Loading required package: R.oo
+Loading required package: R.methodsS3
+R.methodsS3 v1.8.1 (2020-08-26 16:20:06 UTC) successfully loaded. See ?R.methodsS3 for help.
+R.oo v1.24.0 (2020-08-26 16:11:58 UTC) successfully loaded. See ?R.oo for help.
+
+Attaching package: ‘R.oo’
+
+The following object is masked from ‘package:R.methodsS3’:
+
+    throw
+
+The following objects are masked from ‘package:methods’:
+
+    getClasses, getMethods
+
+The following objects are masked from ‘package:base’:
+
+    attach, detach, load, save
+
+R.utils v2.12.0 (2022-06-28 03:20:05 UTC) successfully loaded. See ?R.utils for help.
+
+Attaching package: ‘R.utils’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+The following object is masked from ‘package:utils’:
+
+    timestamp
+
+The following objects are masked from ‘package:base’:
+
+    cat, commandArgs, getOption, isOpen, nullfile, parse, warnings
+
+> 
+> library(pROC)
+Type 'citation("pROC")' for a citation.
+
+Attaching package: ‘pROC’
+
+The following objects are masked from ‘package:stats’:
+
+    cov, smooth, var
+
+> 
+> library(ggplot2)
+> library(cowplot)
+> library(gridExtra)
+
+Attaching package: ‘gridExtra’
+
+The following object is masked from ‘package:dplyr’:
+
+    combine
+
+> library(grid)
+> 
+> 
+> ## ----setup, include = FALSE----------------------------------------------------------------------------------------------------------
+> plotFolder <- here("results","images", "v3")
+> if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
+> 
+> knitr::opts_chunk$set(
++   cache=FALSE, autodep=FALSE, warning=FALSE, message=FALSE, echo=FALSE,
++   results = 'markup', dev='png', dpi=150, fig.align = "center", fig.path=paste0(plotFolder, "/"),
++   cache.path=".cache/",
++   duplicate.label="allow"
++ )
+> 
+> source(here("scripts", "scripts_v3", "1_simu_functions_hal9001.R"))
+> source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> 
+> 
+> ## ----check_sys1----------------------------------------------------------------------------------------------------------------------
+> generate_data_1 <- function(n, a=NA, z=NA){
++   # exogenous variables
++   U_W <- rnorm(n, 0, 1)
++   U_A <- rnorm(n, 0, 2)
++   U_Z <- runif(n, 0, 1)
++   U_Y <- runif(n, 0, 1)
++   
++   # endogenous variables
++   W <- U_W
++   
++   if(is.na(a)){
++     A <-  2 - 0.5*W + U_A
++     A[A<=0] = 0
++     A[A>=5] = 5
++   } else {
++     A <- rep(a, n)
++   }
++   
++   if(is.na(z)){
++     Z <- as.numeric(U_Z < plogis(2-W-A))
++   } else {
++     Z <- rep(z, n)
++   }
++   
++   Y <- as.numeric(U_Y < plogis(W + 5*A + Z - 0.5 * W * A - 8))
++   
++   # data frame
++   O <- data.frame(W, A, Z, Y)
++   return(O)
++ }
+> 
+> obs <- generate_data_1(n=10000)
+> print(summary(obs))
+       W                  A                Z                Y         
+ Min.   :-3.54676   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+ 1st Qu.:-0.71227   1st Qu.:0.6214   1st Qu.:0.0000   1st Qu.:0.0000  
+ Median :-0.01552   Median :1.9846   Median :0.0000   Median :1.0000  
+ Mean   :-0.01384   Mean   :2.1175   Mean   :0.4881   Mean   :0.5977  
+ 3rd Qu.: 0.65630   3rd Qu.:3.4126   3rd Qu.:1.0000   3rd Qu.:1.0000  
+ Max.   : 3.70206   Max.   :5.0000   Max.   :1.0000   Max.   :1.0000  
+>   
+> # check positivity violations
+> cat("Summary of A given W < -1:")
+Summary of A given W < -1:> summary(obs$A[obs$W < -1])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   1.297   2.746   2.660   4.070   5.000 
+> cat("Summary of A given -1 < W <= 0:")
+Summary of A given -1 < W <= 0:> summary(obs$A[-1 <= obs$W & obs$W < 0])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.8695  2.2458  2.2924  3.6133  5.0000 
+> cat("Summary of A given 0 < W <= 1:")
+Summary of A given 0 < W <= 1:> summary(obs$A[0 <= obs$W & obs$W < 1])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.4029  1.7394  1.9299  3.1434  5.0000 
+> cat("Summary of A given 1 < W:")
+Summary of A given 1 < W:> summary(obs$A[1 <= obs$W])
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   0.000   1.351   1.576   2.569   5.000 
+> 
+> par(mfrow=c(2,4))
+> hist(obs$W)
+> hist(obs$A)
+> plot(obs$W,obs$A)
+> plot(obs$A,obs$Z)
+> plot(obs$Z,obs$Y)
+> plot(obs$W,obs$Z)
+> plot(obs$W,obs$Y)
+> plot(obs$A,obs$Y)
+> 
+> glm_fit <- glm(formula = Y ~ W + A + W*A + Z,
++                family = binomial,
++                data = obs)
+> summary(glm_fit)
+
+Call:
+glm(formula = Y ~ W + A + W * A + Z, family = binomial, data = obs)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-3.5273  -0.0556   0.0004   0.0480   3.8417  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept)  -8.3626     0.2733 -30.598  < 2e-16 ***
+W             1.0589     0.2068   5.119 3.07e-07 ***
+A             5.2074     0.1563  33.319  < 2e-16 ***
+Z             1.0388     0.1186   8.760  < 2e-16 ***
+W:A          -0.5546     0.1329  -4.173 3.01e-05 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 13478.7  on 9999  degrees of freedom
+Residual deviance:  2519.3  on 9995  degrees of freedom
+AIC: 2529.3
+
+Number of Fisher Scoring iterations: 9
+
+> y_preds <- predict(glm_fit, type = "response")
+> mse <- sum((y_preds - obs$Y)^2)
+> auc <- auc(obs$Y, y_preds)
+Setting levels: control = 0, case = 1
+Setting direction: controls < cases
+> print(paste0("    MSE: ", round(mse, 4), ", AUC: ", round(auc, 4)))
+[1] "    MSE: 382.2855, AUC: 0.99"
+> 
+> 
+> ## ----true_psi_sys1-------------------------------------------------------------------------------------------------------------------
+> # Getting trul value of psi
+> #------------------------------------------------------------------------------------
+> # a_vec <- seq(0,5,0.1)
+> # psi0_a_0 <- c()
+> # psi0_a_1 <- c()
+> # 
+> # N = 1e+07
+> # data_0_0 <- generate_data_1(n=N, a=0, z=0)
+> # data_0_1 <- generate_data_1(n=N, a=0, z=1)
+> # 
+> # for (i in 1:length(a_vec)) {
+> #   a <- a_vec[i]
+> # 
+> #   data_a_0 <- generate_data_1(n=N, a=a, z=0)
+> #   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
+> # 
+> #   data_a_1 <- generate_data_1(n=N, a=a, z=1)
+> #   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
+> # }
+> # 
+> # psi0_pnt <- data.frame(a=rep(a_vec, 2), z=c(rep(1,length(a_vec)), rep(0,length(a_vec))), psi0 = c(psi0_a_1,psi0_a_0))
+> # psi0_10pnt <- psi0_pnt[psi0_pnt$a %in% seq(0.5,5,0.5),]
+> # save.image(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
+> #------------------------------------------------------------------------------------
+> load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
+> # source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> #------------------------------------------------------------------------------------
+> 
+> 
+> p <- ggplot() +
++     geom_line(data=psi0_pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) + 
++     geom_point(data=psi0_10pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) + 
++     labs(x="a", y="ATE",
++          title = "True Average Treatment Effect \n  P_0(E[Y|a,z] - E[Y|0,z])") +
++         theme(plot.title = element_text(hjust = 0.5), #size=8.6, 
++               #axis.title.y = element_blank(),
++               panel.grid.major.x = element_blank(),
++               #axis.text.y = element_text(size=8),
++               #axis.title.x = element_text(size=8),
++               axis.text = element_text(size=7)) 
+> 
+> p
+> 
+> 
+> 
+> ## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------
+> nn=200
+> 
+> 
+> ## ------------------------------------------------------------------------------------------------------------------------------------
+> # load(here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
+> # source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> 
+> 
+> ## ----simu_sys1_n200_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
+> set.seed(123)
+> results_200 <- run_simu_1round(generate_data_1, n=nn)
+> 
+> psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200), by=c("a", "z"))
+> 
+> cat(paste0("CV selected lambda (from one sample): ", unique(psi_10pnt$lambda)))
+CV selected lambda (from one sample): 0.00669857527625325> 
+> 
+> p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
++   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
+> p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
++   labs(title = "z=0") + theme(plot.title = element_text(hjust = 0.5))
+> 
+> p <- grid.arrange(p1, p0, nrow=1,
++                   top = textGrob(paste0("Average Treatment Effect,  E[Y|a,z] - E[Y|0,z]",
++                                          gp=gpar(fontface = 'bold')))) # gp=gpar(fontsize=11, fontface = 'bold')
+> 
+> 
+> ## ----simu_sys1_n200_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
+> set.seed(123)
+> simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+Warning message:
+from glmnet Fortran code (error code -100); Convergence for 100th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+> cat(paste0("The average of CV selected lambdas (from 1000 sample): ", unique(simu_results$result_summary$lambda)))
+The average of CV selected lambdas (from 1000 sample): 0.00805053386604685 The average of CV selected lambdas (from 1000 sample): 0.00805577329430703 The average of CV selected lambdas (from 1000 sample): 0.00805745619998476> 
+> 
+> cat("z=1:")
+z=1:> p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F, add_oracal=T)
+> cat("z=0:")
+z=0:> p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F, add_oracal=T)
+> 
+> save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_CV.RData"))
+> 
+> 
+> ## ----simu_sys1_n200_B_cv_qq, fig.width=6, fig.height=4--------------------------------------------------------------------------------
+> p1 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 1)
+> p1
+> p0 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 0)
+> p0
+> 
+> 
+> ## ------------------------------------------------------------------------------------------------------------------------------------
+> # load(here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
+> # source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> 
+> 
+> ## ----simu_sys1_n200_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+> set.seed(123)
+> n = nn
+> results_200_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+> 
+> psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_200_under), by=c("a", "z"))
+> cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
+Undersmoothed lambda: 0.0015646006085061
+ which is 1 * lambda_CV> 
+> 
+> p1 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=1, est_plot_only = T) +
++   labs(title = "z=1") + theme(plot.title = element_text(hjust = 0.5))
+> p0 <- plot_perforences_1lambda_alla(psi_10pnt, z_para=0, est_plot_only = T) +
++   labs(title = "z=0") + theme(plot.title = element_text(hjust = 0.5))
+> 
+> p <- grid.arrange(p1, p0, nrow=1,
++                   top = textGrob(paste0("Average Treatment Effect,  E[Y|a,z] - E[Y|0,z]",
++                                          gp=gpar(fontface = 'bold')))) # gp=gpar(fontsize=11, fontface = 'bold')
+> 
+> 
+> ## ----simu_sys1_n200_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+> set.seed(123)
+> 
+> simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
+[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+There were 47 warnings (use warnings() to see them)
+> 
+> 
+> cat(paste0("The average of unsersmoothed lambda (from 1000 sample): ", unique(simu_results$result_summary$lambda),
++            "\n which is ", unique(simu_results$result_summary$lambda_scaler), " * the average of 1000 lambda_CV"))
+The average of unsersmoothed lambda (from 1000 sample): 0.00198207951272976
+ which is 1 * the average of 1000 lambda_CV The average of unsersmoothed lambda (from 1000 sample): 0.00198377327801413
+ which is 1 * the average of 1000 lambda_CV> 
+> cat("z=1:")
+z=1:> p1_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=1, plot_list=F, add_oracal=T)
+> cat("z=0:")
+z=0:> p0_list <- plot_perforences_1lambda_alla(simu_results$result_summary, z_para=0, plot_list=F, add_oracal=T)
+> save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_U.RData"))
+> 
+> 
+> ## ----simu_sys1_n200_B_u_qq, fig.width=6, fig.height=4---------------------------------------------------------------------------------
+> p1 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 1)
+> p1
+> p0 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 0)
+> p0
+> 
+> 
+> ## ------------------------------------------------------------------------------------------------------------------------------------
+> # load(here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
+> # source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> 
+> 
+> ## ----simu_sys1_n200_B_grid------------------------------------------------------------------------------------------------------------
+> set.seed(123)
+> 
+> lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+> # lambda_scalers <- c(1.2, 1.1, seq(from=1, to=0.001, length=28))
+> 
+> simu_results_lists <- list()
+> for(i in 1:length(lambda_scalers)){
++   scaler = lambda_scalers[i]
++   simu_results_lists[[i]] <- run_simu_rep(generate_data_1, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
++ }
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+There were 50 or more warnings (use warnings() to see the first 50)
+> simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
+> 
+> save.image(file=here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
+> 
+> 
+> ## ----simu_sys1_n200_B_grid_05_1, fig.height=5.5, fig.width=5.5------------------------------------------------------------------------
+> # load(here("data", "rdata", "02_simu_V3_sys1_200_grid.RData"))
+> plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T)
+TableGrob (7 x 4) "arrange": 7 grobs
+  z     cells    name                 grob
+1 1 (2-3,2-3) arrange       gtable[layout]
+2 2 (4-5,1-2) arrange       gtable[layout]
+3 3 (4-5,3-4) arrange       gtable[layout]
+4 4 (6-7,1-2) arrange       gtable[layout]
+5 5 (6-7,3-4) arrange       gtable[layout]
+6 6 (3-3,4-4) arrange    gtable[guide-box]
+7 7 (1-1,1-4) arrange text[GRID.text.3841]
+> 
+> 
+> ## ----simu_sys1_n200_B_grid_15_1, fig.height=5.5, fig.width=5.5------------------------------------------------------------------------
+> plot_perforences_alllambda_1a(simu_results_all, a_para = 2.5, z_para = 1, add_oracal=T)
+TableGrob (7 x 4) "arrange": 7 grobs
+  z     cells    name                 grob
+1 1 (2-3,2-3) arrange       gtable[layout]
+2 2 (4-5,1-2) arrange       gtable[layout]
+3 3 (4-5,3-4) arrange       gtable[layout]
+4 4 (6-7,1-2) arrange       gtable[layout]
+5 5 (6-7,3-4) arrange       gtable[layout]
+6 6 (3-3,4-4) arrange    gtable[guide-box]
+7 7 (1-1,1-4) arrange text[GRID.text.4117]
+> 
+> 
+> ## ----simu_sys1_n200_B_grid_5_1, fig.height=5.5, fig.width=5.5-------------------------------------------------------------------------
+> plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 1, add_oracal=T)
+TableGrob (7 x 4) "arrange": 7 grobs
+  z     cells    name                 grob
+1 1 (2-3,2-3) arrange       gtable[layout]
+2 2 (4-5,1-2) arrange       gtable[layout]
+3 3 (4-5,3-4) arrange       gtable[layout]
+4 4 (6-7,1-2) arrange       gtable[layout]
+5 5 (6-7,3-4) arrange       gtable[layout]
+6 6 (3-3,4-4) arrange    gtable[guide-box]
+7 7 (1-1,1-4) arrange text[GRID.text.4393]
+> 
+> 
+> ## ------------------------------------------------------------------------------------------------------------------------------------
+> # knitr::purl("2_simulations.Rmd")
+> 
+> 
+> proc.time()
+    user   system  elapsed 
+299712.4 120780.2 151877.1 
