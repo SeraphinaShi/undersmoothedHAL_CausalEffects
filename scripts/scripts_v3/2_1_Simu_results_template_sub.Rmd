@@ -1,7 +1,7 @@
 
 ### CV HAL
 ```{r}
-load(here("data", "rdata", paste0("02_simu_V3_sys", sn, "_", nn, "_CV.RData")))
+load(here("data", "rdata_v3", paste0("02_simu_V3_sys", sn, "_", nn, "_CV.RData")))
 ```
 
 #### results
@@ -52,7 +52,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_cv_qq.
 
 ### Globally Undersmoothed HAL
 ```{r}
-load(here("data", "rdata", paste0("02_simu_V3_sys", sn, "_", nn, "_U.RData")))
+load(here("data", "rdata_v3", paste0("02_simu_V3_sys", sn, "_", nn, "_U.RData")))
 ```
 
 #### results
@@ -111,11 +111,11 @@ if(grid=FALSE){
   knitr::knit_exit ()
 }
 
-load(here("data", "rdata", paste0("02_simu_V3_sys", sn, "_", nn, "_grid.RData")))
+load(here("data", "rdata_v3", paste0("02_simu_V3_sys", sn, "_", nn, "_grid.RData")))
 ```
 
 ```{r simu_sys_n_B_grid_05_1, fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T, avg_u_scaler = avg_u_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a05_z1.png")))
 ```
 

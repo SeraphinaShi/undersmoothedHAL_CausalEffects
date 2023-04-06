@@ -129,7 +129,7 @@ estimation_qqplot <- function(results_list, z_para){
 
 
 
-plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_scaler=NA){
+plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_scaler=NA, avg_u_scaler=NA){
   df <- df %>% filter(a == a_para, z == z_para)
   
   p_est_avg <- ggplot(df) +  
@@ -189,6 +189,19 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_sc
     p_cr <- p_cr +  
       geom_line(aes(y = oracal_cover_rate), color = "#EEC591") + 
       geom_point(aes(y = oracal_cover_rate, color = "Oracal")) 
+  }
+  
+  if(!is.na(avg_u_scaler)){
+    p_est_avg <- p_est_avg +
+      geom_vline(xintercept = avg_u_scaler, lty=2)
+    p_bias <- p_bias +
+      geom_vline(xintercept = avg_u_scaler, lty=2)
+    p_se <- p_se + 
+      geom_vline(xintercept = avg_u_scaler, lty=2)
+    p_bias_d_df <- p_bias_d_df +  
+      geom_vline(xintercept = avg_u_scaler, lty=2)
+    p_cr <- p_cr +
+      geom_vline(xintercept = avg_u_scaler, lty=2)
   }
   
   p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr, legend, 

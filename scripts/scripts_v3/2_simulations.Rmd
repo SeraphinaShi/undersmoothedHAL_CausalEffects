@@ -682,7 +682,6 @@ plot(obs$A,obs$Y)
 load(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
 #------------------------------------------------------------------------------------
 
-
 p <- ggplot() +
     geom_line(data=psi0_pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) +
     geom_point(data=psi0_10pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) +

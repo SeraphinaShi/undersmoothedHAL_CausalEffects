@@ -45,7 +45,6 @@ knitr::opts_chunk$set(
 
 source(here("scripts", "scripts_v3", "1_simu_functions_hal9001.R"))
 source(here("scripts", "scripts_v3", "1_simu_functions.R"))
-
 ```
 
 # Simulation 1

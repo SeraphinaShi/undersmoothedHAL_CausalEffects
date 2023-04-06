@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=sys3_n500
-#SBATCH --account=junmingshi
+#SBATCH --account=co_biostat
 #SBATCH --partition=savio3
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
