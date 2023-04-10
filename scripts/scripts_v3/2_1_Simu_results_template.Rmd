@@ -1,5 +1,5 @@
 
-```{r check_sys}
+```{r }
 obs <- DGS(n=10000)
 print(summary(obs))
   
@@ -25,7 +25,7 @@ plot(obs$A,obs$Y)
 ```
 
 
-```{r true_psi_sys}
+```{r }
 load(file=here("data", "rdata", paste0("02_simu_V3_sys", sn ,"_psi0.RData")))
 
 ggplot() +
@@ -44,33 +44,28 @@ ggsave(here(getwd(), "plots", paste0("true_psi_sys", sn, ".png")))
 
 ```
 
-## n = 200
-```{r simu_sys_n200}
+
+## n = 200 
+```{r }
 nn=200
-grid = TRUE
 ```
 
 ```{r child = '2_1_Simu_results_template_sub.Rmd'}
 ```
+
 
 ## n = 500
-```{r simu_sys_n500}
+```{r}
 nn=500
-if(sn %in% c(2,3)){
-  grid = FALSE
-}
 ```
 
 ```{r child = '2_1_Simu_results_template_sub.Rmd'}
-
 ```
 
+
 ## n = 1000
-```{r simu_sys_n1000}
+```{r }
 nn=1000
-if(sn %in% c(2,3)){
-  grid = FALSE
-}
 ```
 
 ```{r child = '2_1_Simu_results_template_sub.Rmd'}
