@@ -121,11 +121,13 @@ simu_results_CV_U <- rbind(simu_results_CV, simu_results_U)
 
 cat("z=1:")
 p1 <- plot_perforences_cv_u_alla(simu_results_CV_U, z_para=1)
-ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z1", "_n", nn ,"_.png")), p1)
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z1", "_n", nn ,"_cv_vs_u.png")), p1)
 
 
 cat("z=0:")
 p0 <- plot_perforences_cv_u_alla(simu_results_CV_U, z_para=0)
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z1", "_n", nn ,"_cv_vs_u.png")), p0)
+
 ```
 
 
