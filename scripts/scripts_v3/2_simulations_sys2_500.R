@@ -97,52 +97,64 @@ generate_data_2 <- function(n, a=NA, z=NA){
 # save.image(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
 #------------------------------------------------------------------------------------
 load(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
-# source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 #------------------------------------------------------------------------------------
 
 
 ## ----simu_sys2_n500-------------------------------------------------------------------------------------------------------------------
 nn=500
-
-## ----simu_sys2_n500_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
-set.seed(123)
-results <- run_simu_1round(generate_data_2, n=nn)
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
-
-
-## ----simu_sys2_n500_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
-set.seed(123)
-simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T)
-
-save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_CV.RData"))
-
-## ----simu_sys2_n500_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+# 
+# ## ----simu_sys2_n500_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
+# set.seed(123)
+# results <- run_simu_1round(generate_data_2, n=nn)
+# psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
+# 
+# 
+# ## ----simu_sys2_n500_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
+# set.seed(123)
+# simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_CV.RData"))
+# 
+# ## ----simu_sys2_n500_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+# set.seed(123)
+# n = nn
+# results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth=T)
+# 
+# psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+# cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
+# 
+# 
+# ## ----simu_sys2_n500_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+# set.seed(123)
+# simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_U.RData"))
+# 
+## ----simu_sys2_n500_2_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
 set.seed(123)
 n = nn
-results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth=T)
-
+results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth='local')
 psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
-cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
 
 
-## ----simu_sys2_n500_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+## ----simu_sys2_n500_B_u_local, fig.width=6, fig.height=7------------------------------------------------------------------------------------
 set.seed(123)
-simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth='local')
 
-save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_U.RData"))
-
-
-
-## ----simu_sys2_n500_B_grid------------------------------------------------------------------------------------------------------------
-set.seed(123)
-
-lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-
-simu_results_lists <- list()
-for(i in 1:length(lambda_scalers)){
-  scaler = lambda_scalers[i]
-  simu_results_lists[[i]] <- run_simu_rep(generate_data_2, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
-}
-simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
-
-save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_grid.RData"))
+save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_U_l.RData"))
+# 
+# 
+# ## ----simu_sys2_n500_B_grid------------------------------------------------------------------------------------------------------------
+# set.seed(123)
+# 
+# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+# 
+# simu_results_lists <- list()
+# for(i in 1:length(lambda_scalers)){
+#   scaler = lambda_scalers[i]
+#   simu_results_lists[[i]] <- run_simu_rep(generate_data_2, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
+# }
+# simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
+# 
+# save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_grid.RData"))
