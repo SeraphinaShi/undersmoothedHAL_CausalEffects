@@ -68,13 +68,16 @@ cal_IC_for_ATE <- function(X_new_a, X_new_0, beta_n, IC_beta){
 
 # returns the estimated ATE and empirical 95% CI
 ##############################################################
-run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmooth=F){
+run_simu_1round <- function(gen_data_functions, n, undersmooth='none', lambda_scaler = 1){
   obs <- gen_data_functions(n)
+  
+  start <- Sys.time()
   
   y_name = "Y"
   x_names = c("W", "A", "Z")
   y_type = "binomial"
-  
+
+
   Y <- as.numeric(as.matrix(obs %>% select(all_of(y_name))))
   X <- obs %>% 
     select(all_of(x_names)) %>% 
@@ -88,41 +91,24 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
                       smoothness_orders = 1,
                       base_num_knots_0 = 20,
                       base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                      )
+                    )
   )
   CV_lambda <- CV_hal$lambda_star
   
-  if((!undersmooth) & lambda_scaler == 1){
+  
+  if(undersmooth == 'none' & lambda_scaler == 1){
     hal_fit <- CV_hal
     lambda = CV_lambda
+    
   } else {
-    if(undersmooth){
-      
+    if(undersmooth == 'none'){
+      lambda = lambda_scaler * CV_lambda
+    } else if(undersmooth == 'global'){
       CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
-      CV_basis_mat <- as.matrix(CV_hal$x_basis)
-      CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
-      
-      hal_undersmooth <- undersmooth_hal(X, Y,
-                                         fit_init = CV_hal,
-                                         basis_mat = CV_basis_mat,
-                                         family = y_type)
-      lambda = hal_undersmooth$lambda_under
-      
-      while(is.na(lambda)){
-        print("  Since the learned undersmoothed lambda is NA, refitting lambdas.")
-        
-        CV_hal <- fit_hal(X = X, Y = Y, family = y_type,
-                          return_x_basis = TRUE,
-                          num_knots = hal9001:::num_knots_generator(
-                            max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                            smoothness_orders = 1,
-                            base_num_knots_0 = 20,
-                            base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                          )
-        )
-        CV_lambda <- CV_hal$lambda_star
-        
-        CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
+      # if all coefs are zero, skip undersmooth and use the initial fit
+      if (length(CV_nonzero_col) == 0){
+        lambda = CV_lambda
+      }else{
         CV_basis_mat <- as.matrix(CV_hal$x_basis)
         CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
         
@@ -132,11 +118,51 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
                                            family = y_type)
         lambda = hal_undersmooth$lambda_under
       }
-      
-      
-    } else {
-      lambda = lambda_scaler * CV_lambda
+    } else if(undersmooth == 'local'){
+      lambdas = rep(NA, 5)
+      for(i in 1:5){
+        a_seg_min = seq(0,5,1)[i]
+        a_seg_max = seq(0,5,1)[i+1]
+        obs_local = obs[a_seg_min <= obs$A & obs$A < a_seg_max, ]
+        
+        Y_seg <- as.numeric(as.matrix(obs_local %>% select(all_of(y_name))))
+        
+        if(0.1 <= sum(Y_seg==1)/length(Y_seg) & sum(Y_seg==1)/length(Y_seg) <= 0.9){
+          X_seg <- obs_local %>% 
+            select(all_of(x_names)) %>% 
+            mutate_if(sapply(., is.factor), as.numeric)
+          
+          # fitting HAL
+          CV_hal <- fit_hal(X = X_seg, Y = Y_seg, family = y_type,
+                            return_x_basis = TRUE,
+                            num_knots = hal9001:::num_knots_generator(
+                              max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                              smoothness_orders = 1,
+                              base_num_knots_0 = 20,
+                              base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                            )
+          )
+          CV_lambda <- CV_hal$lambda_star
+          
+          CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
+          CV_basis_mat <- as.matrix(CV_hal$x_basis)
+          CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+          
+          hal_undersmooth <- undersmooth_hal(X_seg, Y_seg,
+                                             fit_init = CV_hal,
+                                             basis_mat = CV_basis_mat,
+                                             family = y_type)
+          lambda = hal_undersmooth$lambda_under
+          lambdas[i] = lambda
+        } else {
+          lambdas[i] = CV_lambda
+        }
+      }
+      print(lambdas)
+      lambda = min(lambdas, na.rm = T)
+
     }
+    
     
     hal_fit <- fit_hal(X = X, Y = Y, family = y_type,
                        return_x_basis = TRUE,
@@ -154,10 +180,14 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
                          lambda.min.ratio = 1e-4,
                          prediction_bounds = "default"
                        ),
-                       lambda = lambda
-    )
+                       lambda = lambda)
+  }
 
-  } 
+  
+  end <- Sys.time()
+  hal_fit_time = end - start
+  hal_fit_time_unit = units(hal_fit_time)
+  hal_fit_time = as.numeric(hal_fit_time)
   
   coef <- hal_fit$coefs
   basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
@@ -215,8 +245,8 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
   psi_hat_10pnt <- psi_hat_10pnt[-1, ]
   colnames(psi_hat_10pnt) <- c("a", "z", "psi_hat", "SE", "ci_lwr", "ci_upr")
   
-  psi_hat_10pnt <- cbind(psi_hat_10pnt, lambda, CV_lambda, lambda_scaler)
-  
+  psi_hat_10pnt <- cbind(psi_hat_10pnt, lambda, CV_lambda, lambda_scaler, hal_fit_time, hal_fit_time_unit)
+
   return(psi_hat_10pnt)
 }
 
@@ -229,17 +259,22 @@ run_simu_1round <- function(gen_data_functions, n, lambda_scaler = 1, undersmoot
 
 # returns the estimated ATE, empirical 95% CI, and coverage rates
 ##############################################################
-run_simu_rep <- function(gen_data_functions, n, B, lambda_scaler=1, undersmooth=F, return_all_rslts = F){
+run_simu_rep <- function(gen_data_functions, n, B, undersmooth='none', lambda_scaler=1, return_all_rslts = F){
   result_list <- list()
   for(b in 1:B){
-    result <- run_simu_1round(gen_data_functions, n=n, lambda_scaler, undersmooth)
+    result <- run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
     while(any(is.na(result))){
-      result <- run_simu_1round(gen_data_functions, n=n, lambda_scaler, undersmooth)
+      result <- run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
     }
     result_list[[b]] <- result
   }
   result_all <-  do.call("rbind", result_list) %>% as.data.frame()
   result_all <- merge(as.data.frame(psi0_10pnt), result_all, by=c("a", "z"))
+  
+  cols.num <- names(result_all)[names(result_all) != 'hal_fit_time_unit']
+  result_all[cols.num] <- sapply(result_all[cols.num],as.numeric)
+  
+  hal_fit_time_unit = paste(unique(result_all$hal_fit_time_unit), collapse = ' & ')
   
   result_summary <- result_all %>% 
     filter(SE != 0) %>% 
@@ -252,8 +287,9 @@ run_simu_rep <- function(gen_data_functions, n, B, lambda_scaler=1, undersmooth=
            oracal_ci_lwr = psi_hat - 1.96 * oracal_SE,
            oracal_ci_upr = psi_hat + 1.96 * oracal_SE,
            oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-    summarise(across(everything(), mean)) %>% 
-    ungroup()
+    summarise(across(where(is.numeric), mean)) %>% 
+    ungroup() %>%
+    mutate(hal_fit_time_unit = hal_fit_time_unit)
   
   if(return_all_rslts){
     return(list(result_summary = result_summary,

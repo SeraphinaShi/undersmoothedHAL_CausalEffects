@@ -45,13 +45,13 @@ ggsave(here(getwd(), "plots", paste0("true_psi_sys", sn, ".png")))
 ```
 
 
-## n = 200 
-```{r }
-nn=200
-```
+<!-- ## n = 200  -->
+<!-- ```{r } -->
+<!-- nn=200 -->
+<!-- ``` -->
 
-```{r child = '2_1_Simu_results_template_sub.Rmd'}
-```
+<!-- ```{r child = '2_1_Simu_results_template_sub.Rmd'} -->
+<!-- ``` -->
 
 
 ## n = 500
@@ -59,7 +59,7 @@ nn=200
 nn=500
 ```
 
-```{r child = '2_1_Simu_results_template_sub.Rmd'}
+```{r child = '2_1_Simu_results_template_sub_1.Rmd'}
 ```
 
 
@@ -68,5 +68,5 @@ nn=500
 nn=1000
 ```
 
-```{r child = '2_1_Simu_results_template_sub.Rmd'}
+```{r child = '2_1_Simu_results_template_sub_1.Rmd'}
 ```

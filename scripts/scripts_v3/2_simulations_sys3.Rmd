@@ -69,7 +69,7 @@ Data structure:  $O = (W, A, Z, Y)$
   + $W =  U_W$
   + $A = bound(2 - 0.5W + U_A, min=0, max=5)$
   + $Z = \mathbf{I}[U_Z < expit(2-W-A)]$
-  + $Y = \mathbf{I}[U_Y < expit(-10 - 3W + 2A + 10Z + Z(10 + 5W + 2AW))]$
+  + $Y = \mathbf{I}[U_Y < expit(-10 - 3W + 2A + Z(5 + 2 sin(A^2) - 20 \mathbf{I}(A>4)))]$
 
 ```{r check_sys3}
 generate_data_3 <- function(n, a=NA, z=NA){
