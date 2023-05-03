@@ -108,7 +108,8 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
   df <- df %>% filter(z==z_para)
 
   color_cv =  "#F8766D"
-  color_u = "#00BFC4"
+  color_u_g = "#00BA38"
+  color_u_l = '#619CFF'
 
   p_est_avg <- ggplot(data=df, aes(x=a)) +
     geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
@@ -119,8 +120,8 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
     labs(x="a", y="ATE", title = "Estimation") +
     scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
     scale_color_manual(name='Method',
-                       breaks=c('CV', 'Undersmoothing'),
-                       values=c('CV'=color_cv, 'Undersmoothing'=color_u)) +
+                       breaks=c('CV', 'U_Global', 'U_Lmin'),
+                       values=c('CV'=color_cv, 'U_Global'=color_u_g, 'U_Lmin'=color_u_l)) +
     scale_linetype_manual(breaks=c('Empirical', 'Oracal'),
                           values=c('Empirical'= 1, 'Oracal'=2))
     
@@ -134,9 +135,9 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
       labs(title="|Bias|") +
       scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
       scale_color_manual(name='Method',
-                         breaks=c('CV', 'Undersmoothing'),
-                         values=c('CV'=color_cv, 'Undersmoothing'=color_u)) 
-    
+                         breaks=c('CV', 'U_Global', 'U_Lmin'),
+                         values=c('CV'=color_cv, 'U_Global'=color_u_g, 'U_Lmin'=color_u_l)) 
+      
       p_se <- ggplot(df, aes(x = a)) +  
         geom_line(aes(y = SE, color=method, linetype='Empirical'),alpha=0.7) +
         geom_point(aes(y = SE, color=method, linetype='Empirical'),alpha=0.7) + 
@@ -146,8 +147,8 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
         labs(title="Standard Error") +
         scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
         scale_color_manual(name='Method',
-                           breaks=c('CV', 'Undersmoothing'),
-                           values=c('CV'=color_cv, 'Undersmoothing'=color_u)) +
+                           breaks=c('CV', 'U_Global', 'U_Lmin'),
+                           values=c('CV'=color_cv, 'U_Global'=color_u_g, 'U_Lmin'=color_u_l)) +
         scale_linetype_manual(breaks=c('Empirical', 'Oracal'),
                               values=c('Empirical'= 1, 'Oracal'=2))
       
@@ -161,8 +162,8 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
         labs(title="|Bias| / Standard Error") +
         scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
         scale_color_manual(name='Method',
-                           breaks=c('CV', 'Undersmoothing'),
-                           values=c('CV'=color_cv, 'Undersmoothing'=color_u)) +
+                           breaks=c('CV', 'U_Global', 'U_Lmin'),
+                           values=c('CV'=color_cv, 'U_Global'=color_u_g, 'U_Lmin'=color_u_l)) +
         scale_linetype_manual(breaks=c('Empirical', 'Oracal'),
                               values=c('Empirical'= 1, 'Oracal'=2))
       
@@ -175,8 +176,8 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
         labs(title="95% CI Coverage Rate")+
         scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
         scale_color_manual(name='Method',
-                           breaks=c('CV', 'Undersmoothing'),
-                           values=c('CV'=color_cv, 'Undersmoothing'=color_u)) +
+                           breaks=c('CV', 'U_Global', 'U_Lmin'),
+                           values=c('CV'=color_cv, 'U_Global'=color_u_g, 'U_Lmin'=color_u_l)) +
         scale_linetype_manual(breaks=c('Empirical', 'Oracal'),
                               values=c('Empirical'= 1, 'Oracal'=2))
     
@@ -213,7 +214,7 @@ estimation_qqplot <- function(results_list, z_para){
 
 
 
-plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_scaler=NA){
+plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_g_scaler=NA, u_l_scaler=NA){
   df <- df %>% filter(a == a_para, z == z_para)
   
   p_est_avg <- ggplot(df) +  
@@ -275,22 +276,35 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_sc
       geom_point(aes(y = oracal_cover_rate, color = "Oracal")) 
   }
   
-  if(!is.na(u_scaler)){
+  if(!is.na(u_g_scaler)){
     p_est_avg <- p_est_avg +
-      geom_vline(xintercept = u_scaler, lty=2, col = "red") +
-      geom_vline(xintercept = 1, lty=2, col = "red")
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
     p_bias <- p_bias +
-      geom_vline(xintercept = u_scaler, lty=2, col = "red")+
-      geom_vline(xintercept = 1, lty=2, col = "red")
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
     p_se <- p_se + 
-      geom_vline(xintercept = u_scaler, lty=2, col = "red")+
-      geom_vline(xintercept = 1, lty=2, col = "red")
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
     p_bias_d_df <- p_bias_d_df +  
-      geom_vline(xintercept = u_scaler, lty=2, col = "red")+
-      geom_vline(xintercept = 1, lty=2, col = "red")
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
     p_cr <- p_cr +
-      geom_vline(xintercept = u_scaler, lty=2, col = "red")+
-      geom_vline(xintercept = 1, lty=2, col = "red")
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
+  }
+  
+  if(!is.na(u_l_scaler)){
+    p_est_avg <- p_est_avg +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") 
+    p_bias <- p_bias +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
+    p_se <- p_se + 
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
+    p_bias_d_df <- p_bias_d_df +  
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
+    p_cr <- p_cr +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
   }
   
   p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr, legend, 
