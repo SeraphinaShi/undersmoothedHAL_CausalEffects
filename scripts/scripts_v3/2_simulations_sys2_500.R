@@ -131,7 +131,7 @@ nn=500
 # 
 # save.image(file=here("data", "rdata", "02_simu_V3_sys2_500_U.RData"))
 # 
-## ----simu_sys2_n500_2_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+## ----simu_sys2_n500_1_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
 set.seed(123)
 n = nn
 results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth='local')

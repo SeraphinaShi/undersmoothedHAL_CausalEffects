@@ -130,7 +130,7 @@ run_simu_1round <- function(gen_data_functions, n, undersmooth='none', lambda_sc
           select(all_of(x_names)) %>% 
           mutate_if(sapply(., is.factor), as.numeric)
         
-        if((0.1 <= sum(Y_seg==1)/length(Y_seg) & sum(Y_seg==1)/length(Y_seg) <= 0.9)|(dim(X)[1] > 0)){
+        if((0.1 <= sum(Y_seg==1)/length(Y_seg) & sum(Y_seg==1)/length(Y_seg) <= 0.9) & (dim(X)[1] > 0)){
           
           # fitting HAL
           CV_hal <- fit_hal(X = X_seg, Y = Y_seg, family = y_type,
