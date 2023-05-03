@@ -145,14 +145,18 @@ run_simu_1round <- function(gen_data_functions, n, undersmooth='none', lambda_sc
           CV_lambda <- CV_hal$lambda_star
           
           CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
-          CV_basis_mat <- as.matrix(CV_hal$x_basis)
-          CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
-          
-          hal_undersmooth <- undersmooth_hal(X_seg, Y_seg,
-                                             fit_init = CV_hal,
-                                             basis_mat = CV_basis_mat,
-                                             family = y_type)
-          lambda = hal_undersmooth$lambda_under
+          if (length(CV_nonzero_col) == 0){
+            lambda = CV_lambda
+          }else{
+            CV_basis_mat <- as.matrix(CV_hal$x_basis)
+            CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+            
+            hal_undersmooth <- undersmooth_hal(X_seg, Y_seg,
+                                               fit_init = CV_hal,
+                                               basis_mat = CV_basis_mat,
+                                               family = y_type)
+            lambda = hal_undersmooth$lambda_under
+          }
           lambdas[i] = lambda
         } else {
           lambdas[i] = CV_lambda
