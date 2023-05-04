@@ -122,6 +122,9 @@ load(here("data", "rdata", paste0("02_simu_V3_sys", sn, "_", nn, "_U_l.RData")))
 ```{r, fig.width=6, fig.height=4}
 set.seed(123)
 
+cols_to_convert <- names(psi_10pnt)[names(psi_10pnt) != 'hal_fit_time_unit']
+psi_10pnt[cols_to_convert]  <- lapply(psi_10pnt[cols_to_convert], as.numeric)
+
 cat(paste0("Undersmoothed lambda: ", mean(psi_10pnt$lambda), 
              "\n which is ", mean(psi_10pnt$lambda)/mean(psi_10pnt$CV_lambda), " * lambda_CV"))
   
@@ -143,7 +146,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z_n", nn ,"_1_u.png")), p
 ```{r , fig.width=6, fig.height=7}
 set.seed(123)
   
-avg_u_scaler <- mean(simu_results$result_summary$lambda)/mean(simu_results$result_summary$CV_lambda)
+avg_u_l_scaler <- mean(simu_results$result_summary$lambda)/mean(simu_results$result_summary$CV_lambda)
   
 cat(paste0("The average of unsersmoothed lambda (from 1000 sample): ", mean(simu_results$result_summary$lambda),
              "\n which is ", avg_u_scaler, " * the average of 1000 lambda_CV"))
@@ -162,6 +165,7 @@ simu_results_U_l$method = "U_Lmin"
 ```
 
 ```{r , fig.width=6, fig.height=4}
+source(here("scripts", "scripts_v3", "1_visual_functions.R"))
   p1 <- estimation_qqplot(results_list = simu_results$all_results, z_para = 1)
   p1
   ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z1", "_n", nn ,"_B_u_qq.png")), p1)
@@ -175,7 +179,7 @@ simu_results_U_l$method = "U_Lmin"
 ```{r, fig.width=6, fig.height=7}
 source(here("scripts", "scripts_v3", "1_visual_functions.R"))
 
-simu_results_CV_U <- rbind(simu_results_CV, simu_results_U)
+simu_results_CV_U <- rbind(simu_results_CV, simu_results_U) %>% rbind(simu_results_U_l %>% select(names(simu_results_CV)))
 
 cat("z=1:")
 p1 <- plot_perforences_cv_u_alla(simu_results_CV_U, z_para=1)
@@ -197,63 +201,63 @@ source(here("scripts", "scripts_v3", "1_visual_functions.R"))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(df=simu_results_all, a_para = 0.5, z_para = 1, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a05_z1.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 2, z_para = 1, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 2, z_para = 1, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a2_z1.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 2.5, z_para = 1, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 2.5, z_para = 1, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a25_z1.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 3, z_para = 1, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 3, z_para = 1, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a3_z1.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 4, z_para = 1, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 4, z_para = 1, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a4_z1.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 1, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 1, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a5_z1.png")))
 ```
 
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 0, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 0.5, z_para = 0, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a05_z0.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 2, z_para = 0, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 2, z_para = 0, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a2_z0.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 2.5, z_para = 0, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 2.5, z_para = 0, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a25_z0.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 3, z_para = 0, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 3, z_para = 0, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a3_z0.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 4, z_para = 0, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 4, z_para = 0, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a4_z0.png")))
 ```
 
 ```{r , fig.height=5.5, fig.width=5.5}
-plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 0, add_oracal=T, u_scaler=avg_u_scaler)
+plot_perforences_alllambda_1a(simu_results_all, a_para = 5, z_para = 0, add_oracal=T, u_g_scaler=avg_u_scaler, u_l_scaler=avg_u_l_scaler)
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_z0", "_n", nn ,"_B_grid_a5_z0.png")))
 ```
 

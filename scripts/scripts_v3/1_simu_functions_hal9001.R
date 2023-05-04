@@ -72,6 +72,7 @@ undersmooth_hal <- function(X,
                             fit_init,
                             basis_mat,
                             criterion = NULL,
+                            a = NULL,
                             Nlam = 20,
                             family = "gaussian"){
   
@@ -97,17 +98,20 @@ undersmooth_hal <- function(X,
     return(res)
   }
   
-  # evaluate refits
-  if (family != "binomial"){
-    pred_mat <- predict(us_fit, fit_init$x_basis)
-  }else {
-    pred_mat <- predict(us_fit, fit_init$x_basis, type = "response")
-  }
-  resid_mat <- pred_mat - Y
+  
+
   
   # check the criterion (global)
   # TBD user-specified criterion (e.g. target parameter driven)
   if (is.null(criterion)){
+    
+    if (family != "binomial"){
+      pred_mat <- predict(us_fit, fit_init$x_basis)
+    }else {
+      pred_mat <- predict(us_fit, fit_init$x_basis, type = "response")
+    }
+    resid_mat <- pred_mat - Y
+    
     max_score <- get_maxscore(basis_mat = basis_mat,
                               resid_mat = resid_mat,
                               sd_est = sd_est,
@@ -115,6 +119,11 @@ undersmooth_hal <- function(X,
     
     # get the first lambda that satisfies the criteria
     lambda_under <- us_lambda[max_score <= 1/(sqrt(n)*log(n))][1] # over under-smoothing 
+  } else if(criterion == 'local') {
+    X_new <- X
+    X_new$A = a
+    
+    
   }
   
   # collect results

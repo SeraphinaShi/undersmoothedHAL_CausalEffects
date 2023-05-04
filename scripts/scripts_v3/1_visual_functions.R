@@ -198,7 +198,12 @@ plot_perforences_cv_u_alla <- function(df, z_para=1){
 
 estimation_qqplot <- function(results_list, z_para){
   df <- do.call("rbind", results_list) %>% 
-    as.data.frame() %>% filter(z == z_para)
+    as.data.frame()
+  
+  cols_to_convert <- names(df)[names(df) != 'hal_fit_time_unit']
+  df[cols_to_convert]  <- lapply(df[cols_to_convert], as.numeric)
+  
+  df <- df %>% filter(z == z_para)
   
   p <- ggplot(df, aes(sample = psi_hat)) + 
     stat_qq() + stat_qq_line() +
@@ -279,6 +284,7 @@ plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_g_
   if(!is.na(u_g_scaler)){
     p_est_avg <- p_est_avg +
       geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+      # geom_text(aes(x=u_g_scaler, label="Globally undersmoothed HAL\n", y=+Inf), colour="#00BA38", angle=90, text=element_text(size=5)) +
       geom_vline(xintercept = 1, lty=2, col = "#F8766D")
     p_bias <- p_bias +
       geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
