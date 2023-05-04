@@ -267,7 +267,7 @@ run_simu_1round <- function(gen_data_functions, n, undersmooth='none', lambda_sc
 ##############################################################
 run_simu_rep <- function(gen_data_functions, n, B, undersmooth='none', lambda_scaler=1, return_all_rslts = F){
   result_list <- list()
-  for(b in 1:B){
+  for(b in 1:98){
     print(b)
     result <- run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
     while(any(is.na(result))){

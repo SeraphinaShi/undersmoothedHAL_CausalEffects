@@ -83,6 +83,19 @@ undersmooth_hal <- function(X,
   # refit on new lambda sequence
   us_lambda <- fit_init$lambda_star*10^seq(from=0, to=-3, length=Nlam)
   us_fit <- glmnet(fit_init$x_basis, Y, lambda=us_lambda, family = family, standardize = FALSE)
+  # >   us_fit <- glmnet(fit_init$x_basis, Y, lambda=us_lambda, family = family, standardize = FALSE)
+  # Warning messages:
+  #   1: from glmnet C++ code (error code -1); Convergence for 1th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+  # 2: In getcoef(fit, nvars, nx, vnames) :
+  #   an empty model has been returned; probably a convergence issue
+
+  
+  if(identical(us_fit$df, 0)){
+    res <- list("lambda_init" = fit_init$lambda_star,
+                "lambda_under" = fit_init$lambda_star,
+                "spec_under" = NA)
+    return(res)
+  }
   
   # evaluate refits
   if (family != "binomial"){

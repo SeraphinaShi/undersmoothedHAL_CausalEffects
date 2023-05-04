@@ -144,6 +144,13 @@ psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c
 
 ## ----simu_sys3_n500_B_u_local, fig.width=6, fig.height=7------------------------------------------------------------------------------------
 set.seed(123)
+gen_data_functions = generate_data_3
+n=nn
+B=1000
+return_all_rslts=T
+undersmooth='local'
+lambda_scaler=1
+
 simu_results <- run_simu_rep(generate_data_3, n=nn, B=1000, return_all_rslts=T,  undersmooth='local')
 
 save.image(file=here("data", "rdata", "02_simu_V3_sys3_500_U_l.RData"))
