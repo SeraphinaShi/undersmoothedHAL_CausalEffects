@@ -269,10 +269,23 @@ run_simu_rep <- function(gen_data_functions, n, B, undersmooth='none', lambda_sc
   result_list <- list()
   for(b in 1:B){
     print(b)
-    result <- run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
-    while(any(is.na(result))){
-      result <- run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
+    result <- tryCatch({
+      run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
+    }, error = function(e) {
+      print(paste0("Error: ", e$message))
+      NULL
+    })
+    
+    while(is.null(result)) {
+      print('retry with a new generated data')
+      result <- tryCatch({
+        run_simu_1round(gen_data_functions, n=n, undersmooth, lambda_scaler)
+      }, error = function(e) {
+        print(paste0("Error: ", e$message))
+        NULL
+      })
     }
+    
     result_list[[b]] <- result
   }
   result_all <-  do.call("rbind", result_list) %>% as.data.frame()

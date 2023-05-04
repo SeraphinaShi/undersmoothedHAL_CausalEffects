@@ -118,19 +118,19 @@ nn=200
 # 
 # save.image(file=here("data", "rdata", "02_simu_V3_sys3_200_CV.RData"))
 # 
-# ## ----simu_sys3_n200_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
-# set.seed(123)
-# n = nn
-# results_under <- run_simu_1round(generate_data_3, n=nn, undersmooth=T)
-# 
-# psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
-# 
-# 
-# ## ----simu_sys3_n200_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
-# set.seed(123)
-# simu_results <- run_simu_rep(generate_data_3, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V3_sys3_200_U.RData"))
+## ----simu_sys3_n200_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+set.seed(123)
+n = nn
+results_under <- run_simu_1round(generate_data_3, n=nn, undersmooth='global')
+
+psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+
+
+## ----simu_sys3_n200_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+set.seed(123)
+simu_results <- run_simu_rep(generate_data_3, n=nn, B=1000, return_all_rslts=T,  undersmooth='global')
+
+save.image(file=here("data", "rdata", "02_simu_V3_sys3_200_U.RData"))
 # 
 # 
 ## ----simu_sys3_n200_1_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
