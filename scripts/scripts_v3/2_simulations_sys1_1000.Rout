@@ -200,7 +200,7 @@ The following object is masked from ‘package:dplyr’:
 > # save.image(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
 > #------------------------------------------------------------------------------------
 > load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
-> # source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 > #------------------------------------------------------------------------------------
 > 
 > 
@@ -208,834 +208,1077 @@ The following object is masked from ‘package:dplyr’:
 > ## ----simu_sys1_n1000-------------------------------------------------------------------------------------------------------------------
 > nn=1000
 > 
-> 
-> 
-> ## ----simu_sys1_n1000_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
-> set.seed(123)
-> results <- run_simu_1round(generate_data_1, n=nn)
-> psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
-> 
-> 
-> ## ----simu_sys1_n1000_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
-> set.seed(123)
-> simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-> 
-> save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_CV.RData"))
-> 
-> 
-> ## ----simu_sys1_n1000_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+> # 
+> # 
+> # ## ----simu_sys1_n1000_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
+> # set.seed(123)
+> # results <- run_simu_1round(generate_data_1, n=nn)
+> # psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
+> # 
+> # 
+> # ## ----simu_sys1_n1000_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
+> # set.seed(123)
+> # simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T)
+> # 
+> # save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_CV.RData"))
+> # 
+> # 
+> # ## ----simu_sys1_n1000_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+> # set.seed(123)
+> # n = nn
+> # results_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+> # psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+> # 
+> # 
+> # ## ----simu_sys1_n1000_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+> # set.seed(123)
+> # simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+> # 
+> # save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_U.RData"))
+> # 
+> ## ----simu_sys1_n1000_1_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
 > set.seed(123)
 > n = nn
-> results_under <- run_simu_1round(generate_data_1, n=nn, undersmooth=T)
+> results_under <- run_simu_1round(generate_data_1, n=nn, undersmooth='local')
+[1] 0.0019168639 0.0005796278 0.0073860516 0.0073860516 0.0073860516
+Warning messages:
+1: from glmnet Fortran code (error code -97); Convergence for 97th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+2: from glmnet Fortran code (error code -98); Convergence for 98th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+3: from glmnet Fortran code (error code -100); Convergence for 100th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+4: from glmnet Fortran code (error code -97); Convergence for 97th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+5: from glmnet Fortran code (error code -98); Convergence for 98th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+6: from glmnet Fortran code (error code -95); Convergence for 95th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+7: from glmnet Fortran code (error code -89); Convergence for 89th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+8: from glmnet Fortran code (error code -97); Convergence for 97th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+9: from glmnet Fortran code (error code -96); Convergence for 96th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+10: from glmnet Fortran code (error code -18); Convergence for 18th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
 > psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
 > 
 > 
-> ## ----simu_sys1_n1000_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+> ## ----simu_sys1_n1000_B_u_local, fig.width=6, fig.height=7------------------------------------------------------------------------------------
 > set.seed(123)
-> simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
+> simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth='local')
+[1] 0.0019168639 0.0005796278 0.0073860516 0.0073860516 0.0073860516
+[1] 0.0013584599 0.0001008762 0.0026597526 0.0026597526 0.0026597526
+[1] 0.001809424 0.000469014 0.005976528 0.005976528 0.005976528
+[1] 0.0017317339 0.0006831301 0.0060516228 0.0060516228 0.0060516228
+[1] 0.003882933 0.001307880 0.011586073 0.011586073 0.011586073
+[1] 0.002382730 0.001285035 0.016374874 0.016374874 0.016374874
+[1] 0.0012679165 0.0008654219 0.0053296854 0.0053296854 0.0053296854
+[1] 0.0008524391 0.0005638573 0.0071850928 0.0071850928 0.0071850928
+[1] 0.0007707484 0.0002548259 0.0032471827 0.0032471827 0.0032471827
+[1] 0.001613929 0.000654785 0.005800523 0.005800523 0.005800523
+[1] 0.0017652284 0.0002948987 0.0054054370 0.0054054370 0.0054054370
+[1] 0.002692034 0.001351916 0.024780367 0.024780367 0.024780367
+[1] 0.0026422450 0.0005354731 0.0032977012 0.0032977012 0.0032977012
+[1] 0.0012244833 0.0004019284 0.0035605506 0.0035605506 0.0035605506
+[1] 0.002328505 0.001081072 0.013775835 0.013775835 0.013775835
+[1] 0.001812129 0.000774445 0.004769406 0.004769406 0.004769406
+[1] 0.0009437282 0.0007701512 0.0047429627 0.0047429627 0.0047429627
+[1] 0.0006179999 0.0005048444 0.0031090751 0.0031090751 0.0031090751
+[1] 0.0030998663 0.0005216973 0.0066478579 0.0066478579 0.0066478579
+[1] 0.002405669 0.001306460 0.011573498 0.011573498 0.011573498
+[1] 0.0030688221 0.0005107967 0.0093628051 0.0093628051 0.0093628051
+[1] 0.0026297984 0.0005069831 0.0064603589 0.0064603589 0.0064603589
+[1] 0.0019830287 0.0009461728 0.0083818306 0.0083818306 0.0083818306
+[1] 0.0010378894 0.0005392505 0.0098843570 0.0098843570 0.0098843570
+[1] 0.0024279948 0.0009454442 0.0083753763 0.0083753763 0.0083753763
+[1] 0.0003180870 0.0005352638 0.0068207323 0.0068207323 0.0068207323
+[1] 0.001568794 0.000590899 0.007529679 0.007529679 0.007529679
+[1] 0.0005865963 0.0006083910 0.0026047240 0.0026047240 0.0026047240
+[1] 0.001571791 0.001389580 0.017707076 0.017707076 0.017707076
+[1] 0.0031085739 0.0008227766 0.0104844359 0.0104844359 0.0104844359
+[1] 0.001910623 0.001225326 0.015614028 0.015614028 0.015614028
+[1] 0.0043564490 0.0007352448 0.0065132895 0.0065132895 0.0065132895
+[1] 0.0018171460 0.0008000391 0.0070872807 0.0070872807 0.0070872807
+[1] 0.0020270787 0.0007176573 0.0044196798 0.0044196798 0.0044196798
+[1] 0.0037488293 0.0006914066 0.0088104219 0.0088104219 0.0088104219
+[1] 0.0012312759 0.0006537696 0.0057915282 0.0057915282 0.0057915282
+[1] 0.002171969 0.000836766 0.007412632 0.007412632 0.007412632
+[1] 1.065700e-03 2.748672e-05 2.157048e-03 2.157048e-03 2.157048e-03
+[1] 0.0029610573 0.0009910247 0.0061032079 0.0061032079 0.0061032079
+[1] 0.0039184816 0.0007547693 0.0096178360 0.0096178360 0.0096178360
+[1] 0.0012365401 0.0002537419 0.0032333693 0.0032333693 0.0032333693
+[1] 0.0017439955 0.0005723273 0.0050700574 0.0050700574 0.0050700574
+[1] 0.0027332342 0.0006858235 0.0087392769 0.0087392769 0.0087392769
+[1] 0.0019465064 0.0007733784 0.0047628369 0.0047628369 0.0047628369
+[1] 0.0007951219 0.0005319560 0.0032760418 0.0032760418 0.0032760418
+[1] 0.003660521 0.001374938 0.017520497 0.017520497 0.017520497
+[1] 0.0015465917 0.0003717379 0.0047369635 0.0047369635 0.0047369635
+[1] 0.002217001 0.001517662 0.019339184 0.019339184 0.019339184
+[1] 0.0018569666 0.0001518184 0.0040029215 0.0040029215 0.0040029215
+[1] 0.0007790685 0.0008351451 0.0073982729 0.0073982729 0.0073982729
+[1] 0.0006331076 0.0011190581 0.0099133638 0.0099133638 0.0099133638
+[1] 0.0009741748 0.0035791011 0.0153233215 0.0153233215 0.0153233215
+[1] 0.003420398 0.001043880 0.019134119 0.019134119 0.019134119
+[1] 0.0026680674 0.0005534533 0.0049028593 0.0049028593 0.0049028593
+[1] 0.003270527 0.001978323 0.017525306 0.017525306 0.017525306
+[1] 0.0016615320 0.0007569376 0.0067054590 0.0067054590 0.0067054590
+[1] 0.0009728744 0.0005538135 0.0049060499 0.0049060499 0.0049060499
+[1] 0.0007552067 0.0004533986 0.0057775450 0.0057775450 0.0057775450
+[1] 0.0028823048 0.0002467731 0.0045233038 0.0045233038 0.0045233038
+[1] 0.0035641450 0.0006007612 0.0036997769 0.0036997769 0.0036997769
+[1] 0.0045971974 0.0009650841 0.0059434530 0.0059434530 0.0059434530
+[1] 0.001747198 0.000525604 0.004656151 0.004656151 0.004656151
+[1] 0.000927263 0.002062145 0.012699680 0.012699680 0.012699680
+[1] 0.0017033819 0.0005124274 0.0093926952 0.0093926952 0.0093926952
+[1] 0.001889703 0.001816194 0.033290477 0.033290477 0.033290477
+[1] 0.0019241310 0.0006987654 0.0061901307 0.0061901307 0.0061901307
+[1] 0.002385739 0.001798637 0.015933525 0.015933525 0.015933525
+[1] 0.0012348675 0.0006177147 0.0038041848 0.0038041848 0.0038041848
+[1] 0.0028152206 0.0006734449 0.0041473984 0.0041473984 0.0041473984
+[1] 0.0042939112 0.0004870865 0.0043149374 0.0043149374 0.0043149374
+[1] 0.0018946983 0.0006067897 0.0077321693 0.0077321693 0.0077321693
+[1] 0.0031932984 0.0007445652 0.0136477367 0.0136477367 0.0136477367
+[1] 0.0024304183 0.0008663969 0.0076751227 0.0076751227 0.0076751227
+[1] 0.001590136 0.001376083 0.017535087 0.017535087 0.017535087
+[1] 0.0016317078 0.0005192787 0.0046001177 0.0046001177 0.0046001177
+[1] 0.0009031720 0.0002252489 0.0041287694 0.0041287694 0.0041287694
+[1] 0.002475051 0.000768296 0.006806079 0.006806079 0.006806079
+[1] 0.0007737519 0.0005405977 0.0033292612 0.0033292612 0.0033292612
+[1] 0.001147469 0.001197230 0.010605863 0.010605863 0.010605863
+[1] 0.0008257279 0.0003495664 0.0064074842 0.0064074842 0.0064074842
+[1] 0.0011261804 0.0007855275 0.0143985677 0.0143985677 0.0143985677
+[1] 0.0018548779 0.0004243361 0.0037590525 0.0037590525 0.0037590525
+[1] 0.0016878566 0.0004823066 0.0042725941 0.0042725941 0.0042725941
+[1] 0.0011372188 0.0006211096 0.0055022040 0.0055022040 0.0055022040
+[1] 0.0008791025 0.0007549043 0.0096195567 0.0096195567 0.0096195567
+[1] 0.0030645684 0.0002498465 0.0031837321 0.0031837321 0.0031837321
+[1] 0.0030042137 0.0005680955 0.0050325694 0.0050325694 0.0050325694
+[1] 0.002283337 0.001810785 0.016041140 0.016041140 0.016041140
+[1] 0.0029646985 0.0001013312 0.0018573812 0.0018573812 0.0018573812
+[1] 0.0007109940 0.0001128431 0.0020683923 0.0020683923 0.0020683923
+[1] 0.001886834 0.000717243 0.003070756 0.003070756 0.003070756
+[1] 0.0011206339 0.0001963691 0.0035994069 0.0035994069 0.0035994069
+[1] 0.0023581351 0.0000538412 0.0009868988 0.0009868988 0.0009868988
+[1] 0.0030677407 0.0008770042 0.0054010146 0.0054010146 0.0054010146
+[1] 0.0003265089 0.0008264544 0.0073212854 0.0073212854 0.0073212854
+[1] 0.0014571160 0.0002219287 0.0084170676 0.0084170676 0.0084170676
+[1] 0.0012633895 0.0008132265 0.0072041035 0.0072041035 0.0072041035
+[1] 0.0011697726 0.0007392531 0.0065487979 0.0065487979 0.0065487979
+[1] 0.001561592 0.001975404 0.017499449 0.017499449 0.017499449
+[1] 0.0033309684 0.0005207918 0.0046135217 0.0046135217 0.0046135217
+[1] 0.002228123 0.000212229 0.005595738 0.005595738 0.005595738
+[1] 0.0024265268 0.0003051767 0.0027034588 0.0027034588 0.0027034588
+[1] 0.0004641531 0.0006135461 0.0112461811 0.0112461811 0.0112461811
+[1] 0.006179093 0.001239454 0.015794052 0.015794052 0.015794052
+[1] 0.0019462874 0.0002660468 0.0048765872 0.0048765872 0.0048765872
+[1] 0.0017926609 0.0005683469 0.0050347968 0.0050347968 0.0050347968
+[1] 0.003326812 0.001510018 0.019241782 0.019241782 0.019241782
+[1] 0.002147307 0.001630708 0.020779706 0.020779706 0.020779706
+[1] 0.0003939624 0.0001300052 0.0023829707 0.0023829707 0.0023829707
+[1] 0.0029993271 0.0008085852 0.0071629876 0.0071629876 0.0071629876
+[1] 0.0023461361 0.0005442329 0.0069350234 0.0069350234 0.0069350234
+[1] 0.0005162048 0.0015808905 0.0201448918 0.0201448918 0.0201448918
+[1] 0.001023510 0.000402224 0.003563169 0.003563169 0.003563169
+[1] 0.001330476 0.001902497 0.016853592 0.016853592 0.016853592
+[1] 0.0011718426 0.0001298016 0.0070814505 0.0070814505 0.0070814505
+[1] 0.0021023566 0.0004050003 0.0074235779 0.0074235779 0.0074235779
+[1] 0.003458787 0.001505730 0.013338764 0.013338764 0.013338764
+[1] 0.002324476 0.002225817 0.013707652 0.013707652 0.013707652
+[1] 0.0015020032 0.0004049004 0.0051595441 0.0051595441 0.0051595441
+[1] 0.0010778747 0.0004226656 0.0053859217 0.0053859217 0.0053859217
+[1] 0.0016558889 0.0001365381 0.0017398703 0.0017398703 0.0017398703
+[1] 0.002408129 0.001991858 0.012266823 0.012266823 0.012266823
+[1] 0.0035901925 0.0005965388 0.0076015446 0.0076015446 0.0076015446
+[1] 0.003123045 0.001789408 0.022801983 0.022801983 0.022801983
+[1] 0.0025510319 0.0004116985 0.0075463538 0.0075463538 0.0075463538
+[1] 0.0044352888 0.0003375156 0.0043008768 0.0043008768 0.0043008768
+[1] 3.311922e-04 9.262492e-05 1.697797e-03 1.697797e-03 1.697797e-03
+[1] 0.001441823 0.001653919 0.030316015 0.030316015 0.030316015
+[1] 0.0010179741 0.0003955499 0.0050403935 0.0050403935 0.0050403935
+[1] 0.0042132064 0.0005652201 0.0050070969 0.0050070969 0.0050070969
+[1] 0.0012412379 0.0003065612 0.0039064325 0.0039064325 0.0039064325
+[1] 0.0022490637 0.0007387848 0.0045497927 0.0045497927 0.0045497927
+[1] 0.0008636011 0.0003419963 0.0062687263 0.0062687263 0.0062687263
+[1] 0.0021869162           NA 0.0008376089 0.0008376089 0.0008376089
+[1] 0.002422690 0.001797713 0.022907806 0.022907806 0.022907806
+[1] 0.001382718 0.000800816 0.007094163 0.007094163 0.007094163
+[1] 0.0015050765 0.0007150361 0.0063342677 0.0063342677 0.0063342677
+[1] 0.0022139102 0.0004990605 0.0030734550 0.0030734550 0.0030734550
+[1] 0.0006315526 0.0001928259 0.0017081808 0.0017081808 0.0017081808
+[1] 0.0012179620 0.0001455142 0.0018542511 0.0018542511 0.0018542511
+[1] 0.0037422130 0.0008809816 0.0078043232 0.0078043232 0.0078043232
+[1] 0.0010688710 0.0006457006 0.0118355679 0.0118355679 0.0118355679
+[1] 0.0010916273 0.0009852167 0.0087277073 0.0087277073 0.0087277073
+[1] 0.0026253413 0.0008853443 0.0078429707 0.0078429707 0.0078429707
+[1] 0.0011268508 0.0005943316 0.0108939832 0.0108939832 0.0108939832
+[1] 0.0009111273 0.0002441721 0.0031114238 0.0031114238 0.0031114238
+[1] 0.0039621477 0.0002122232 0.0027043076 0.0027043076 0.0027043076
+[1] 0.002353720 0.001667717 0.021251306 0.021251306 0.021251306
+[1] 0.0010890405 0.0002538996 0.0046539308 0.0046539308 0.0046539308
+[1] 0.003471479 0.000285591 0.003639214 0.003639214 0.003639214
+[1] 0.0009786799 0.0004675272 0.0085696839 0.0085696839 0.0085696839
+[1] 0.0009434219 0.0007734042 0.0068513307 0.0068513307 0.0068513307
+[1] 0.0011607859 0.0003665744 0.0046711662 0.0046711662 0.0046711662
+[1] 0.0004512545 0.0005015958 0.0044434707 0.0044434707 0.0044434707
+[1] 0.0029556051 0.0004002195 0.0073359456 0.0073359456 0.0073359456
+[1] 0.002231683 0.000980792 0.008688511 0.008688511 0.008688511
+[1] 0.0008289074 0.0003519298 0.0044845530 0.0044845530 0.0044845530
+[1] 0.0003648749 0.0004349044 0.0038526734 0.0038526734 0.0038526734
+[1] 0.001105831 0.001300245 0.016568703 0.016568703 0.016568703
+[1] 0.0015125120 0.0004518455 0.0057577542 0.0057577542 0.0057577542
+[1] 0.0036942011 0.0008518412 0.0052460486 0.0052460486 0.0052460486
+[1] 0.002258821 0.000765542 0.004714576 0.004714576 0.004714576
+[1] 0.0010095054 0.0009147018 0.0116558157 0.0116558157 0.0116558157
+[1] 0.0024255489 0.0003569695 0.0065431824 0.0065431824 0.0065431824
+[1] 0.0004701302 0.0002005611 0.0036762463 0.0036762463 0.0036762463
+[1] 0.002577831 0.000884223 0.007833038 0.007833038 0.007833038
+[1] 0.000717906 0.001513880 0.019290996 0.019290996 0.019290996
+[1] 0.0030406155 0.0003509624 0.0031090589 0.0031090589 0.0031090589
+[1] 0.0008077327 0.0004242199 0.0054057278 0.0054057278 0.0054057278
+[1] 0.002419756 0.001687366 0.030929089 0.030929089 0.030929089
+[1] 0.003284338 0.002097889 0.018584506 0.018584506 0.018584506
+[1] 0.0027619638 0.0007018976 0.0043226238 0.0043226238 0.0043226238
+[1] 0.003465781 0.001325183 0.016886478 0.016886478 0.016886478
+[1] 0.003288454 0.001517077 0.013439280 0.013439280 0.013439280
+[1] 0.0015891607 0.0001064473 0.0040372155 0.0040372155 0.0040372155
+[1] 0.0021724979 0.0003169966 0.0040394081 0.0040394081 0.0040394081
+[1] 0.0012824038 0.0006413884 0.0081730518 0.0081730518 0.0081730518
+[1] 0.0035878099 0.0009147174 0.0056332705 0.0056332705 0.0056332705
+[1] 0.001592686 0.001558072 0.013802442 0.013802442 0.013802442
+[1] 0.0002395504 0.0001034987 0.0027289004 0.0027289004 0.0027289004
+[1] 0.002865356 0.003213192 0.028464604 0.028464604 0.028464604
+[1] 0.0013833499 0.0007084223 0.0043628060 0.0043628060 0.0043628060
+[1] 0.0031420285 0.0005598585 0.0102620979 0.0102620979 0.0102620979
+[1] 0.0008597102 0.0006106191 0.0054092715 0.0054092715 0.0054092715
+[1] 0.0006656326 0.0003396605 0.0043282091 0.0043282091 0.0043282091
+[1] 0.0023623807 0.0005505388 0.0048770401 0.0048770401 0.0048770401
+[1] 0.001647966 0.000706503 0.006258676 0.006258676 0.006258676
+[1] 0.001265616 0.000155896 0.001986543 0.001986543 0.001986543
+[1] 0.0011628212 0.0006360354 0.0056344266 0.0056344266 0.0056344266
+[1] 0.0019608693 0.0005700526 0.0072640377 0.0072640377 0.0072640377
+[1] 0.001358697 0.002324527 0.020592210 0.020592210 0.020592210
+[1] 0.0012130720 0.0005872635 0.0052023724 0.0052023724 0.0052023724
+[1] 0.0017575416 0.0001304878 0.0034405076 0.0034405076 0.0034405076
+[1] 0.003653271 0.002211665 0.013620499 0.013620499 0.013620499
+[1] 0.001756789 0.001171887 0.010381354 0.010381354 0.010381354
+[1] 0.0021501565 0.0001039158 0.0039412033 0.0039412033 0.0039412033
+[1] 0.0019330566 0.0003892803 0.0023973760 0.0023973760 0.0023973760
+[1] 0.001467473 0.002175909 0.019275654 0.019275654 0.019275654
+[1] 0.0007645782 0.0014181240 0.0125626897 0.0125626897 0.0125626897
+[1] 0.0030200407 0.0006466283 0.0118525729 0.0118525729 0.0118525729
+[1] 5.467746e-04 6.035965e-05 1.591473e-03 1.591473e-03 1.591473e-03
+[1] 5.966593e-04 4.383838e-05 1.155865e-03 1.155865e-03 1.155865e-03
+[1] 0.0018828489 0.0009433745 0.0058097549 0.0058097549 0.0058097549
+[1] 0.0013639548 0.0002292919 0.0029218087 0.0029218087 0.0029218087
+[1] 0.0040661804 0.0009779942 0.0086637258 0.0086637258 0.0086637258
+[1] 0.0028875144 0.0007409148 0.0045629106 0.0045629106 0.0045629106
+[1] 0.0012501496 0.0006376888 0.0039271950 0.0039271950 0.0039271950
+[1] 0.0010973849 0.0006629992 0.0058732902 0.0058732902 0.0058732902
+[1] 0.001849896 0.002718212 0.016740062 0.016740062 0.016740062
+[1] 0.0020750880 0.0005703956 0.0104552417 0.0104552417 0.0104552417
+[1] 0.002077887 0.001967673 0.017430965 0.017430965 0.017430965
+[1] 0.0011276599 0.0002716384 0.0034614205 0.0034614205 0.0034614205
+[1] 0.0006235967 0.0033262869 0.0142409398 0.0142409398 0.0142409398
+[1] 2.355840e-03 5.804924e-05 1.064031e-03 1.064031e-03 1.064031e-03
+[1] 0.001250207 0.000459796 0.004073180 0.004073180 0.004073180
+[1] 0.0011445687 0.0007702273 0.0098148141 0.0098148141 0.0098148141
+[1] 0.0021409436 0.0006372871 0.0081207900 0.0081207900 0.0081207900
+[1] 0.0021710643 0.0004882014 0.0030065794 0.0030065794 0.0030065794
+[1] 0.0009843032 0.0003637551 0.0046352403 0.0046352403 0.0046352403
+[1] 0.002169401 0.001028511 0.006334069 0.006334069 0.006334069
+[1] 0.0018899699 0.0007664918 0.0067900964 0.0067900964 0.0067900964
+[1] 0.0006128198 0.0003429542 0.0062862850 0.0062862850 0.0062862850
+[1] 0.0013133917 0.0008627051 0.0076424183 0.0076424183 0.0076424183
+[1] 0.0030435237 0.0008763816 0.0077635732 0.0077635732 0.0077635732
+[1] 0.002771254 0.001757556 0.015569609 0.015569609 0.015569609
+[1] 0.0016842549 0.0003922403 0.0049982205 0.0049982205 0.0049982205
+[1] 0.0043826530 0.0002068752 0.0054545770 0.0054545770 0.0054545770
+[1] 0.0024471641 0.0006856402 0.0087369414 0.0087369414 0.0087369414
+[1] 0.0019191325 0.0002381946 0.0043660602 0.0043660602 0.0043660602
+[1] 2.320678e-03 4.977984e-05 1.312520e-03 1.312520e-03 1.312520e-03
+[1] 0.002317051 0.000434176 0.005532597 0.005532597 0.005532597
+[1] 0.001576367 0.001339117 0.011862795 0.011862795 0.011862795
+[1] 0.002997909 0.002252767 0.019956515 0.019956515 0.019956515
+[1] 1.666959e-03 6.366804e-05 1.167023e-03 1.167023e-03 1.167023e-03
+[1] 0.0026975581 0.0008360745 0.0074065062 0.0074065062 0.0074065062
+[1] 0.0005973407 0.0001871842 0.0034310495 0.0034310495 0.0034310495
+[1] 0.0040463125 0.0004605664 0.0084420938 0.0084420938 0.0084420938
+[1] 0.0023981118 0.0005269747 0.0067151072 0.0067151072 0.0067151072
+[1] 0.0036960416 0.0003248431 0.0059543118 0.0059543118 0.0059543118
+[1] 0.0018417167 0.0006018845 0.0110324267 0.0110324267 0.0110324267
+[1] 0.0010912462 0.0001172944 0.0021499836 0.0021499836 0.0021499836
+[1] 0.0010444219 0.0006944616 0.0061520045 0.0061520045 0.0061520045
+[1] 0.0032652433 0.0004948394 0.0063056147 0.0063056147 0.0063056147
+[1] 0.002231383 0.000761903 0.006749446 0.006749446 0.006749446
+[1] 0.001733076 0.002634063 0.016221829 0.016221829 0.016221829
+[1] 0.0029887359 0.0008462796 0.0074969102 0.0074969102 0.0074969102
+[1] 0.0031500359 0.0004732983 0.0086754658 0.0086754658 0.0086754658
+[1] 0.0012628278 0.0001763788 0.0046504922 0.0046504922 0.0046504922
+[1] 0.002558693 0.000524696 0.004648108 0.004648108 0.004648108
+[1] 0.0026134891 0.0009280809 0.0170115430 0.0170115430 0.0170115430
+[1] 0.0030059418 0.0003124301 0.0027677144 0.0027677144 0.0027677144
+[1] 0.001959265 0.002295755 0.014138367 0.014138367 0.014138367
+[1] 0.0008344780 0.0002995916 0.0026539826 0.0026539826 0.0026539826
+[1] 0.0028523840 0.0001289981 0.0048924996 0.0048924996 0.0048924996
+[1] 0.0009605152 0.0021077584 0.0268586382 0.0268586382 0.0268586382
+[1] 0.0004954018 0.0013012934 0.0165820564 0.0165820564 0.0165820564
+[1] 0.002078898 0.001494871 0.013242565 0.013242565 0.013242565
+[1] 0.0012359366 0.0009355449 0.0119214142 0.0119214142 0.0119214142
+[1] 0.003984566 0.001395337 0.012360827 0.012360827 0.012360827
+[1] 0.003486678 0.001643784 0.014561739 0.014561739 0.014561739
+[1] 0.003562604 0.000965408 0.005945448 0.005945448 0.005945448
+[1] 0.0005949126 0.0005194986 0.0095223097 0.0095223097 0.0095223097
+[1] 0.002090814 0.001778907 0.015758750 0.015758750 0.015758750
+[1] 0.001631070 0.001226068 0.010861333 0.010861333 0.010861333
+[1] 0.0043402085 0.0004937767 0.0062920730 0.0062920730 0.0062920730
+[1] 0.0005695550 0.0003559696 0.0045360311 0.0045360311 0.0045360311
+[1] 0.0023871850 0.0002753982 0.0024396612 0.0024396612 0.0024396612
+[1] 0.004414865 0.000692608 0.006135585 0.006135585 0.006135585
+[1] 0.0032279101 0.0003914463 0.0049881024 0.0049881024 0.0049881024
+[1] 0.0015756295 0.0003483631 0.0063854288 0.0063854288 0.0063854288
+[1] 0.0033299970 0.0005901532 0.0052279709 0.0052279709 0.0052279709
+[1] 0.0026511268 0.0006720603 0.0059535592 0.0059535592 0.0059535592
+[1] 0.0026946220 0.0007340894 0.0093543173 0.0093543173 0.0093543173
+[1] 0.002274763 0.000528613 0.006735983 0.006735983 0.006735983
+[1] 0.0004866771 0.0002973405 0.0012730134 0.0012730134 0.0012730134
+[1] 0.0017463613 0.0006279127 0.0080013348 0.0080013348 0.0080013348
+[1] 0.002508274 0.001494576 0.019045010 0.019045010 0.019045010
+[1] 0.0021884715 0.0008369453 0.0051543130 0.0051543130 0.0051543130
+[1] 0.0028355007 0.0006822736 0.0086940417 0.0086940417 0.0086940417
+[1] 0.002385380 0.001053865 0.009335841 0.009335841 0.009335841
+[1] 0.0016641068 0.0003548632 0.0045219330 0.0045219330 0.0045219330
+[1] 0.0036343160 0.0005436423 0.0048159463 0.0048159463 0.0048159463
+[1] 0.001221009 0.001259431 0.016048619 0.016048619 0.016048619
+[1] 0.001458897 0.000615848 0.005455593 0.005455593 0.005455593
+[1] 0.0017982417 0.0004537728 0.0057823132 0.0057823132 0.0057823132
+[1] 0.003431786 0.000279081 0.003556260 0.003556260 0.003556260
+[1] 0.0018210141 0.0001460879 0.0038518291 0.0038518291 0.0038518291
+[1] 0.0009782324 0.0006124860 0.0054258100 0.0054258100 0.0054258100
+[1] 0.0018280436 0.0006007569 0.0076552955 0.0076552955 0.0076552955
+[1] 0.0011415795 0.0003665631 0.0067190303 0.0067190303 0.0067190303
+[1] 1.569477e-03 6.157065e-05 2.335184e-03 2.335184e-03 2.335184e-03
+[1] 0.0015702451 0.0007190764 0.0063700586 0.0063700586 0.0063700586
+[1] 0.0020924144 0.0007257923 0.0092485897 0.0092485897 0.0092485897
+[1] 0.001589300 0.001334443 0.017004472 0.017004472 0.017004472
+[1] 0.0025483272 0.0009252282 0.0056980016 0.0056980016 0.0056980016
+[1] 0.0028587306 0.0007414485 0.0065682463 0.0065682463 0.0065682463
+[1] 0.0017744156 0.0006739807 0.0041506981 0.0041506981 0.0041506981
+[1] 0.0004060205 0.0004512691 0.0039976428 0.0039976428 0.0039976428
+[1] 0.0025742906 0.0001663252 0.0043854142 0.0043854142 0.0043854142
+[1] 0.0016836261 0.0003140038 0.0057556296 0.0057556296 0.0057556296
+[1] 0.001954844 0.001917645 0.016987776 0.016987776 0.016987776
+[1] 0.0016801690 0.0005666084 0.0072201486 0.0072201486 0.0072201486
+[1] 0.001895696 0.001313764 0.011638199 0.011638199 0.011638199
+[1] 0.004105715 0.001463882 0.018653884 0.018653884 0.018653884
+[1] 0.002418706 0.001599339 0.014168011 0.014168011 0.014168011
+[1] 0.0010289883 0.0007111649 0.0062999739 0.0062999739 0.0062999739
+[1] 2.308147e-03 9.979501e-05 1.829223e-03 1.829223e-03 1.829223e-03
+[1] 0.001904257 0.001900234 0.024214209 0.024214209 0.024214209
+[1] 0.0008776380 0.0007975795 0.0070654916 0.0070654916 0.0070654916
+[1] 0.0019987324 0.0002200884 0.0058029616 0.0058029616 0.0058029616
+[1] 0.0032968560 0.0009301003 0.0082394501 0.0082394501 0.0082394501
+[1] 0.0008867461 0.0003806201 0.0023440420 0.0023440420 0.0023440420
+[1] 0.0019629593 0.0001909324 0.0034997535 0.0034997535 0.0034997535
+[1] 0.0021697616 0.0007676437 0.0068003005 0.0068003005 0.0068003005
+[1] 0.0022262698 0.0006344227 0.0080842897 0.0080842897 0.0080842897
+[1] 0.0039648986 0.0008448181 0.0074839632 0.0074839632 0.0074839632
+[1] 0.0015057549 0.0002576234 0.0032828311 0.0032828311 0.0032828311
+[1] 0.0010824439 0.0004770186 0.0060785283 0.0060785283 0.0060785283
+[1] 7.146949e-04 6.274286e-05 3.422996e-03 3.422996e-03 3.422996e-03
+[1] 0.0030531249 0.0001056896 0.0013467766 0.0013467766 0.0013467766
+[1] 0.0013137300 0.0001777704 0.0032584967 0.0032584967 0.0032584967
+[1] 0.0018994695 0.0001960104 0.0035928337 0.0035928337 0.0035928337
+[1] 0.0009154085 0.0006027457 0.0053395240 0.0053395240 0.0053395240
+[1] 0.0035626389 0.0002885532 0.0025561969 0.0025561969 0.0025561969
+[1] 0.0029273793 0.0004111564 0.0052392634 0.0052392634 0.0052392634
+[1] 0.0003048313 0.0001800491 0.0011088291 0.0011088291 0.0011088291
+[1] 0.002564388 0.002262673 0.013934631 0.013934631 0.013934631
+[1] 0.0022781404 0.0001170003 0.0030848906 0.0030848906 0.0030848906
+[1] 0.0038876046 0.0004797167 0.0061129101 0.0061129101 0.0061129101
+[1] 0.003352624 0.001003792 0.012791077 0.012791077 0.012791077
+[1] 0.0008123686 0.0003146864 0.0057681403 0.0057681403 0.0057681403
+[1] 0.003514566 0.001861797 0.016493044 0.016493044 0.016493044
+[1] 0.005614775 0.001573941 0.013943020 0.013943020 0.013943020
+[1] 0.0025148787 0.0001054628 0.0019331135 0.0019331135 0.0019331135
+[1] 0.0010624286 0.0002296392 0.0029262343 0.0029262343 0.0029262343
+[1] 0.0023316774 0.0001942732 0.0024755753 0.0024755753 0.0024755753
+[1] 0.0027338330 0.0004532351 0.0119502286 0.0119502286 0.0119502286
+[1] 0.0002100259 0.0005274774 0.0032484599 0.0032484599 0.0032484599
+[1] 0.0008663035 0.0001478020 0.0038970235 0.0038970235 0.0038970235
+[1] 0.0023688453 0.0006529591 0.0057843482 0.0057843482 0.0057843482
+[1] 0.003648622 0.003112140 0.013324106 0.013324106 0.013324106
+[1] 0.0024859527 0.0005663283 0.0103806878 0.0103806878 0.0103806878
+[1] 0.0007203838 0.0007401856 0.0045584199 0.0045584199 0.0045584199
+[1] 0.0012067088 0.0008307038 0.0035565193 0.0035565193 0.0035565193
+[1] 0.0024125500 0.0002134984 0.0080973338 0.0080973338 0.0080973338
+[1] 0.0022908868 0.0003863815 0.0049235626 0.0049235626 0.0049235626
+[1] 0.0025246611 0.0008881931 0.0054699216 0.0054699216 0.0054699216
+[1] 0.0023197239 0.0001655266 0.0030340715 0.0030340715 0.0030340715
+[1] 0.0020858996 0.0006495721 0.0082773351 0.0082773351 0.0082773351
+[1] 0.0011936981 0.0002711522 0.0049701677 0.0049701677 0.0049701677
+[1] 0.001643404 0.002179001 0.027766460 0.027766460 0.027766460
+[1] 0.0011252728 0.0006077433 0.0077443207 0.0077443207 0.0077443207
+[1] 0.0026405684 0.0008400761 0.0107048797 0.0107048797 0.0107048797
+[1] 0.0012652349 0.0005275918 0.0139107545 0.0139107545 0.0139107545
+[1] 0.002151657 0.001025093 0.009080956 0.009080956 0.009080956
+[1] 0.0008257864 0.0007081351 0.0062731340 0.0062731340 0.0062731340
+[1] 0.0027425528 0.0004546716 0.0057937666 0.0057937666 0.0057937666
+[1] 0.002031367 0.000740753 0.006562084 0.006562084 0.006562084
+[1] 2.479515e-03 4.269225e-05 1.125646e-03 1.125646e-03 1.125646e-03
+[1] 0.0020693820 0.0008786514 0.0077836812 0.0077836812 0.0077836812
+[1] 0.0024046397 0.0009145329 0.0056321345 0.0056321345 0.0056321345
+[1] 0.001395873 0.001438251 0.018327273 0.018327273 0.018327273
+[1] 0.0021268861 0.0004555049 0.0040351669 0.0040351669 0.0040351669
+[1] 0.0025710248 0.0004625277 0.0058938745 0.0058938745 0.0058938745
+[1] 0.0031415106 0.0009888986 0.0060901142 0.0060901142 0.0060901142
+[1] 0.0025500199 0.0007401485 0.0065567299 0.0065567299 0.0065567299
+[1] 0.0003345262 0.0001235815 0.0010947671 0.0010947671 0.0010947671
+[1] 0.0023362357 0.0006092337 0.0053969992 0.0053969992 0.0053969992
+[1] 0.0005015032 0.0018971160 0.0241744742 0.0241744742 0.0241744742
+[1] 0.002109423 0.001238835 0.015786162 0.015786162 0.015786162
+[1] 0.003130609 0.001550426 0.013734711 0.013734711 0.013734711
+[1] 0.0010696061 0.0006017832 0.0076683726 0.0076683726 0.0076683726
+[1] 0.0026099375 0.0002190496 0.0040151376 0.0040151376 0.0040151376
+[1] 0.002700532 0.001087136 0.013853097 0.013853097 0.013853097
+[1] 0.0033876919 0.0007396157 0.0065520097 0.0065520097 0.0065520097
+[1] 0.0008200492 0.0007348383 0.0134694446 0.0134694446 0.0134694446
+[1] 2.463403e-03 7.053137e-05 6.248140e-04 6.248140e-04 6.248140e-04
+[1] 0.0029443476 0.0004709579 0.0060012993 0.0060012993 0.0060012993
+[1] 0.0007649455 0.0005076935 0.0044974885 0.0044974885 0.0044974885
+[1] 0.0022825773 0.0007236598 0.0092214153 0.0092214153 0.0092214153
+[1] 0.0023974609 0.0002086168 0.0055004961 0.0055004961 0.0055004961
+[1] 0.0034676991 0.0006393351 0.0117188890 0.0117188890 0.0117188890
+[1] 0.0027173997 0.0002116662 0.0055808995 0.0055808995 0.0055808995
+[1] 0.0041032190 0.0008881696 0.0113177227 0.0113177227 0.0113177227
+[1] 0.002384283 0.001613147 0.020555922 0.020555922 0.020555922
+[1] 0.0007782852 0.0008339321 0.0073875276 0.0073875276 0.0073875276
+[1] 0.001049580 0.000667252 0.005910964 0.005910964 0.005910964
+[1] 0.0009467770 0.0002839654 0.0025155550 0.0025155550 0.0025155550
+[1] 0.0023180162 0.0003252572 0.0059619019 0.0059619019 0.0059619019
+[1] 0.0007270592 0.0013839242 0.0176349997 0.0176349997 0.0176349997
+[1] 0.001582646 0.000895127 0.011406379 0.011406379 0.011406379
+[1] 0.0005906269 0.0005699979 0.0072633405 0.0072633405 0.0072633405
+[1] 0.003895122 0.001282679 0.016344856 0.016344856 0.016344856
+[1] 0.0025884470 0.0009347419 0.0082805678 0.0082805678 0.0082805678
+[1] 0.0015616858 0.0006629103 0.0058725024 0.0058725024 0.0058725024
+[1] 0.003778598 0.001064865 0.006557952 0.006557952 0.006557952
+[1] 0.0008333036 0.0007654251 0.0097536212 0.0097536212 0.0097536212
+[1] 0.003874654 0.001011229 0.006227637 0.006227637 0.006227637
+[1] 0.0008369126 0.0003246818 0.0028762479 0.0028762479 0.0028762479
+[1] 0.0030182158 0.0007022565 0.0043248341 0.0043248341 0.0043248341
+[1] 0.0012155267 0.0006398756 0.0081537749 0.0081537749 0.0081537749
+[1] 0.0030917793 0.0002738938 0.0024263342 0.0024263342 0.0024263342
+[1] 0.0012888061 0.0007704992 0.0098182789 0.0098182789 0.0098182789
+[1] 4.053493e-04 5.778051e-05 1.523470e-03 1.523470e-03 1.523470e-03
+[1] 0.0045550826 0.0005028797 0.0064080698 0.0064080698 0.0064080698
+[1] 0.0016876561 0.0005789607 0.0073775510 0.0073775510 0.0073775510
+[1] 0.003472163 0.002295997 0.029257309 0.029257309 0.029257309
+[1] 0.0024769948 0.0008910415 0.0078934409 0.0078934409 0.0078934409
+[1] 0.001354903 0.000943967 0.005813404 0.005813404 0.005813404
+[1] 0.002521431 0.001004616 0.008899562 0.008899562 0.008899562
+[1] 0.0015826324 0.0004892397 0.0043340119 0.0043340119 0.0043340119
+[1] 0.0023556557 0.0004301964 0.0038109668 0.0038109668 0.0038109668
+[1] 0.0018488120 0.0002765288 0.0035237369 0.0035237369 0.0035237369
+[1] 0.003171620 0.001342774 0.017110627 0.017110627 0.017110627
+[1] 0.0053011055 0.0002679621 0.0034145739 0.0034145739 0.0034145739
+[1] 0.0018954136 0.0004612217 0.0040858102 0.0040858102 0.0040858102
+[1] 0.0013929032 0.0003175553 0.0058207268 0.0058207268 0.0058207268
+[1] 0.0002952910 0.0002795371 0.0035620718 0.0035620718 0.0035620718
+[1] 0.0023950687 0.0003824608 0.0048736022 0.0048736022 0.0048736022
+[1] 0.0015844359 0.0005695263 0.0104393072 0.0104393072 0.0104393072
+[1] 0.0020739644 0.0006908541 0.0061200466 0.0061200466 0.0061200466
+[1] 0.0036128010 0.0009464463 0.0058286728 0.0058286728 0.0058286728
+[1] 0.0011076031 0.0003925114 0.0034771282 0.0034771282 0.0034771282
+[1] 0.001234203 0.001337351 0.008236053 0.008236053 0.008236053
+[1] 0.002760118 0.001873671 0.016598227 0.016598227 0.016598227
+[1] 0.002407613 0.001101006 0.009753445 0.009753445 0.009753445
+[1] 0.0005467931 0.0001191243 0.0010552830 0.0010552830 0.0010552830
+[1] 0.0018380682 0.0006525152 0.0040185030 0.0040185030 0.0040185030
+[1] 0.003445513 0.001193082 0.007347574 0.007347574 0.007347574
+[1] 0.0035266838 0.0007651919 0.0067785810 0.0067785810 0.0067785810
+[1] 0.0006323173 0.0021425916 0.0189805075 0.0189805075 0.0189805075
+[1] 0.002977786 0.000787763 0.006978530 0.006978530 0.006978530
+[1] 0.001263308 0.001794902 0.015900439 0.015900439 0.015900439
+[1] 0.0028155952 0.0005675814 0.0050280155 0.0050280155 0.0050280155
+[1] 0.0007593214 0.0001983099 0.0036349825 0.0036349825 0.0036349825
+[1] 0.0021328572 0.0007787193 0.0099230248 0.0099230248 0.0099230248
+[1] 0.001588779 0.001593298 0.009812300 0.009812300 0.009812300
+[1] 0.0006525299 0.0009902404 0.0087722112 0.0087722112 0.0087722112
+[1] 0.0015959152 0.0005772243 0.0051134383 0.0051134383 0.0051134383
+[1] 0.004433307 0.000723282 0.013257620 0.013257620 0.013257620
+[1] 0.002791188 0.000405761 0.007437520 0.007437520 0.007437520
+[1] 0.0031566621 0.0004489123 0.0039767646 0.0039767646 0.0039767646
+[1] 0.0011160944 0.0006245103 0.0079579791 0.0079579791 0.0079579791
+[1] 0.002681034 0.001009451 0.008942390 0.008942390 0.008942390
+[1] 0.0009007583 0.0006073370 0.0053801965 0.0053801965 0.0053801965
+[1] 0.0016261390 0.0008948725 0.0114031361 0.0114031361 0.0114031361
+[1] 0.0025657159 0.0007516714 0.0046291552 0.0046291552 0.0046291552
+[1] 0.001993489 0.001834847 0.016254298 0.016254298 0.016254298
+[1] 0.0016360502 0.0007279684 0.0092763197 0.0092763197 0.0092763197
+[1] 0.002354611 0.002249925 0.013856123 0.013856123 0.013856123
+[1] 0.003281034 0.001950658 0.017280235 0.017280235 0.017280235
+[1] 0.0025960360 0.0007561695 0.0046568566 0.0046568566 0.0046568566
+[1] 0.0029473306 0.0006634314 0.0058771185 0.0058771185 0.0058771185
+[1] 0.0018312974 0.0001774168 0.0032520149 0.0032520149 0.0032520149
+[1] 0.0008523313 0.0001689144 0.0030961689 0.0030961689 0.0030961689
+[1] 0.0022015275 0.0001585583 0.0041806300 0.0041806300 0.0041806300
+[1] 0.0018290408 0.0009101901 0.0080630719 0.0080630719 0.0080630719
+[1] 0.0015084156 0.0005241513 0.0066791285 0.0066791285 0.0066791285
+[1] 0.0008181239 0.0006093801 0.0053982958 0.0053982958 0.0053982958
+[1] 0.0009852136 0.0007639486 0.0097348053 0.0097348053 0.0097348053
+[1] 0.0014269169 0.0009231067 0.0081774953 0.0081774953 0.0081774953
+[1] 0.0008369009 0.0006799183 0.0086640287 0.0086640287 0.0086640287
+[1] 0.001642928 0.000811460 0.007188454 0.007188454 0.007188454
+[1] 0.001430695 0.002069312 0.018331346 0.018331346 0.018331346
+[1] 0.0013844440 0.0005058713 0.0021658033 0.0021658033 0.0021658033
+[1] 0.004259323 0.001094546 0.006740743 0.006740743 0.006740743
+[1] 0.0013499292 0.0006341765 0.0080811523 0.0080811523 0.0080811523
+[1] 0.0023534757 0.0009729114 0.0123975664 0.0123975664 0.0123975664
+[1] 0.002362422 0.002244775 0.019885716 0.019885716 0.019885716
+[1] 0.002048601 0.000320144 0.005868178 0.005868178 0.005868178
+[1] 0.0012049328 0.0008816965 0.0078106569 0.0078106569 0.0078106569
+[1] 0.0008905611 0.0014092020 0.0124836522 0.0124836522 0.0124836522
+[1] 0.002331311 0.001832192 0.016230777 0.016230777 0.016230777
+[1] 0.0019035004 0.0007071713 0.0062645958 0.0062645958 0.0062645958
+[1] 0.001071519 0.000613934 0.003780902 0.003780902 0.003780902
+[1] 0.0022785719 0.0003993055 0.0050882497 0.0050882497 0.0050882497
+[1] 0.0019331165 0.0008935547 0.0055029408 0.0055029408 0.0055029408
+[1] 0.0017732006 0.0002564693 0.0047010332 0.0047010332 0.0047010332
+[1] 0.005205029 0.001395814 0.017786511 0.017786511 0.017786511
+[1] 0.0009237547 0.0007904041 0.0048676897 0.0048676897 0.0048676897
+[1] 0.002273760 0.002129226 0.027132198 0.027132198 0.027132198
+[1] 0.0020752883 0.0002927012 0.0037298187 0.0037298187 0.0037298187
+[1] 0.0017522137 0.0003920014 0.0034726106 0.0034726106 0.0034726106
+[1] 0.0002567337 0.0006641088 0.0058831195 0.0058831195 0.0058831195
+[1] 0.001021684 0.003057178 0.038956857 0.038956857 0.038956857
+[1] 0.001540239 0.001226181 0.022475653 0.022475653 0.022475653
+[1] 0.0011591847 0.0006194417 0.0054874279 0.0054874279 0.0054874279
+[1] 0.0044373083 0.0007622955 0.0097137403 0.0097137403 0.0097137403
+[1] 0.0024798727 0.0001372154 0.0036178917 0.0036178917 0.0036178917
+[1] 0.003642133 0.002113691 0.009049414 0.009049414 0.009049414
+[1] 0.0018482117 0.0006891727 0.0061051519 0.0061051519 0.0061051519
+[1] 0.0012370427 0.0008736922 0.0111332408 0.0111332408 0.0111332408
+[1] 0.0028143941 0.0001076652 0.0019734831 0.0019734831 0.0019734831
+[1] 0.002815972 0.001214602 0.010759759 0.010759759 0.010759759
+[1] 0.0016325874 0.0009862859 0.0087371790 0.0087371790 0.0087371790
+[1] 0.001507203 0.000494214 0.006297645 0.006297645 0.006297645
+[1] 0.002670720 0.002519365 0.022318215 0.022318215 0.022318215
+[1] 0.0033226994 0.0005150671 0.0045628082 0.0045628082 0.0045628082
+[1] 0.0017016593 0.0004511653 0.0057490867 0.0057490867 0.0057490867
+[1] 0.0008363102 0.0004588139 0.0058465511 0.0058465511 0.0058465511
+[1] 0.002460600 0.001470153 0.018733795 0.018733795 0.018733795
+[1] 0.002740023 0.001838612 0.011323061 0.011323061 0.011323061
+[1] 0.003289592 0.000639572 0.008149906 0.008149906 0.008149906
+[1] 0.0011892169 0.0005007674 0.0044361323 0.0044361323 0.0044361323
+[1] 0.002585871 0.001888035 0.016725478 0.016725478 0.016725478
+[1] 0.0011318226 0.0002040056 0.0053789151 0.0053789151 0.0053789151
+[1] 0.0012984327 0.0002245352 0.0028611957 0.0028611957 0.0028611957
+[1] 0.0038505737 0.0009257523 0.0117966300 0.0117966300 0.0117966300
+[1] 0.0004783128 0.0003309684 0.0029319396 0.0029319396 0.0029319396
+[1] 0.003218553 0.001420305 0.018098597 0.018098597 0.018098597
+[1] 0.0044335246 0.0007532671 0.0095986947 0.0095986947 0.0095986947
+[1] 0.0040429468 0.0001285204 0.0016377037 0.0016377037 0.0016377037
+[1] 0.0013683194 0.0001271747 0.0023310878 0.0023310878 0.0023310878
+[1] 0.0006052011 0.0010260210 0.0130743292 0.0130743292 0.0130743292
+[1] 1.838183e-04 3.764048e-05 1.427587e-03 1.427587e-03 1.427587e-03
+[1] 0.0013386650 0.0005853428 0.0154334470 0.0154334470 0.0154334470
+[1] 0.002324190 0.003242607 0.019969540 0.019969540 0.019969540
+[1] 0.004275299 0.000795542 0.007047442 0.007047442 0.007047442
+[1] 0.003314822 0.001132695 0.020762086 0.020762086 0.020762086
+[1] 0.0007325925 0.0006912045 0.0126696454 0.0126696454 0.0126696454
+[1] 0.003360646 0.001461132 0.012943686 0.012943686 0.012943686
+[1] 0.002059960 0.001048069 0.009284494 0.009284494 0.009284494
+[1] 0.002375964 0.001075883 0.013709702 0.013709702 0.013709702
+[1] 0.0034626005 0.0007723229 0.0098415178 0.0098415178 0.0098415178
+[1] 0.003099992 0.001032267 0.009144514 0.009144514 0.009144514
+[1] 0.0012416058 0.0006823893 0.0060450599 0.0060450599 0.0060450599
+[1] 0.002109688 0.001002255 0.006172368 0.006172368 0.006172368
+[1] 0.0018444322 0.0001717788 0.0045292076 0.0045292076 0.0045292076
+[1] 0.0010893077 0.0003053612 0.0055972114 0.0055972114 0.0055972114
+[1] 0.0006055954 0.0002900361 0.0036958570 0.0036958570 0.0036958570
+[1] 0.0010406075 0.0004378741 0.0115452103 0.0115452103 0.0115452103
+[1] 0.0008235124 0.0006060384 0.0053686927 0.0053686927 0.0053686927
+[1] 0.0021092929 0.0006689249 0.0059257837 0.0059257837 0.0059257837
+[1] 0.0034477362 0.0007450961 0.0094945728 0.0094945728 0.0094945728
+[1] 0.003269345 0.001145970 0.010151769 0.010151769 0.010151769
+[1] 0.002169676 0.001991564 0.012265013 0.012265013 0.012265013
+[1] 0.002379940 0.001382647 0.017618726 0.017618726 0.017618726
+[1] 0.0014913898 0.0006158074 0.0078470795 0.0078470795 0.0078470795
+[1] 0.0010984004 0.0006203526 0.0038204307 0.0038204307 0.0038204307
+[1] 0.0024496179 0.0002551484 0.0067273719 0.0067273719 0.0067273719
+[1] 0.0046717929 0.0009365991 0.0082970205 0.0082970205 0.0082970205
+[1] 0.0022726313 0.0006444606 0.0082122006 0.0082122006 0.0082122006
+[1] 0.0013315242 0.0004136033 0.0036639744 0.0036639744 0.0036639744
+[1] 0.002989073 0.000210594 0.003860147 0.003860147 0.003860147
+[1] 0.0006735884 0.0001383315 0.0036473187 0.0036473187 0.0036473187
+[1] 0.002957519 0.001827824 0.016192088 0.016192088 0.016192088
+[1] 0.004238245 0.000705373 0.006248665 0.006248665 0.006248665
+[1] 0.0024966145 0.0000920986 0.0050245262 0.0050245262 0.0050245262
+[1] 1.981793e-04 2.527112e-05 9.584554e-04 9.584554e-04 9.584554e-04
+[1] 0.0009661517 0.0004515226 0.0057536397 0.0057536397 0.0057536397
+[1] 0.001212609 0.001042524 0.013284620 0.013284620 0.013284620
+[1] 2.995232e-04 7.986266e-05 1.017670e-03 1.017670e-03 1.017670e-03
+[1] 0.0012369812 0.0002177587 0.0039914751 0.0039914751 0.0039914751
+[1] 0.0017891694 0.0007344797 0.0134628719 0.0134628719 0.0134628719
+[1] 0.0004815793 0.0003287348 0.0041889859 0.0041889859 0.0041889859
+[1] 0.003172981 0.002455570 0.031290719 0.031290719 0.031290719
+[1] 0.0017730626 0.0002486572 0.0022027716 0.0022027716 0.0022027716
+[1] 0.0014981454 0.0004590076 0.0040661959 0.0040661959 0.0040661959
+[1] 0.002276137 0.002211407 0.019590119 0.019590119 0.019590119
+[1] 0.0020484861 0.0008155964 0.0072250974 0.0072250974 0.0072250974
+[1] 0.0024840416 0.0003183768 0.0040569955 0.0040569955 0.0040569955
+[1] 0.0003851290 0.0005744838 0.0073205036 0.0073205036 0.0073205036
+[1] 0.002014675 0.000448024 0.003968896 0.003968896 0.003968896
+[1] 0.0035209339 0.0006843716 0.0042146902 0.0042146902 0.0042146902
+[1] 0.0008077972 0.0007631899 0.0097251383 0.0097251383 0.0097251383
+[1] 0.0015314586 0.0006809529 0.0086772125 0.0086772125 0.0086772125
+[1] 0.0036124410 0.0008624808 0.0076404314 0.0076404314 0.0076404314
+[1] 0.002347298 0.002089584 0.012868667 0.012868667 0.012868667
+[1] 0.0003380604 0.0016403937 0.0209031260 0.0209031260 0.0209031260
+[1] 0.0007491107 0.0016793300 0.0148766272 0.0148766272 0.0148766272
+[1] 0.0027180049 0.0003857316 0.0034170677 0.0034170677 0.0034170677
+[1] 0.0018485017 0.0002221688 0.0028310416 0.0028310416 0.0028310416
+[1] 0.0004735517 0.0003340237 0.0042563808 0.0042563808 0.0042563808
+[1] 0.0033591336 0.0008441816 0.0074783243 0.0074783243 0.0074783243
+[1] 0.0011174257 0.0001472058 0.0026982544 0.0026982544 0.0026982544
+[1] 0.0014466395 0.0005937308 0.0052596636 0.0052596636 0.0052596636
+[1] 0.0038106705 0.0009385241 0.0083140735 0.0083140735 0.0083140735
+[1] 0.0019767464 0.0003153756 0.0057807731 0.0057807731 0.0057807731
+[1] 0.001686427 0.002986406 0.038055028 0.038055028 0.038055028
+[1] 0.0005221750 0.0001922683 0.0024500263 0.0024500263 0.0024500263
+[1] 0.0022751453 0.0002090707 0.0055124632 0.0055124632 0.0055124632
+[1] 8.875607e-04 3.653876e-05 1.385802e-03 1.385802e-03 1.385802e-03
+[1] 0.0035701535 0.0002097515 0.0038447046 0.0038447046 0.0038447046
+[1] 0.0011847385 0.0005056692 0.0092688186 0.0092688186 0.0092688186
+[1] 0.002083577 0.001350955 0.017214887 0.017214887 0.017214887
+[1] 0.0034797332 0.0004794256 0.0061092002 0.0061092002 0.0061092002
+[1] 0.0037207968 0.0002022637 0.0037074548 0.0037074548 0.0037074548
+[1] 0.0033290087 0.0005883844 0.0074976350 0.0074976350 0.0074976350
+[1] 0.001784921 0.001247562 0.015897373 0.015897373 0.015897373
+[1] 0.004074562 0.001869446 0.016560802 0.016560802 0.016560802
+[1] 0.0012975974 0.0002936977 0.0053834216 0.0053834216 0.0053834216
+[1] 0.0015965421 0.0001997702 0.0017696977 0.0017696977 0.0017696977
+[1] 0.001177128 0.000909474 0.003893760 0.003893760 0.003893760
+[1] 0.0038390238 0.0005545937 0.0146226994 0.0146226994 0.0146226994
+[1] 0.0015423840 0.0004605349 0.0040797256 0.0040797256 0.0040797256
+[1] 0.001158503 0.001498888 0.027474332 0.027474332 0.027474332
+[1] 0.0024411720 0.0008270257 0.0151592211 0.0151592211 0.0151592211
+[1] 0.003725656 0.001745590 0.022243622 0.022243622 0.022243622
+[1] 0.0025280627 0.0003098818 0.0039487459 0.0039487459 0.0039487459
+[1] 0.0029091472 0.0007835499 0.0143623193 0.0143623193 0.0143623193
+[1] 0.0018453520 0.0006966335 0.0061712450 0.0061712450 0.0061712450
+[1] 0.0026780260 0.0009756759 0.0060086826 0.0060086826 0.0060086826
+[1] 0.0026743206 0.0006739795 0.0059705607 0.0059705607 0.0059705607
+[1] 0.0018297020 0.0004530663 0.0083046184 0.0083046184 0.0083046184
+[1] 0.0016424485 0.0004870158 0.0062059202 0.0062059202 0.0062059202
+[1] 0.004871822 0.000581094 0.005147719 0.005147719 0.005147719
+[1] 0.0021604692 0.0004891619 0.0089662425 0.0089662425 0.0089662425
+[1] 0.0019259080 0.0001333777 0.0035167031 0.0035167031 0.0035167031
+[1] 0.0030603920 0.0006833118 0.0060532325 0.0060532325 0.0060532325
+[1] 0.0023712541 0.0005190262 0.0031964133 0.0031964133 0.0031964133
+[1] 0.0021216505 0.0003342579 0.0042593654 0.0042593654 0.0042593654
+[1] 0.0016740821 0.0005021017 0.0063981559 0.0063981559 0.0063981559
+[1] 0.0011056829 0.0004921081 0.0062708104 0.0062708104 0.0062708104
+[1] 0.0025626771 0.0008932403 0.0055010041 0.0055010041 0.0055010041
+[1] 0.004010086 0.001373692 0.025179518 0.025179518 0.025179518
+[1] 0.0012117760 0.0008420755 0.0107303577 0.0107303577 0.0107303577
+[1] 3.539686e-03 9.919207e-05 2.615349e-03 2.615349e-03 2.615349e-03
+[1] 0.0010247762 0.0006191599 0.0113490820 0.0113490820 0.0113490820
+[1] 0.0028287920 0.0003600637 0.0045882013 0.0045882013 0.0045882013
+[1] 0.0019353179 0.0007097071 0.0062870599 0.0062870599 0.0062870599
+[1] 3.190412e-03 6.861925e-05 1.809250e-03 1.809250e-03 1.809250e-03
+[1] 0.002754442 0.000806124 0.007141185 0.007141185 0.007141185
+[1] 0.002717379 0.001384381 0.012263772 0.012263772 0.012263772
+[1] 0.0022981671 0.0002447805 0.0044867791 0.0044867791 0.0044867791
+[1] 0.0006278094 0.0007209245 0.0063864309 0.0063864309 0.0063864309
+[1] 0.0004784217 0.0003290786 0.0060319468 0.0060319468 0.0060319468
+[1] 0.0031950181 0.0004164471 0.0076333947 0.0076333947 0.0076333947
+[1] 0.001283526 0.001844872 0.016343109 0.016343109 0.016343109
+[1] 0.002646060 0.001876215 0.023908139 0.023908139 0.023908139
+[1] 0.0028675747 0.0009257666 0.0082010589 0.0082010589 0.0082010589
+[1] 0.0007167232 0.0001083786 0.0028575652 0.0028575652 0.0028575652
+[1] 0.0015427035 0.0007039751 0.0089705791 0.0089705791 0.0089705791
+[1] 0.001397973 0.001007952 0.006207456 0.006207456 0.006207456
+[1] 0.003553256 0.001141797 0.014549636 0.014549636 0.014549636
+[1] 0.0028071458 0.0009404745 0.0057918952 0.0057918952 0.0057918952
+[1] 0.001513607 0.002454410 0.021742800 0.021742800 0.021742800
+[1] 1.094617e-03 3.514119e-05 1.332796e-03 1.332796e-03 1.332796e-03
+[1] 0.002609774 0.001259570 0.007757038 0.007757038 0.007757038
+[1] 0.0020863556 0.0008572133 0.0075937678 0.0075937678 0.0075937678
+[1] 0.0029729009 0.0008330783 0.0073799638 0.0073799638 0.0073799638
+[1] 0.0006600453 0.0002010963 0.0053022075 0.0053022075 0.0053022075
+[1] 0.0018897180 0.0009418038 0.0083431269 0.0083431269 0.0083431269
+[1] 0.0028929483 0.0001617889 0.0029655602 0.0029655602 0.0029655602
+[1] 0.0025030243 0.0008875986 0.0054662604 0.0054662604 0.0054662604
+[1] 0.0029654249 0.0004824364 0.0061475665 0.0061475665 0.0061475665
+[1] 0.0022018166 0.0002815318 0.0051604227 0.0051604227 0.0051604227
+[1] 0.0024067521 0.0006194773 0.0078938441 0.0078938441 0.0078938441
+[1] 0.0008635300 0.0005933574 0.0052563562 0.0052563562 0.0052563562
+[1] 0.0043067833 0.0005170905 0.0045807334 0.0045807334 0.0045807334
+[1] 0.0002777622 0.0003052361 0.0080480099 0.0080480099 0.0080480099
+[1] 0.0023034154 0.0004015625 0.0051170103 0.0051170103 0.0051170103
+[1] 0.0017078100 0.0002452188 0.0064655640 0.0064655640 0.0064655640
+[1] 1.705401e-03 5.839944e-05 2.214910e-03 2.214910e-03 2.214910e-03
+[1] 0.0015962546 0.0001203949 0.0031743931 0.0031743931 0.0031743931
+[1] 0.0008732797 0.0004596137 0.0040715655 0.0040715655 0.0040715655
+[1] 0.002328595 0.001137874 0.020857013 0.020857013 0.020857013
+[1] 0.0012077209 0.0002192716 0.0040192055 0.0040192055 0.0040192055
+[1] 0.0005447958 0.0009895186 0.0087658167 0.0087658167 0.0087658167
+[1] 0.002066084 0.002521552 0.010795603 0.010795603 0.010795603
+[1] 0.002858676 0.002173537 0.013385689 0.013385689 0.013385689
+[1] 0.0021479193 0.0006991061 0.0089085339 0.0089085339 0.0089085339
+[1] 0.0004819165 0.0005214808 0.0046196253 0.0046196253 0.0046196253
+[1] 0.0005847425 0.0002736895 0.0034875568 0.0034875568 0.0034875568
+[1] 0.0025180490 0.0007987961 0.0070762697 0.0070762697 0.0070762697
+[1] 0.0031400526 0.0002965406 0.0054355316 0.0054355316 0.0054355316
+[1] 0.002174942 0.000303769 0.001870756 0.001870756 0.001870756
+[1] 0.0017257624 0.0001500631 0.0027506281 0.0027506281 0.0027506281
+[1] 0.002846757 0.001318885 0.011683566 0.011683566 0.011683566
+[1] 0.0020085926 0.0007631809 0.0097250227 0.0097250227 0.0097250227
+[1] 0.0025105596 0.0003639169 0.0046373019 0.0046373019 0.0046373019
+[1] 0.0031911511 0.0007087763 0.0090317592 0.0090317592 0.0090317592
+[1] 0.0033476642 0.0003364909 0.0020722735 0.0020722735 0.0020722735
+[1] 0.0018427041 0.0009790808 0.0124761820 0.0124761820 0.0124761820
+[1] 0.0020017976 0.0008851061 0.0078408612 0.0078408612 0.0078408612
+[1] 0.000850812 0.000728399 0.009281806 0.009281806 0.009281806
+[1] 0.0031011648 0.0006022923 0.0053355078 0.0053355078 0.0053355078
+[1] 0.0012630771 0.0006947753 0.0061547835 0.0061547835 0.0061547835
+[1] 0.0015429070 0.0007697797 0.0068192231 0.0068192231 0.0068192231
+[1] 0.004797887 0.001287114 0.016401370 0.016401370 0.016401370
+[1] 0.0017102659 0.0002881007 0.0052808307 0.0052808307 0.0052808307
+[1] 0.0022024244 0.0008500974 0.0108325788 0.0108325788 0.0108325788
+[1] 0.0012409782 0.0001710064 0.0045088420 0.0045088420 0.0045088420
+[1] 0.0008614140 0.0005327547 0.0067887596 0.0067887596 0.0067887596
+[1] 0.0027182371 0.0007346572 0.0093615529 0.0093615529 0.0093615529
+[1] 0.0020510790 0.0004942037 0.0043779863 0.0043779863 0.0043779863
+[1] 0.003617402 0.001528526 0.013540700 0.013540700 0.013540700
+[1] 0.0047364170 0.0007702881 0.0098155886 0.0098155886 0.0098155886
+[1] 0.0020960360 0.0008043881 0.0071258075 0.0071258075 0.0071258075
+[1] 0.003651448 0.001373465 0.017501724 0.017501724 0.017501724
+[1] 0.0008810447 0.0003137890 0.0039985343 0.0039985343 0.0039985343
+[1] 1.408000e-03 5.330328e-05 1.405421e-03 1.405421e-03 1.405421e-03
+[1] 0.0013429081 0.0002976331 0.0054555569 0.0054555569 0.0054555569
+[1] 0.0016184040 0.0005639201 0.0071858931 0.0071858931 0.0071858931
+[1] 0.002933856 0.001259885 0.011160899 0.011160899 0.011160899
+[1] 0.0021874921 0.0008980827 0.0055308263 0.0055308263 0.0055308263
+[1] 0.0034683285 0.0008444841 0.0107610494 0.0107610494 0.0107610494
+[1] 0.0025537816 0.0003844878 0.0070475878 0.0070475878 0.0070475878
+[1] 0.0004911686 0.0011097811 0.0141416630 0.0141416630 0.0141416630
+[1] 0.003116134 0.001204805 0.015352533 0.015352533 0.015352533
+[1] 1.823689e-03 5.510254e-05 3.006171e-03 3.006171e-03 3.006171e-03
+[1] 0.0008466540 0.0001750133 0.0032079592 0.0032079592 0.0032079592
+[1] 0.0006771673 0.0008408124 0.0051781281 0.0051781281 0.0051781281
+[1] 0.0004077891 0.0002589596 0.0032998579 0.0032998579 0.0032998579
+[1] 0.0020812962 0.0008267332 0.0073237545 0.0073237545 0.0073237545
+[1] 0.0007906684 0.0008182977 0.0072490276 0.0072490276 0.0072490276
+[1] 0.0015244428 0.0006325997 0.0038958537 0.0038958537 0.0038958537
+[1] 0.0030185495 0.0008596819 0.0076156363 0.0076156363 0.0076156363
+[1] 0.001156130 0.000835184 0.010642540 0.010642540 0.010642540
+[1] 0.0021192736 0.0009834222 0.0087118107 0.0087118107 0.0087118107
+[1] 0.001763032 0.001200558 0.015298404 0.015298404 0.015298404
+[1] 0.0006527523 0.0009368690 0.0171726289 0.0171726289 0.0171726289
+[1] 0.001441103 0.000265871 0.003387927 0.003387927 0.003387927
+[1] 0.002350447 0.001457776 0.012913949 0.012913949 0.012913949
+[1] 0.0027252317 0.0003932993 0.0072091011 0.0072091011 0.0072091011
+[1] 0.0004608089 0.0008383157 0.0106824471 0.0106824471 0.0106824471
+[1] 0.0016538777 0.0002766401 0.0035251560 0.0035251560 0.0035251560
+[1] 0.0037283238 0.0002097395 0.0055300980 0.0055300980 0.0055300980
+[1] 0.0030550829 0.0007196112 0.0063747966 0.0063747966 0.0063747966
+[1] 0.0023532738 0.0008606536 0.0109670930 0.0109670930 0.0109670930
+[1] 0.0024022242 0.0009301572 0.0082399535 0.0082399535 0.0082399535
+[1] 0.0014532967 0.0005701894 0.0072657806 0.0072657806 0.0072657806
+[1] 0.0004707292 0.0014568631 0.0129058664 0.0129058664 0.0129058664
+[1] 0.001332500 0.000463768 0.005909680 0.005909680 0.005909680
+[1] 0.003454622 0.001633219 0.014468148 0.014468148 0.014468148
+[1] 0.0008498519 0.0005069248 0.0064596158 0.0064596158 0.0064596158
+[1] 0.0038082715 0.0008898433 0.0038097151 0.0038097151 0.0038097151
+[1] 0.0005499300 0.0005860279 0.0036090425 0.0036090425 0.0036090425
+[1] 0.001170216 0.000257514 0.002281231 0.002281231 0.002281231
+[1] 0.0037363173 0.0006933526 0.0088352185 0.0088352185 0.0088352185
+[1] 0.004614082 0.001622001 0.020668759 0.020668759 0.020668759
+[1] 0.0009392765 0.0002174607 0.0027710470 0.0027710470 0.0027710470
+[1] 2.213605e-03 3.301845e-05 8.705813e-04 8.705813e-04 8.705813e-04
+[1] 0.0005848597 0.0003733428 0.0033073199 0.0033073199 0.0033073199
+[1] 0.0014545309 0.0006047679 0.0037244521 0.0037244521 0.0037244521
+[1] 0.0007885123 0.0006054070 0.0077145495 0.0077145495 0.0077145495
+[1] 0.002369977 0.001934979 0.017141335 0.017141335 0.017141335
+[1] 0.003081876 0.001212530 0.015450968 0.015450968 0.015450968
+[1] 0.0022913162 0.0001544308 0.0040718022 0.0040718022 0.0040718022
+[1] 0.002769524 0.001385704 0.017657680 0.017657680 0.017657680
+[1] 0.0014451817 0.0006177596 0.0054725269 0.0054725269 0.0054725269
+[1] 0.0010393829 0.0003383067 0.0043109576 0.0043109576 0.0043109576
+[1] 0.0036762355 0.0004525506 0.0057667397 0.0057667397 0.0057667397
+[1] 0.0031510538 0.0007745881 0.0068618188 0.0068618188 0.0068618188
+[1] 0.003837972 0.001751735 0.010788031 0.010788031 0.010788031
+[1] 0.002480474 0.000299903 0.003821589 0.003821589 0.003821589
+[1] 0.0015465717 0.0004884314 0.0062239593 0.0062239593 0.0062239593
+[1] 0.0008294312 0.0003817003 0.0033813563 0.0033813563 0.0033813563
+[1] 0.0008803319 0.0014471569 0.0184407585 0.0184407585 0.0184407585
+[1] 0.002410106 0.001845624 0.011366242 0.011366242 0.011366242
+[1] 0.0008315571 0.0005565116 0.0070914877 0.0070914877 0.0070914877
+[1] 0.0004208385 0.0002799915 0.0073823981 0.0073823981 0.0073823981
+[1] 0.002420560 0.001141753 0.014549078 0.014549078 0.014549078
+[1] 0.0003768317 0.0010050890 0.0089037499 0.0089037499 0.0089037499
+[1] 1.110242e-03 8.877978e-05 4.843465e-03 4.843465e-03 4.843465e-03
+[1] 0.0026109993 0.0004438753 0.0081361492 0.0081361492 0.0081361492
+[1] 0.0023401053 0.0005278057 0.0046756552 0.0046756552 0.0046756552
+[1] 0.0006571496 0.0006538380 0.0119847247 0.0119847247 0.0119847247
+[1] 0.0010506269 0.0005052116 0.0064377851 0.0064377851 0.0064377851
+[1] 0.0017743291 0.0008295957 0.0073491132 0.0073491132 0.0073491132
+[1] 0.0003006509 0.0020033230 0.0123374287 0.0123374287 0.0123374287
+[1] 0.0014056714 0.0007687765 0.0097963270 0.0097963270 0.0097963270
+[1] 0.001905626 0.000906068 0.008026556 0.008026556 0.008026556
+[1] 1.623055e-03 5.457465e-05 2.069847e-03 2.069847e-03 2.069847e-03
+[1] 0.0010305177 0.0003079699 0.0039243835 0.0039243835 0.0039243835
+[1] 0.0022146041 0.0005247088 0.0046482210 0.0046482210 0.0046482210
+[1] 0.001474773 0.000553707 0.004905106 0.004905106 0.004905106
+[1] 0.003718950 0.002266134 0.028876780 0.028876780 0.028876780
+[1] 0.0020509571 0.0006342165 0.0056183133 0.0056183133 0.0056183133
+[1] 0.001640306 0.003017177 0.012917537 0.012917537 0.012917537
+[1] 0.0018894896 0.0002049822 0.0026120365 0.0026120365 0.0026120365
+[1] 0.0020025806 0.0007408914 0.0094409944 0.0094409944 0.0094409944
+[1] 0.0020762954 0.0005380103 0.0068557304 0.0068557304 0.0068557304
+[1] 0.002988436 0.000479734 0.006113130 0.006113130 0.006113130
+[1] 0.0008058624 0.0003800464 0.0048428363 0.0048428363 0.0048428363
+[1] 0.002036938 0.001197468 0.021949361 0.021949361 0.021949361
+[1] 0.002536306 0.001004417 0.012799035 0.012799035 0.012799035
+[1] 0.0017750359 0.0003400507 0.0062330639 0.0062330639 0.0062330639
+[1] 0.0007861801 0.0006525012 0.0083146598 0.0083146598 0.0083146598
+[1] 0.0013690642 0.0001298154 0.0011499917 0.0011499917 0.0011499917
+[1] 0.0029737927 0.0009551001 0.0121706012 0.0121706012 0.0121706012
+[1] 0.0006547798 0.0003156359 0.0040220699 0.0040220699 0.0040220699
+[1] 0.0019086347 0.0004881914 0.0043247252 0.0043247252 0.0043247252
+[1] 0.0030655487 0.0008391625 0.0074338619 0.0074338619 0.0074338619
+[1] 0.0013419966 0.0001810413 0.0033184519 0.0033184519 0.0033184519
+[1] 0.0005859746 0.0006867690 0.0042294544 0.0042294544 0.0042294544
+[1] 0.001301458 0.002210327 0.013612258 0.013612258 0.013612258
+[1] 0.0021680461 0.0002312779 0.0060979900 0.0060979900 0.0060979900
+[1] 0.0023659135 0.0003209903 0.0058836910 0.0058836910 0.0058836910
+[1] 0.0017764696 0.0009574554 0.0058964718 0.0058964718 0.0058964718
+[1] 0.002541304 0.001038706 0.009201552 0.009201552 0.009201552
+[1] 0.002925836 0.000748182 0.009533896 0.009533896 0.009533896
+[1] 0.0012716796 0.0006479018 0.0057395470 0.0057395470 0.0057395470
+[1] 0.0013890835 0.0001348958 0.0035567323 0.0035567323 0.0035567323
+[1] 0.0026812606 0.0007749267 0.0098746972 0.0098746972 0.0098746972
+[1] 0.0025723642 0.0009983202 0.0127213441 0.0127213441 0.0127213441
+[1] 0.0011534862 0.0005462366 0.0069605558 0.0069605558 0.0069605558
+[1] 0.0039292334 0.0001512568 0.0027725075 0.0027725075 0.0027725075
+[1] 0.0024765470 0.0004267534 0.0054380119 0.0054380119 0.0054380119
+[1] 0.0052424194 0.0001376074 0.0036282272 0.0036282272 0.0036282272
+[1] 0.0022149142 0.0002828343 0.0025055355 0.0025055355 0.0025055355
+[1] 0.0008751037 0.0003917845 0.0034706884 0.0034706884 0.0034706884
+[1] 0.0013487157 0.0005129236 0.0031588306 0.0031588306 0.0031588306
+[1] 0.0020249107 0.0006993162 0.0089112116 0.0089112116 0.0089112116
+[1] 0.0009604264 0.0009885292 0.0087570520 0.0087570520 0.0087570520
+[1] 0.002502955 0.000905092 0.008017909 0.008017909 0.008017909
+[1] 0.0013306155 0.0007871525 0.0048476646 0.0048476646 0.0048476646
+[1] 0.002690976 0.001479598 0.013107268 0.013107268 0.013107268
+[1] 0.0037745078 0.0004975337 0.0044074854 0.0044074854 0.0044074854
+[1] 0.0012741452 0.0004368111 0.0055661752 0.0055661752 0.0055661752
+[1] 0.001416147 0.001045377 0.006437937 0.006437937 0.006437937
+[1] 0.002481638 0.001031551 0.009138164 0.009138164 0.009138164
+[1] 0.0020783365 0.0003144827 0.0027858977 0.0027858977 0.0027858977
+[1] 0.0014859105 0.0001401252 0.0036946135 0.0036946135 0.0036946135
+[1] 0.001314502 0.000396768 0.003514836 0.003514836 0.003514836
+[1] 0.0023285066 0.0005388065 0.0068658766 0.0068658766 0.0068658766
+[1] 0.0032993137 0.0002493221 0.0045700253 0.0045700253 0.0045700253
+[1] 0.0016532119 0.0007653131 0.0047131671 0.0047131671 0.0047131671
+[1] 0.0007968097 0.0010424899 0.0092350715 0.0092350715 0.0092350715
+[1] 0.0009808322 0.0003917283 0.0034701905 0.0034701905 0.0034701905
+[1] 0.0015183101 0.0008900812 0.0054815494 0.0054815494 0.0054815494
+[1] 0.0019211741 0.0003526956 0.0031244131 0.0031244131 0.0031244131
+[1] 0.001127937 0.003145437 0.013466661 0.013466661 0.013466661
+[1] 0.0006597757 0.0003727827 0.0033023585 0.0033023585 0.0033023585
+[1] 0.000869464 0.001928712 0.024577094 0.024577094 0.024577094
+[1] 0.0022470029 0.0003565275 0.0065350811 0.0065350811 0.0065350811
+[1] 0.0018186361 0.0006591768 0.0083997253 0.0083997253 0.0083997253
+[1] 0.0007663360 0.0001264716 0.0023181995 0.0023181995 0.0023181995
+[1] 0.0027471954 0.0005273245 0.0139037054 0.0139037054 0.0139037054
+[1] 0.0008918926 0.0009971463 0.0088333880 0.0088333880 0.0088333880
+[1] 1.670372e-03 3.217116e-05 1.755128e-03 1.755128e-03 1.755128e-03
+[1] 0.002267623 0.001739726 0.015411653 0.015411653 0.015411653
+[1] 0.0010019158 0.0008185702 0.0050411498 0.0050411498 0.0050411498
+[1] 0.0007947987 0.0003858802 0.0049171746 0.0049171746 0.0049171746
+[1] 0.0008031054 0.0003587353 0.0031779169 0.0031779169 0.0031779169
+[1] 0.0005866911 0.0005068561 0.0044900696 0.0044900696 0.0044900696
+[1] 0.0019014921 0.0003996787 0.0073260333 0.0073260333 0.0073260333
+[1] 0.0012817735 0.0006105632 0.0160984190 0.0160984190 0.0160984190
+[1] 0.001393316 0.001505730 0.027599731 0.027599731 0.027599731
+[1] 0.0016210556 0.0008226406 0.0104827038 0.0104827038 0.0104827038
+[1] 0.0019956002 0.0001817636 0.0068937316 0.0068937316 0.0068937316
+[1] 0.0017233807 0.0004901855 0.0043423902 0.0043423902 0.0043423902
+[1] 0.0007002980 0.0007698831 0.0068201387 0.0068201387 0.0068201387
+[1] 0.0019803357 0.0008470463 0.0107936988 0.0107936988 0.0107936988
+[1] 0.0026263145 0.0003979151 0.0035249974 0.0035249974 0.0035249974
+[1] 0.0010175841 0.0005280801 0.0046780866 0.0046780866 0.0046780866
+[1] 0.0037982325 0.0000576766 0.0015207306 0.0015207306 0.0015207306
+[1] 0.0009064258 0.0007220411 0.0030912978 0.0030912978 0.0030912978
+[1] 0.0015477941 0.0007320491 0.0093283182 0.0093283182 0.0093283182
+[1] 0.0014406100 0.0004360548 0.0038628649 0.0038628649 0.0038628649
+[1] 0.0025294949 0.0005499443 0.0048717737 0.0048717737 0.0048717737
+[1] 0.0013868162 0.0001510266 0.0019244946 0.0019244946 0.0019244946
+[1] 0.0028110500 0.0007735534 0.0098571974 0.0098571974 0.0098571974
+[1] 3.356292e-03 7.695009e-05 2.918479e-03 2.918479e-03 2.918479e-03
+[1] 0.0009561657 0.0001662283 0.0030469328 0.0030469328 0.0030469328
+[1] 0.002210233 0.002057102 0.037706276 0.037706276 0.037706276
+[1] 0.0042842543 0.0008927126 0.0038219992 0.0038219992 0.0038219992
+[1] 0.0019735271 0.0003751391 0.0047803034 0.0047803034 0.0047803034
+[1] 0.0026761879 0.0007431026 0.0045763838 0.0045763838 0.0045763838
+[1] 0.0009987751 0.0011027951 0.0202140213 0.0202140213 0.0202140213
+[1] 0.0007652430 0.0001896767 0.0034767370 0.0034767370 0.0034767370
+[1] 0.0007328889 0.0003992326 0.0024586665 0.0024586665 0.0024586665
+[1] 0.0037740774 0.0005123666 0.0065289597 0.0065289597 0.0065289597
+[1] 0.0012301735 0.0006614146 0.0058592523 0.0058592523 0.0058592523
+[1] 0.0028566082 0.0006441488 0.0039669787 0.0039669787 0.0039669787
+[1] 0.0062653314 0.0004927896 0.0090327375 0.0090327375 0.0090327375
+[1] 0.0035289913 0.0001078811 0.0019774398 0.0019774398 0.0019774398
+[1] 0.002271462 0.001996021 0.017682091 0.017682091 0.017682091
+[1] 0.0019521259 0.0005357251 0.0068266116 0.0068266116 0.0068266116
+[1] 0.0016755146 0.0006617278 0.0040752390 0.0040752390 0.0040752390
+[1] 0.0009440327 0.0007064929 0.0062585858 0.0062585858 0.0062585858
+[1] 0.0016985100 0.0006002057 0.0076482709 0.0076482709 0.0076482709
+[1] 0.003547432 0.001458374 0.018583694 0.018583694 0.018583694
+[1] 0.0010786276 0.0003389692 0.0062132393 0.0062132393 0.0062132393
+[1] 0.002119351 0.000197782 0.002520286 0.002520286 0.002520286
+[1] 1.073452e-03 6.117946e-05 1.121408e-03 1.121408e-03 1.121408e-03
+[1] 0.0017623590 0.0003161808 0.0057955328 0.0057955328 0.0057955328
+[1] 0.0011380948 0.0005181103 0.0031907733 0.0031907733 0.0031907733
+[1] 0.0022640548 0.0005773332 0.0105824070 0.0105824070 0.0105824070
+[1] 0.0004050493 0.0003032511 0.0079956718 0.0079956718 0.0079956718
+[1] 0.0018026283 0.0004194637 0.0053451206 0.0053451206 0.0053451206
+[1] 0.0012973746 0.0001433862 0.0026282416 0.0026282416 0.0026282416
+[1] 0.003112811 0.000494774 0.006304781 0.006304781 0.006304781
+[1] 0.003407065 0.001274602 0.016241931 0.016241931 0.016241931
+[1] 0.0028482939 0.0001566074 0.0059396352 0.0059396352 0.0059396352
+[1] 0.003196926 0.001230954 0.015685738 0.015685738 0.015685738
+[1] 0.0024307171 0.0004482657 0.0057121382 0.0057121382 0.0057121382
+[1] 0.001553847 0.001754099 0.015538981 0.015538981 0.015538981
+[1] 0.000929319 0.001524184 0.019422299 0.019422299 0.019422299
+[1] 0.0025096939 0.0004173121 0.0076492502 0.0076492502 0.0076492502
+[1] 0.002613481 0.001193757 0.015211752 0.015211752 0.015211752
+[1] 0.001990948 0.001461097 0.018618388 0.018618388 0.018618388
+[1] 0.0016159872 0.0004563763 0.0058154893 0.0058154893 0.0058154893
+[1] 0.0021686317 0.0008601192 0.0052970289 0.0052970289 0.0052970289
+[1] 0.0025560848 0.0008376408 0.0074203815 0.0074203815 0.0074203815
+[1] 0.004536204 0.002194125 0.013512479 0.013512479 0.013512479
+[1] 0.0026044497 0.0004864913 0.0061992364 0.0061992364 0.0061992364
+[1] 0.0021685948 0.0004673183 0.0059549201 0.0059549201 0.0059549201
+[1] 0.001596336 0.001033325 0.009153883 0.009153883 0.009153883
+[1] 0.0022811720 0.0004050521 0.0074245265 0.0074245265 0.0074245265
+[1] 0.0009089984 0.0004878301 0.0062162971 0.0062162971 0.0062162971
+[1] 0.0020983890 0.0005080696 0.0064742039 0.0064742039 0.0064742039
+[1] 0.002024993 0.001066685 0.019552136 0.019552136 0.019552136
+[1] 0.0017198216 0.0006219181 0.0055093660 0.0055093660 0.0055093660
+[1] 0.002212319 0.001040907 0.013264015 0.013264015 0.013264015
+[1] 0.0013809110 0.0003025639 0.0038554962 0.0038554962 0.0038554962
+[1] 0.0006997380 0.0002828357 0.0074573909 0.0074573909 0.0074573909
+[1] 0.001760697 0.001501254 0.019130102 0.019130102 0.019130102
+[1] 5.133914e-04 9.890357e-05 1.812883e-03 1.812883e-03 1.812883e-03
+[1] 0.001857975 0.002452664 0.021727335 0.021727335 0.021727335
+[1] 0.0028316033 0.0005839687 0.0051731844 0.0051731844 0.0051731844
+[1] 0.0021848995 0.0005928636 0.0052519816 0.0052519816 0.0052519816
+[1] 0.0018704855 0.0001229583 0.0022538013 0.0022538013 0.0022538013
+[1] 0.001206161 0.000951735 0.008431104 0.008431104 0.008431104
+[1] 0.001381010 0.002280409 0.014043860 0.014043860 0.014043860
+[1] 0.0015661493 0.0006430021 0.0056961423 0.0056961423 0.0056961423
+[1] 0.0032383912 0.0008005747 0.0070920255 0.0070920255 0.0070920255
+[1] 0.0017351498 0.0004305707 0.0054866548 0.0054866548 0.0054866548
+[1] 0.0018965798 0.0002270306 0.0028929939 0.0028929939 0.0028929939
+[1] 0.0014166688 0.0003134831 0.0057460854 0.0057460854 0.0057460854
+[1] 0.0008628396 0.0009722579 0.0123892395 0.0123892395 0.0123892395
+[1] 0.001219579 0.000765804 0.006784003 0.006784003 0.006784003
+[1] 0.0029629586 0.0002107193 0.0038624433 0.0038624433 0.0038624433
+[1] 0.0015867142 0.0002473226 0.0045333754 0.0045333754 0.0045333754
+[1] 0.0018524362 0.0007537409 0.0066771399 0.0066771399 0.0066771399
+[1] 0.0019161332 0.0002107035 0.0055555145 0.0055555145 0.0055555145
+[1] 0.0025552528 0.0005811699 0.0051483910 0.0051483910 0.0051483910
+[1] 0.0025806527 0.0004111842 0.0036425444 0.0036425444 0.0036425444
+[1] 0.001630083 0.001997879 0.025458470 0.025458470 0.025458470
+[1] 0.0003569380 0.0002390723 0.0043821495 0.0043821495 0.0043821495
+[1] 0.0048201195 0.0009604667 0.0059150167 0.0059150167 0.0059150167
+[1] 0.002931412 0.000506801 0.006458039 0.006458039 0.006458039
+[1] 0.0032598539 0.0009426501 0.0120119544 0.0120119544 0.0120119544
+[1] 0.0010718790 0.0006230929 0.0055197735 0.0055197735 0.0055197735
+[1] 0.0026062094 0.0005891854 0.0075078422 0.0075078422 0.0075078422
+[1] 0.0006720602 0.0006931791 0.0088330084 0.0088330084 0.0088330084
+[1] 0.0020326724 0.0004355383 0.0038582895 0.0038582895 0.0038582895
+[1] 0.001489837 0.000504541 0.006429240 0.006429240 0.006429240
+[1] 0.0012953447 0.0000316683 0.0024852017 0.0024852017 0.0024852017
+[1] 0.002848166 0.001735005 0.015369834 0.015369834 0.015369834
+[1] 0.0011924356 0.0006871172 0.0060869428 0.0060869428 0.0060869428
+[1] 0.001803876 0.001635460 0.014488001 0.014488001 0.014488001
+[1] 0.0007874565 0.0006745101 0.0085951139 0.0085951139 0.0085951139
+[1] 0.0029714888 0.0008204814 0.0072683723 0.0072683723 0.0072683723
+[1] 0.0024946500 0.0002533071 0.0066788239 0.0066788239 0.0066788239
+[1] 3.748064e-04 8.943534e-05 1.639333e-03 1.639333e-03 1.639333e-03
+[1] 0.0009190773 0.0009524643 0.0121370140 0.0121370140 0.0121370140
+[1] 0.0039979972 0.0002907744 0.0076667048 0.0076667048 0.0076667048
+[1] 0.0018551678 0.0007271948 0.0064419776 0.0064419776 0.0064419776
+[1] 0.002205446 0.001365685 0.012098153 0.012098153 0.012098153
+[1] 0.0008034376 0.0014185906 0.0125668229 0.0125668229 0.0125668229
+[1] 0.0028569430 0.0005132802 0.0135334081 0.0135334081 0.0135334081
+[1] 0.0018332195 0.0007479757 0.0095312668 0.0095312668 0.0095312668
+[1] 0.0009043526 0.0001559858 0.0028591891 0.0028591891 0.0028591891
+[1] 0.001075376 0.000726235 0.006433475 0.006433475 0.006433475
+[1] 0.0025506778 0.0005994899 0.0076391495 0.0076391495 0.0076391495
+[1] 0.0034892166 0.0005382943 0.0047685705 0.0047685705 0.0047685705
+[1] 0.0019500710 0.0003946096 0.0050284119 0.0050284119 0.0050284119
+[1] 0.003103841 0.002302411 0.020396296 0.020396296 0.020396296
+[1] 0.0033407366 0.0009163525 0.0116768505 0.0116768505 0.0116768505
+[1] 0.0027202164 0.0002185592 0.0027850450 0.0027850450 0.0027850450
+[1] 0.0007053087 0.0005673841 0.0072300333 0.0072300333 0.0072300333
+[1] 0.002696480 0.000829026 0.010564071 0.010564071 0.010564071
+[1] 0.003724249 0.000455042 0.004031066 0.004031066 0.004031066
+[1] 0.003087720 0.001466935 0.018692781 0.018692781 0.018692781
+[1] 0.0019743030 0.0004088179 0.0017502854 0.0017502854 0.0017502854
+[1] 2.608574e-03 4.418961e-05 2.410806e-03 2.410806e-03 2.410806e-03
+[1] 7.261298e-04 9.379578e-05 2.473067e-03 2.473067e-03 2.473067e-03
+[1] 0.0014263360 0.0005341202 0.0047315939 0.0047315939 0.0047315939
+[1] 0.0028342749 0.0009645818 0.0085449101 0.0085449101 0.0085449101
+[1] 0.001052971 0.000727289 0.006442812 0.006442812 0.006442812
+[1] 0.0016180355 0.0009479638 0.0058380182 0.0058380182 0.0058380182
+[1] 0.0021017987 0.0005835632 0.0035938638 0.0035938638 0.0035938638
+[1] 0.0013322552 0.0006722304 0.0085660644 0.0085660644 0.0085660644
+[1] 0.0024724897 0.0002037932 0.0037354895 0.0037354895 0.0037354895
+[1] 0.0020883551 0.0001963286 0.0025017667 0.0025017667 0.0025017667
+[1] 0.003933986 0.001453106 0.018516561 0.018516561 0.018516561
+[1] 0.0027837140 0.0005937195 0.0108827641 0.0108827641 0.0108827641
+[1] 0.001700296 0.002119217 0.013051157 0.013051157 0.013051157
+[1] 0.001066152 0.002191546 0.009382737 0.009382737 0.009382737
+[1] 0.002069917 0.002531754 0.010839281 0.010839281 0.010839281
+[1] 0.005070903 0.001754965 0.022363074 0.022363074 0.022363074
+[1] 0.0025503002 0.0005203846 0.0046099141 0.0046099141 0.0046099141
+[1] 0.0037011527 0.0006951532 0.0088581636 0.0088581636 0.0088581636
+[1] 0.0016530120 0.0002060525 0.0018253504 0.0018253504 0.0018253504
+[1] 0.0009162165 0.0001019520 0.0026881174 0.0026881174 0.0026881174
+[1] 0.0021893976 0.0002418828 0.0091738652 0.0091738652 0.0091738652
+[1] 0.0061082081 0.0008289435 0.0073433348 0.0073433348 0.0073433348
+[1] 0.00316584 0.00140931 0.01795849 0.01795849 0.01795849
+[1] 0.0015819855 0.0004991719 0.0091497249 0.0091497249 0.0091497249
+[1] 0.001857108 0.001698957 0.021649387 0.021649387 0.021649387
+[1] 0.001186649 0.001063439 0.006549170 0.006549170 0.006549170
+[1] 0.003935533 0.001452233 0.008943552 0.008943552 0.008943552
+[1] 0.0034809619 0.0008478447 0.0075107751 0.0075107751 0.0075107751
+[1] 0.0039524052 0.0009298065 0.0082368467 0.0082368467 0.0082368467
+[1] 0.0002107648 0.0003724571 0.0068270667 0.0068270667 0.0068270667
+[1] 0.0011002063 0.0004271479 0.0054430390 0.0054430390 0.0054430390
+[1] 0.001847834 0.001571193 0.020021325 0.020021325 0.020021325
+[1] 0.0011653122 0.0006686999 0.0085210759 0.0085210759 0.0085210759
+[1] 0.0033753583 0.0005640248 0.0034735368 0.0034735368 0.0034735368
+[1] 0.001130673 0.001594985 0.029235772 0.029235772 0.029235772
 `summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
 There were 50 or more warnings (use warnings() to see the first 50)
 > 
-> save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_U.RData"))
-> 
-> 
-> 
-> ## ----simu_sys1_n1000_B_grid------------------------------------------------------------------------------------------------------------
-> set.seed(123)
-> 
-> lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-> 
-> simu_results_lists <- list()
-> for(i in 1:length(lambda_scalers)){
-+   scaler = lambda_scalers[i]
-+   simu_results_lists[[i]] <- run_simu_rep(generate_data_1, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
-+ }
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-There were 50 or more warnings (use warnings() to see the first 50)
-> simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
-> 
-> save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_grid.RData"))
-> 
+> save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_U_l.RData"))
+> # 
+> # 
+> # ## ----simu_sys1_n1000_B_grid------------------------------------------------------------------------------------------------------------
+> # set.seed(123)
+> # 
+> # lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
+> # 
+> # simu_results_lists <- list()
+> # for(i in 1:length(lambda_scalers)){
+> #   scaler = lambda_scalers[i]
+> #   simu_results_lists[[i]] <- run_simu_rep(generate_data_1, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
+> # }
+> # simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
+> # 
+> # save.image(file=here("data", "rdata", "02_simu_V3_sys1_1000_grid.RData"))
+> # 
 > 
 > proc.time()
-    user   system  elapsed 
-736734.5 350839.8 302587.1 
+     user    system   elapsed 
+50586.024  9280.573 39555.498 

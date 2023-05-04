@@ -202,83 +202,336 @@ The following object is masked from ‘package:dplyr’:
 > # save.image(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
 > #------------------------------------------------------------------------------------
 > load(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
-> # source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+> source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 > #------------------------------------------------------------------------------------
 > 
 > 
 > ## ----simu_sys2_n1000-------------------------------------------------------------------------------------------------------------------
 > nn=1000
+> # 
+> # ## ----simu_sys2_n1000_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
+> # set.seed(123)
+> # results <- run_simu_1round(generate_data_2, n=nn)
+> # psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
+> # 
+> # 
+> # ## ----simu_sys2_n1000_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
+> # set.seed(123)
+> # simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T)
+> # 
+> # save.image(file=here("data", "rdata", "02_simu_V3_sys2_1000_CV.RData"))
+> # 
+> # ## ----simu_sys2_n1000_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+> # set.seed(123)
+> # n = nn
+> # results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth=T)
+> # 
+> # psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+> # cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
+> # 
+> # 
+> # ## ----simu_sys2_n1000_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+> # set.seed(123)
+> # simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
+> # 
+> # save.image(file=here("data", "rdata", "02_simu_V3_sys2_1000_U.RData"))
+> # 
 > 
-> ## ----simu_sys2_n1000_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
-> set.seed(123)
-> results <- run_simu_1round(generate_data_2, n=nn)
-> psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
-> 
-> 
-> ## ----simu_sys2_n1000_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
-> set.seed(123)
-> simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T)
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-> 
-> save.image(file=here("data", "rdata", "02_simu_V3_sys2_1000_CV.RData"))
-> 
-> ## ----simu_sys2_n1000_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+> ## ----simu_sys2_n1000_1_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
 > set.seed(123)
 > n = nn
-> results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth=T)
-Warning message:
-from glmnet Fortran code (error code -15); Convergence for 15th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
-> 
+> results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth='local')
+[1] 6.641687e-04 3.862226e-04 7.071533e-05 4.258025e-05 1.614937e-03
+Warning messages:
+1: from glmnet Fortran code (error code -18); Convergence for 18th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+2: from glmnet Fortran code (error code -17); Convergence for 17th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+3: from glmnet Fortran code (error code -100); Convergence for 100th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+4: from glmnet Fortran code (error code -95); Convergence for 95th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+5: from glmnet Fortran code (error code -100); Convergence for 100th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
+6: from glmnet Fortran code (error code -17); Convergence for 17th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
 > psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
-> cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
-Undersmoothed lambda: 0.000320988082768554
- which is 1 * lambda_CV> 
 > 
-> ## ----simu_sys2_n1000_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
+> 
+> ## ----simu_sys2_n1000_B_u_local, fig.width=6, fig.height=7------------------------------------------------------------------------------------
 > set.seed(123)
-> simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-[1] "  Since the learned undersmoothed lambda is NA, refitting lambdas."
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-There were 50 or more warnings (use warnings() to see the first 50)
-> 
-> save.image(file=here("data", "rdata", "02_simu_V3_sys2_1000_U.RData"))
-> 
-> 
-> 
-> ## ----simu_sys2_n1000_B_grid------------------------------------------------------------------------------------------------------------
-> set.seed(123)
-> 
-> lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-> 
-> simu_results_lists <- list()
-> for(i in 1:length(lambda_scalers)){
-+   scaler = lambda_scalers[i]
-+   simu_results_lists[[i]] <- run_simu_rep(generate_data_2, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
-+ }
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
-`summarise()` has grouped output by 'a'. You can override using the `.groups` argument.
+> simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth='local')
+[1] 1
+[1] 6.641687e-04 3.862226e-04 7.071533e-05 4.258025e-05 1.614937e-03
+[1] 2
+[1] 0.0009579874 0.0007255962 0.0001250660 0.0002795871 0.0035627090
+[1] 3
+[1] 5.681050e-04 5.994281e-04 8.444652e-06 2.422305e-05 1.900928e-03
+[1] 4
+[1] 0.0008604844 0.0007270493 0.0001259540 0.0002265791 0.0013953833
+[1] 5
+[1] 0.0009275925 0.0007422944 0.0002492086           NA 0.0011624481
+[1] 6
+[1] 0.0006095559 0.0002110228 0.0001150148 0.0001220218 0.0015548936
+[1] 7
+[1] 8.426323e-04 7.243053e-04 1.637672e-05 2.131190e-05 1.162691e-03
+[1] 8
+[1] 0.0012380856 0.0003032751 0.0001928519 0.0000293405 0.0023025247
+[1] 9
+[1] 4.179574e-04 8.562831e-04 7.626650e-05 1.138661e-05 4.318589e-04
+[1] 10
+[1] 1.382517e-03 8.224003e-04 2.229439e-04 9.082775e-05 3.444815e-03
+[1] 11
+[1] 1.034971e-03 7.718707e-04 5.899546e-05 1.312720e-04 2.406191e-03
+[1] 12
+[1] 5.197811e-04 1.188296e-03 2.003110e-05 2.714679e-05 2.130372e-03
+[1] 13
+[1] 7.145499e-04 9.550050e-05 1.421732e-05 3.915186e-05 2.135967e-03
+[1] 0.0008119243 0.0005061137 0.0002057022 0.0003058036 0.0038967787
+[1] 14
+[1] 6.345243e-04 9.093484e-04 2.581161e-04 6.112075e-05 1.611541e-03
+[1] 15
+[1] 0.0010701291 0.0005454698 0.0000454918 0.0002285483 0.0041892469
+[1] 16
+[1] 0.0007796162 0.0005749759 0.0001074175 0.0001031501 0.0009137722
+[1] 17
+[1] 1.976320e-04 7.489102e-04 1.694433e-05 5.261217e-05 4.128793e-03
+[1] 18
+[1] 9.644168e-04 8.993927e-05 2.920080e-04 7.434762e-05 1.960287e-03
+[1] 19
+[1] 4.892075e-04 7.439787e-05 6.889897e-05 7.534540e-05 1.381067e-03
+[1] 20
+[1] 6.625643e-04 2.401243e-04 1.640376e-04 5.184447e-05 9.502991e-04
+[1] 21
+[1] 9.145761e-04 2.087171e-05 2.792667e-04 1.139725e-04 3.005056e-03
+[1] 22
+[1] 1.283275e-03 2.908554e-04 2.585584e-05 7.026032e-05 2.664756e-03
+[1] 23
+[1] 0.0010803930 0.0002911973 0.0001636189 0.0001560618 0.0019886567
+[1] 24
+[1] 1.381886e-03 6.127073e-04 1.290098e-04 5.082123e-05 1.927492e-03
+[1] 25
+[1] 0.0008934731 0.0007385909 0.0001773499 0.0003129538 0.0039878922
+[1] 26
+[1] 1.059902e-03 1.497091e-04 1.872329e-04 5.258829e-05 1.386570e-03
+[1] 27
+[1] 0.0008633576 0.0008251525 0.0002482191 0.0002402386 0.0030613008
+[1] 28
+[1] 0.0012175920 0.0007804841 0.0001466723 0.0001056097 0.0019358054
+[1] 29
+[1] 1.458151e-03 6.451049e-04 5.170029e-05 1.042909e-04 9.238787e-04
+[1] 30
+[1] 7.046056e-04 1.038279e-05 2.425728e-04 2.852125e-05 1.556004e-03
+[1] 31
+[1] 2.050673e-03 4.012656e-04 1.833484e-04 7.082975e-05 2.686353e-03
+[1] 32
+[1] 2.039750e-04 4.997191e-05 1.332567e-04 4.900588e-04 4.341268e-03
+[1] 33
+[1] 0.0011674780 0.0003821708 0.0002151697 0.0001624930 0.0029784661
+[1] 34
+[1] 1.142540e-03 1.256691e-03 1.788269e-04 6.790074e-05 8.094303e-05
+[1] 35
+[1] 6.919605e-04 6.441465e-04 4.256982e-05 2.609670e-05 9.897670e-04
+[1] 36
+[1] 6.637502e-04 8.628636e-04 7.796077e-05 1.787874e-04 3.277139e-03
+[1] 37
+[1] 6.686170e-04 1.472308e-03 3.399949e-05 6.018802e-05 1.586948e-03
+[1] 38
+[1] 1.503893e-03 2.212175e-04 2.707109e-04 9.867532e-05 1.808699e-03
+[1] 39
+[1] 1.114715e-03 1.107929e-03 2.025408e-05 5.044600e-05 4.468844e-04
+[1] 40
+[1] 4.975559e-04 7.919779e-04 2.174948e-05 2.606813e-04 2.309289e-03
+[1] 41
+[1] 1.369505e-03 3.075978e-04 2.263948e-05 1.784047e-04 1.580428e-03
+[1] 42
+[1] 0.0008005245 0.0006015590 0.0002540669 0.0001495750 0.0013250353
+[1] 43
+[1] 8.110481e-04 6.169894e-04 1.890825e-04 3.618228e-05 1.973959e-03
+[1] 44
+[1] 1.200155e-03 1.347246e-03 4.553212e-05 2.326353e-05 8.823135e-04
+[1] 45
+[1] 5.095552e-04 3.354944e-04 4.037573e-05 3.844488e-05 3.017001e-03
+[1] 46
+[1] 3.466262e-04 2.281585e-04 4.346278e-06 1.091310e-04 2.000351e-03
+[1] 0.0008119174 0.0001370472 0.0001585379 0.0001388396 0.0025449022
+[1] 47
+[1] 0.0016871091 0.0002885169 0.0001943282 0.0002916351 0.0025834987
+[1] 48
+[1] 1.050474e-03 1.585337e-04 1.502195e-04 2.898038e-05 8.041806e-05
+[1] 49
+[1] 1.078678e-03 8.122966e-04 6.151149e-05 3.689972e-05 1.399492e-03
+[1] 50
+[1] 1.710496e-03 9.095273e-05 4.107005e-05 5.896712e-05 2.236440e-03
+[1] 51
+[1] 9.236220e-04 1.547216e-04 1.569259e-05 2.344240e-04 2.987206e-03
+[1] 52
+[1] 1.094529e-03 2.256794e-04 8.859642e-05 7.539422e-05 4.113203e-03
+[1] 53
+[1] 0.0015068508 0.0005838632 0.0002521134 0.0001503911 0.0019163958
+[1] 54
+[1] 0.0012747918 0.0005329599 0.0002369904 0.0002377028 0.0030289872
+[1] 55
+[1] 0.0014185242 0.0020698869 0.0001317286 0.0001652099 0.0030282658
+[1] 56
+[1] 9.574244e-04 4.727965e-04 3.318530e-05 6.187088e-05 2.346571e-03
+[1] 57
+[1] 1.522903e-03 1.015454e-03 2.174137e-05 1.869433e-05 3.970451e-04
+[1] 58
+[1] 1.576723e-03 1.673592e-04 5.594588e-05 1.323933e-04 3.490748e-03
+[1] 59
+[1] 2.347079e-03           NA 3.339926e-04 5.692142e-05 4.466966e-03
+[1] 60
+[1] 1.109088e-03 6.841971e-05 2.280990e-04 7.444769e-05 1.364612e-03
+[1] 61
+[1] 0.0012546656 0.0003855507 0.0001071734 0.0002129891 0.0018867993
+[1] 62
+[1] 2.306382e-03 1.012860e-03 1.975481e-05 2.578294e-04 3.285456e-03
+[1] 63
+[1] 3.203106e-04 9.155464e-04 1.280750e-04 1.640407e-05 1.287326e-03
+[1] 64
+[1] 1.028933e-03 1.142512e-03 2.282355e-04 5.670265e-05 1.495051e-03
+[1] 65
+[1] 6.139047e-04 5.128057e-04 6.166586e-05 7.867850e-05 1.442162e-03
+[1] 66
+[1] 1.309454e-03 8.455229e-04 5.784109e-05 3.215996e-04 1.376875e-03
+[1] 67
+[1] 0.0006994022 0.0009367078 0.0001085172 0.0002081986 0.0113584710
+[1] 68
+[1] 1.382803e-03 5.730263e-04 7.403012e-05 3.155950e-05 3.562556e-03
+[1] 69
+[1] 0.0014174888 0.0013213402 0.0001478287 0.0001176341 0.0031016015
+[1] 70
+[1] 9.372494e-04 7.840906e-04 2.182487e-04 7.487393e-05 1.974164e-03
+[1] 71
+[1] 1.822674e-03 2.145940e-04 5.342735e-04 3.401014e-05 3.839193e-03
+[1] 72
+[1] 1.581269e-03 1.877479e-05 1.408562e-04 3.381956e-04 2.995962e-03
+[1] 73
+[1] 0.0006646929 0.0007951971 0.0001179805 0.0004186943 0.0053353168
+[1] 74
+[1] 1.442773e-03 2.111736e-04 1.550084e-04 4.909819e-05 3.853030e-03
+[1] 75
+[1] 5.848884e-04 8.753961e-04 2.673904e-05 5.106937e-05 4.683502e-05
+[1] 76
+[1] 3.213691e-04 7.854214e-04 5.638393e-06 5.521189e-05 1.455745e-03
+[1] 77
+[1] 0.0003084293 0.0011199882 0.0001680205 0.0001110206 0.0020349865
+[1] 78
+[1] 0.0017575436 0.0004824536 0.0003129428 0.0001326250 0.0024309908
+[1] 79
+[1] 9.448357e-04 7.319059e-04 1.897918e-04 3.661809e-05 1.997735e-03
+[1] 80
+[1] 2.827701e-04 8.508970e-04 3.010088e-04 2.063901e-05 1.619667e-03
+[1] 81
+[1] 9.584418e-04 6.649801e-04 1.376144e-04 4.942746e-05 2.696562e-03
+[1] 82
+[1] 6.082652e-04 3.035751e-04 5.007546e-05 1.059769e-04 1.350437e-03
+[1] 83
+[1] 7.895033e-04 1.975650e-04 2.676497e-06 4.080459e-05 4.606176e-03
+[1] 84
+[1] 1.200896e-03 5.182095e-04 6.181746e-05 3.985981e-05 2.174590e-03
+[1] 85
+[1] 7.462275e-04 7.932345e-05 5.592683e-05 3.066258e-05 1.672826e-03
+[1] 86
+[1] 2.131253e-03           NA 1.415751e-04 5.773077e-05 1.522159e-03
+[1] 87
+[1] 1.720685e-03 1.158392e-04 7.274542e-05 1.237348e-05 9.710211e-04
+[1] 88
+[1] 1.018936e-03 5.075623e-04 1.531923e-05 7.493904e-05 1.373618e-03
+[1] 89
+[1] 0.0012259291 0.0008492514 0.0001466691 0.0002118210 0.0018764523
+[1] 90
+[1] 9.462220e-04 6.187508e-04 2.537957e-04 5.276207e-05 2.878485e-03
+[1] 91
+[1] 9.161749e-04 6.863378e-04 2.041306e-04 4.522301e-05 3.548921e-03
+[1] 92
+[1] 1.187817e-03 6.068159e-04 1.214606e-04 2.220375e-05 1.742462e-03
+[1] 93
+[1] 4.807276e-04 1.628899e-04 1.318143e-05 2.002630e-05 7.595354e-04
+[1] 94
+[1] 8.400212e-04 5.011902e-05 4.365418e-05 3.787085e-05 1.436324e-03
+[1] 95
+[1] 7.466023e-04 1.050015e-03 3.332130e-05 1.697745e-05 1.332323e-03
+[1] 96
+[1] 5.615333e-04 9.094744e-04 5.248278e-05 1.229470e-04 2.253594e-03
+[1] 97
+[1] 1.791690e-03 1.135004e-03 2.317202e-05 4.571858e-04 4.050058e-03
+[1] 98
+[1] 5.538964e-04 1.667350e-05 2.646453e-04 2.073571e-05 2.340725e-03
+[1] 99
+[1] 8.110243e-04 2.959240e-04 3.945527e-05 2.660555e-05 4.876746e-04
+[1] 100
+[1] 4.435655e-04 5.689829e-04 1.627264e-04 2.750974e-05 1.500820e-03
+[1] 101
+[1] 8.844988e-04 1.980527e-05 4.809021e-05 1.981166e-04 2.524550e-03
+[1] 102
+[1] 0.0012220306 0.0017005078 0.0001028374 0.0001714303 0.0021844938
+[1] 103
+[1] 9.132393e-04 1.127467e-03 1.828993e-04 4.321232e-05 3.391130e-03
+[1] 104
+[1] 8.458715e-04 4.597189e-04 6.191671e-05 2.570518e-05 2.901698e-03
+[1] 105
+[1] 8.775376e-04 9.954850e-04 1.464437e-05 1.068758e-04 2.817941e-03
+[1] 106
+[1] 6.497965e-04 2.364006e-04 2.333704e-05 9.272100e-05 3.516620e-03
+[1] 107
+[1] 0.0009132703 0.0008473426 0.0001549193 0.0001064905 0.0040388529
+[1] 108
+[1] 0.0007959727 0.0009288912 0.0002794916 0.0001344036 0.0011906366
+[1] 109
+[1] 0.0006196297 0.0014766011 0.0002380092 0.0005912788 0.0036413802
+[1] 110
+[1] 0.0011871555 0.0005011184 0.0001064856 0.0001231234 0.0032463338
+[1] 111
+[1] 9.583758e-04 1.618876e-04 3.422955e-05 1.264051e-04 1.610749e-03
+[1] 112
+[1] 6.160840e-04           NA 1.500408e-05 2.408223e-05 2.718493e-03
+[1] 113
+[1] 2.216738e-03 7.328591e-04 4.783939e-05 3.364116e-04 2.980159e-03
+[1] 114
+[1] 6.862071e-04 1.066586e-04 7.452816e-05 1.525502e-04 1.943909e-03
+[1] 115
+[1] 9.656889e-04 5.429802e-04 1.108469e-04 6.339393e-05 1.671477e-03
+[1] 116
+[1] 1.281199e-03 4.949146e-05 2.349868e-04 3.190971e-05 2.504146e-03
+[1] 117
+[1] 7.925333e-04 5.769234e-04 5.252186e-05 5.248588e-05 4.118882e-03
+[1] 118
+[1] 1.585618e-03 9.566459e-04 3.793001e-05 8.276013e-06 1.343840e-03
+[1] 119
+[1] 0.0013759559 0.0009553107 0.0002144478 0.0001077362 0.0013728549
+[1] 120
+[1] 2.243551e-03 3.374200e-04 5.416289e-06 8.307538e-05 1.058609e-03
+[1] 121
+[1] 3.573951e-04 1.376747e-04 1.265651e-05 2.628883e-04 3.349919e-03
+[1] 122
+[1] 1.161257e-03 5.335332e-04 1.264335e-04 4.030862e-05 4.550190e-03
+[1] 123
+[1] 7.436519e-04 6.882060e-04 9.596442e-05 5.847076e-05 3.189928e-03
+[1] 124
+[1] 1.012517e-03 2.373431e-04 1.567739e-04 1.239555e-05 6.762507e-04
+[1] 125
+[1] 1.096203e-03 2.305515e-04 2.084922e-04 3.467029e-05 2.720786e-03
+[1] 126
+[1] 1.205148e-03 8.924849e-04 1.334631e-05 2.288970e-05 1.796292e-03
+[1] 127
+[1] 4.785588e-04 7.539428e-04 3.445514e-04 1.225969e-04 3.500961e-05
+[1] 128
+[1] 9.291560e-04 5.973441e-04 1.204451e-04 4.439247e-05 1.170474e-03
+[1] 129
+[1] 9.559882e-04 6.360322e-05 4.669165e-04 6.697968e-05 2.540332e-03
+[1] 130
+[1] 1.528767e-03 7.875779e-04 3.155138e-05 2.967214e-05 1.125372e-03
+[1] 131
+[1] 0.0014008384 0.0002086343 0.0002404890 0.0002130271 0.0027145507
+[1] 132
+[1] 1.320176e-03 1.016571e-03 5.045666e-05 1.979669e-05 1.553565e-03
+[1] 133
+[1] 6.907140e-04 4.598615e-04 7.915469e-05 3.105646e-04 3.957448e-03
+[1] 134
+[1] 1.201024e-03 5.888032e-04 7.703323e-05 4.342456e-04 3.846837e-03
+[1] 135
+[1] 0.0012888254 0.0005337167 0.0003176893 0.0001858853 0.0001206741
+[1] 136
+[1] 0.0019345870 0.0008635325 0.0002620254 0.0000202037 0.0022806698
+[1] 137
+[1] 0.0010800324 0.0004730209 0.0002849788 0.0001630978 0.0020783141
+[1] 138
+Error: Matrices must have same number of columns in rbind2(.Call(dense_to_Csparse, x), y)
+In addition: There were 50 or more warnings (use warnings() to see the first 50)
+Execution halted
