@@ -1,0 +1,72 @@
+
+```{r }
+obs <- DGS(n=10000)
+print(summary(obs))
+  
+# check positivity violations
+cat("Summary of A given W < -1:")
+summary(obs$A[obs$W < -1])
+cat("Summary of A given -1 < W <= 0:")
+summary(obs$A[-1 <= obs$W & obs$W < 0])
+cat("Summary of A given 0 < W <= 1:")
+summary(obs$A[0 <= obs$W & obs$W < 1])
+cat("Summary of A given 1 < W:")
+summary(obs$A[1 <= obs$W])
+
+par(mfrow=c(2,4))
+hist(obs$W)
+hist(obs$A)
+plot(obs$W,obs$A)
+plot(obs$A,obs$Z)
+plot(obs$Z,obs$Y)
+plot(obs$W,obs$Z)
+plot(obs$W,obs$Y)
+plot(obs$A,obs$Y)
+```
+
+
+```{r }
+load(file=here("data", "rdata", paste0("02_simu_V3_sys", sn ,"_psi0.RData")))
+
+ggplot() +
+    geom_line(data=psi0_pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) + 
+    geom_point(data=psi0_10pnt %>% mutate(z = as.factor(z)), aes(x=a, y=psi0, color=z, group=z)) + 
+    labs(x="a", y="ATE",
+         title = "True Average Treatment Effect \n  P_0(E[Y|a,z] - E[Y|0,z])") +
+        theme(plot.title = element_text(hjust = 0.5), #size=8.6, 
+              #axis.title.y = element_blank(),
+              panel.grid.major.x = element_blank(),
+              #axis.text.y = element_text(size=8),
+              #axis.title.x = element_text(size=8),
+              axis.text = element_text(size=7)) 
+
+ggsave(here(getwd(), "plots", paste0("true_psi_sys", sn, ".png")))
+
+```
+
+
+<!-- ## n = 200 -->
+<!-- ```{r } -->
+<!-- nn=200 -->
+<!-- ``` -->
+
+<!-- ```{r child = '2_1_Simu_results_template_sub.Rmd'} -->
+<!-- ``` -->
+
+
+## n = 500
+```{r}
+nn=500
+```
+
+```{r child = '2_1_Simu_results_template_sub.Rmd'}
+```
+
+
+## n = 1000
+```{r }
+nn=1000
+```
+
+```{r child = '2_1_Simu_results_template_sub.Rmd'}
+```

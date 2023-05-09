@@ -95,6 +95,7 @@ generate_data_1 <- function(n, a=NA, z=NA){
 # save.image(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
 #------------------------------------------------------------------------------------
 load(file=here("data", "rdata", "02_simu_V3_sys1_psi0.RData"))
+source(here("scripts", "scripts_v3", "1_simu_functions_hal9001.R"))
 source(here("scripts", "scripts_v3", "1_simu_functions.R"))
 #------------------------------------------------------------------------------------
 
@@ -142,11 +143,88 @@ psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c
 
 ## ----simu_sys1_n500_B_u_local, fig.width=6, fig.height=7------------------------------------------------------------------------------------
 set.seed(123)
-simu_results <- run_simu_rep(generate_data_1, n=nn, B=1000, return_all_rslts=T,  undersmooth='local')
-
-save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_U_l.RData"))
-
-
+simu_results <- run_simu_rep(generate_data_1, n=nn, B=20, return_all_rslts=T,  undersmooth='local')
+# [1] "round 1"
+# [1] "  CV lambda: 0.003049"
+# [1] "  globally u lambda: 0.000239"
+# [1] "  locally u lambdas: 0.003049, 0.003049, 0.003049, 0.003049, 0.003049"
+# [1] "round 2"
+# [1] "  CV lambda: 0.002055"
+# [1] "  globally u lambda: 0.000026"
+# [1] "  locally u lambdas: 0.002055, 0.002055, 0.002055, 0.002055, 0.002055"
+# [1] "round 3"
+# [1] "  CV lambda: 0.002323"
+# [1] "  globally u lambda: 0.000377"
+# [1] "  locally u lambdas: 0.002323, 0.002323, 0.002323, 0.002323, 0.002323"
+# [1] "round 4"
+# [1] "  CV lambda: 0.003342"
+# [1] "  globally u lambda: 0.001615"
+# [1] "  locally u lambdas: 0.003342, 0.003342, 0.003342, 0.003342, 0.003342"
+# [1] "round 5"
+# [1] "  CV lambda: 0.006453"
+# [1] "  globally u lambda: 0.001048"
+# [1] "  locally u lambdas: 0.006453, 0.006453, 0.006453, 0.006453, 0.006453"
+# [1] "round 6"
+# [1] "  CV lambda: 0.003260"
+# [1] "  globally u lambda: 0.000761"
+# [1] "  locally u lambdas: 0.00326, 0.00326, 0.00326, 0.00326, 0.00326"
+# [1] "round 7"
+# [1] "  CV lambda: 0.003335"
+# [1] "  globally u lambda: 0.000541"
+# [1] "  locally u lambdas: 0.003335, 0.003335, 0.003335, 0.003335, 0.003335"
+# [1] "round 8"
+# [1] "  CV lambda: 0.004956"
+# [1] "  globally u lambda: 0.001665"
+# [1] "  locally u lambdas: 0.004956, 0.004956, 0.004956, 0.004956, 0.004956"
+# [1] "round 9"
+# [1] "  CV lambda: 0.003956"
+# [1] "  globally u lambda: 0.000447"
+# [1] "  locally u lambdas: 0.003956, 0.003956, 0.003956, 0.003956, 0.003956"
+# [1] "round 10"
+# [1] "  CV lambda: 0.004587"
+# [1] "  globally u lambda: 0.000250"
+# [1] "  locally u lambdas: 0.004587, 0.004587, 0.004587, 0.004587, 0.004587"
+# [1] "round 11"
+# [1] "  CV lambda: 0.008346"
+# [1] "  globally u lambda: 0.001949"
+# [1] "  locally u lambdas: 0.008346, 0.008346, 0.008346, 0.008346, 0.008346"
+# [1] "round 12"
+# [1] "  CV lambda: 0.002642"
+# [1] "  globally u lambda: 0.000888"
+# [1] "  locally u lambdas: 0.002642, 0.002642, 0.002642, 0.002642, 0.002642"
+# [1] "round 13"
+# [1] "  CV lambda: 0.004751"
+# [1] "  globally u lambda: 0.001596"
+# [1] "  locally u lambdas: 0.004751, 0.004751, 0.004751, 0.004751, 0.004751"
+# [1] "round 14"
+# [1] "  CV lambda: 0.000404"
+# [1] "  globally u lambda: 0.000022"
+# [1] "  locally u lambdas: 0.000404, 0.000404, 0.000404, 0.000404, 0.000404"
+# [1] "round 15"
+# [1] "  CV lambda: 0.001618"
+# [1] "  globally u lambda: 0.000378"
+# [1] "  locally u lambdas: 0.001618, 0.001618, 0.001618, 0.001618, 0.001618"
+# [1] "round 16"
+# [1] "  CV lambda: 0.002955"
+# [1] "  globally u lambda: 0.000690"
+# [1] "  locally u lambdas: 0.002955, 0.002955, 0.002955, 0.002955, 0.002955"
+# [1] "round 17"
+# [1] "  CV lambda: 0.000885"
+# [1] "  globally u lambda: 0.000207"
+# [1] "  locally u lambdas: 0.000885, 0.000885, 0.000885, 0.000885, 0.000885"
+# [1] "round 18"
+# [1] "  CV lambda: 0.007975"
+# [1] "  globally u lambda: 0.001295"
+# [1] "  locally u lambdas: 0.007975, 0.007975, 0.007975, 0.007975, 0.007975"
+# [1] "round 19"
+# [1] "  CV lambda: 0.007726"
+# [1] "  globally u lambda: 0.001805"
+# [1] "  locally u lambdas: 0.007726, 0.007726, 0.007726, 0.007726, 0.007726"
+# [1] "round 20"
+# [1] "  CV lambda: 0.002753"
+# [1] "  globally u lambda: 0.001331"
+# [1] "  locally u lambdas: 0.002753, 0.002753, 0.002753, 0.002753, 0.002753"
+# # save.image(file=here("data", "rdata", "02_simu_V3_sys1_500_U_l.RData"))
 # 
 # 
 # ## ----simu_sys1_n500_B_grid------------------------------------------------------------------------------------------------------------

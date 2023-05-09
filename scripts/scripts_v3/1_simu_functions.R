@@ -94,81 +94,103 @@ run_simu_1round <- function(gen_data_functions, n, undersmooth='none', lambda_sc
                     )
   )
   CV_lambda <- CV_hal$lambda_star
+  print(sprintf('  CV lambda: %f', CV_lambda))
   
   
   if(undersmooth == 'none' & lambda_scaler == 1){
     hal_fit <- CV_hal
     lambda = CV_lambda
-    
   } else {
     if(undersmooth == 'none'){
       lambda = lambda_scaler * CV_lambda
-    } else if(undersmooth == 'global'){
+    } else {
+      # --------------------undersmoothing--------------------------------
       CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
       # if all coefs are zero, skip undersmooth and use the initial fit
       if (length(CV_nonzero_col) == 0){
         lambda = CV_lambda
       }else{
-        CV_basis_mat <- as.matrix(CV_hal$x_basis)
-        CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
-        
-        hal_undersmooth <- undersmooth_hal(X, Y,
-                                           fit_init = CV_hal,
-                                           basis_mat = CV_basis_mat,
-                                           family = y_type)
-        lambda = hal_undersmooth$lambda_under
-      }
-    } else if(undersmooth == 'local'){
-      lambdas = rep(NA, 5)
-      for(i in 1:5){
-        a_seg_min = seq(0,5,1)[i]
-        a_seg_max = seq(0,5,1)[i+1]
-        obs_local = obs[a_seg_min <= obs$A & obs$A < a_seg_max, ]
-        
-        Y_seg <- as.numeric(as.matrix(obs_local %>% select(all_of(y_name))))
-        X_seg <- obs_local %>% 
-          select(all_of(x_names)) %>% 
-          mutate_if(sapply(., is.factor), as.numeric)
-        
-        if((0.1 <= sum(Y_seg==1)/length(Y_seg) & sum(Y_seg==1)/length(Y_seg) <= 0.9) & 
-           (sum(Y_seg==1) > 10) & (sum(Y_seg!=1) > 10) &
-           (dim(X)[1] > 0)){
+        if(undersmooth == 'global'){
           
-          # fitting HAL
-          CV_hal <- fit_hal(X = X_seg, Y = Y_seg, family = y_type,
-                            return_x_basis = TRUE,
-                            num_knots = hal9001:::num_knots_generator(
-                              max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                              smoothness_orders = 1,
-                              base_num_knots_0 = 20,
-                              base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                            )
-          )
-          CV_lambda <- CV_hal$lambda_star
+          CV_basis_mat <- as.matrix(CV_hal$x_basis)
+          CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
           
-          CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
-          if (length(CV_nonzero_col) == 0){
-            lambda = CV_lambda
-          }else{
-            CV_basis_mat <- as.matrix(CV_hal$x_basis)
-            CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+          hal_undersmooth <- undersmooth_hal(X, Y,
+                                             fit_init = CV_hal,
+                                             basis_mat = CV_basis_mat,
+                                             family = y_type)
+          lambda = hal_undersmooth$lambda_under
+          
+        } else if(undersmooth == 'local'){
+          #compare to global
+          CV_basis_mat <- as.matrix(CV_hal$x_basis)
+          CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+          
+          hal_undersmooth <- undersmooth_hal(X, Y,
+                                             fit_init = CV_hal,
+                                             basis_mat = CV_basis_mat,
+                                             family = y_type)
+          print(sprintf('  globally u lambda: %f', hal_undersmooth$lambda_under))
+          
+          local_points = seq(0.5,4.5, by=1)
+          lambdas = rep(NA, length(local_points))
+          
+          for(i in 1:length(local_points)){
+            X_local <- X
+            X_local$A = local_points[i]
             
-            hal_undersmooth <- undersmooth_hal(X_seg, Y_seg,
-                                               fit_init = CV_hal,
-                                               basis_mat = CV_basis_mat,
-                                               family = y_type)
-            lambda = hal_undersmooth$lambda_under
+            CV_basis_mat_local <- make_design_matrix(as.matrix(X_local), CV_hal$basis_list, p_reserve = 0.75)
+            CV_basis_mat_local <- as.matrix(cbind(1, CV_basis_mat_local)[, CV_nonzero_col])
+            
+            hal_undersmooth_local <- undersmooth_hal(X_local, Y,
+                                                     fit_init = CV_hal,
+                                                     basis_mat = CV_basis_mat_local,
+                                                     family = y_type)
+            lambda_local = hal_undersmooth_local$lambda_under
+            lambdas[i] = lambda_local
           }
-          lambdas[i] = lambda
-        } else {
-          lambdas[i] = CV_lambda
+          
+          print(sprintf('  locally u lambdas: %s', paste(round(lambdas, 6), collapse = ", ")))
+          #print(round(lambdas, 6))
+          lambda = min(lambdas, na.rm = T)
+          
+          # if((0.1 <= sum(Y_seg==1)/length(Y_seg) & sum(Y_seg==1)/length(Y_seg) <= 0.9) & 
+          #    (sum(Y_seg==1) > 10) & (sum(Y_seg!=1) > 10) &
+          #    (dim(X)[1] > 0)){å
+          #   
+          #   # fitting HAL
+          #   CV_hal <- fit_hal(X = X_seg, Y = Y_seg, family = y_type,
+          #                     return_x_basis = TRUE,
+          #                     num_knots = hal9001:::num_knots_generator(
+          #                       max_degree = ifelse(ncol(X) >= 20, 2, 3),
+          #                       smoothness_orders = 1,
+          #                       base_num_knots_0 = 20,
+          #                       base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+          #                     )
+          #   )
+          #   CV_lambda <- CV_hal$lambda_star
+          #   
+          #   CV_nonzero_col <- which(CV_hal$coefs[-1] != 0)
+          #   if (length(CV_nonzero_col) == 0){
+          #     lambda = CV_lambda
+          #   }else{
+          #     CV_basis_mat <- as.matrix(CV_hal$x_basis)
+          #     CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+          #     
+          #     hal_undersmooth <- undersmooth_hal(X_seg, Y_seg,
+          #                                        fit_init = CV_hal,
+          #                                        basis_mat = CV_basis_mat,
+          #                                        family = y_type)
+          #     lambda = hal_undersmooth$lambda_under
+          #  }
+          #   lambdas[i] = lambda
+          # } else {
+          #   lambdas[i] = CV_lambda
+          # }
         }
+        
       }
-      print(lambdas)
-      lambda = min(lambdas, na.rm = T)
-
-    }
-    
+    } 
     
     hal_fit <- fit_hal(X = X, Y = Y, family = y_type,
                        return_x_basis = TRUE,
