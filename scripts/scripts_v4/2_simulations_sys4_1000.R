@@ -93,12 +93,12 @@ save.image(file=here("data", "rdata", "02_simu_V4_sys4_psi0.RData"))
 
 
 ## ----simu_sys4_n500-------------------------------------------------------------------------------------------------------------------
-n = 500
+n = 1000
 
 set.seed(123)
 results <- run_simu_rep(generate_data_4, n=n, B=1000, return_all_rslts=T)
 
-save.image(file=here("data", "rdata", "02_simu_V4_sys4_500.RData"))
+save.image(file=here("data", "rdata", "02_simu_V4_sys4_1000.RData"))
 
 
 

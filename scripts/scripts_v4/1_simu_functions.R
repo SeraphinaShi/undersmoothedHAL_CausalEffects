@@ -97,7 +97,19 @@ run_simu_1round <- function(gen_data_functions, n){
   print(sprintf('  CV lambda: %f', lambda_CV))
   
   end <- Sys.time()
-  hal_cv_fit_time = as.numeric(end - start)
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_cv_fit_time = hal_fit_time
+  
+  
   
   #--------------------------estimations---------------------------------
   hal_fit = hal_CV
@@ -189,7 +201,17 @@ run_simu_1round <- function(gen_data_functions, n){
                      lambda = lambda_u_g)
   
   end <- Sys.time()
-  hal_u_g_fit_time = as.numeric(end - start) + hal_cv_fit_time
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_u_g_fit_time = hal_fit_time + hal_cv_fit_time
   
   
   #--------------------------estimations---------------------------------
@@ -297,7 +319,17 @@ run_simu_1round <- function(gen_data_functions, n){
   }
   
   end <- Sys.time()
-  hal_u_l_fit_time = as.numeric(end - start) + hal_cv_fit_time
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_u_l_fit_time = hal_fit_time + hal_cv_fit_time
     
   #--------------------------estimations---------------------------------
   
@@ -390,35 +422,40 @@ run_simu_rep <- function(gen_data_functions, n, B, return_all_rslts = F){
     
     result_list[[b]] <- result
   }
-  result_all <-  do.call("rbind", result_list) %>% as.data.frame()
-  result_all <- merge(as.data.frame(psi0_10pnt), result_all, by=c("a", "z"))
   
-  cols.num <- names(result_all)[names(result_all) != 'hal_fit_time_unit']
-  result_all[cols.num] <- sapply(result_all[cols.num],as.numeric)
-  
-  hal_fit_time_unit = paste(unique(result_all$hal_fit_time_unit), collapse = ' & ')
-  
-  result_summary <- result_all %>% 
-    filter(SE != 0) %>% 
-    mutate(bias = abs(psi_hat - psi0),
-           bias_se_ratio = bias / SE,
-           cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-    group_by(a, z) %>% 
-    mutate(oracal_SE = sqrt(var(psi_hat)),
-           oracal_bias_se_ratio = bias / oracal_SE,
-           oracal_ci_lwr = psi_hat - 1.96 * oracal_SE,
-           oracal_ci_upr = psi_hat + 1.96 * oracal_SE,
-           oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-    summarise(across(where(is.numeric), mean)) %>% 
-    ungroup() %>%
-    mutate(hal_fit_time_unit = hal_fit_time_unit)
-  
-  if(return_all_rslts){
-    return(list(result_summary = result_summary,
-                all_results = result_list))
-  } else {
-    return(result_summary)
+  results <- list()
+  for (method in c("CV", "U_G", "U_L")){
+    result_list_method <- lapply(result_list, function(lst) lst[[method]])
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() %>%
+      mutate(hal_fit_time_unit = 'secs',
+             method = method)
+    
+    if(return_all_rslts){
+      results[[method]] <- list(result_summary = result_summary,
+                                all_results = result_list_method)
+    } else {
+      results[[method]] <- list(result_summary = result_summary)
+    }
   }
+  
+  results$result_summary <- rbind(results$CV$result_summary, results$U_G$result_summary, results$U_L$result_summary)
+  
+  return(results)
 }
 
 
