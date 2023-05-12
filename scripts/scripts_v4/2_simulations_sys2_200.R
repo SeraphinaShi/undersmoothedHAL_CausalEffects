@@ -33,17 +33,15 @@ knitr::opts_chunk$set(
   duplicate.label="allow"
 )
 
-source(here("scripts", "scripts_v3", "1_simu_functions_hal9001.R"))
-source(here("scripts", "scripts_v3", "1_simu_functions.R"))
+source(here("scripts", "scripts_v4", "1_simu_functions_hal9001.R"))
+source(here("scripts", "scripts_v4", "1_simu_functions.R"))
 
 
-
-## ----check_sys2----------------------------------------------------------------------------------------------------------------------
-generate_data_2 <- function(n, a=NA, z=NA){
+## ----check_sys1----------------------------------------------------------------------------------------------------------------------
+generate_data_2 <- function(n, a=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
   U_A <- rnorm(n, 0, 2)
-  U_Z <- runif(n, 0, 1)
   U_Y <- runif(n, 0, 1)
   
   # endogenous variables
@@ -57,104 +55,50 @@ generate_data_2 <- function(n, a=NA, z=NA){
     A <- rep(a, n)
   }
   
-  if(is.na(z)){
-    Z <- as.numeric(U_Z < plogis(2-W-A))
-  } else {
-    Z <- rep(z, n)
-  }
   
-  Y <- as.numeric(U_Y < plogis(-4 * W + 5*A + 10*Z + 5*W*Z + 2 * A * Z * W - 15))
+  Y <- as.numeric(U_Y < plogis(-10 + 2*W + 5*sin(A^1.5) + 2 * W * A ))
   
   # data frame
-  O <- data.frame(W, A, Z, Y)
+  O <- data.frame(W, A, Y)
   return(O)
 }
 
-## ----true_psi_sys2-------------------------------------------------------------------------------------------------------------------
+## ----true_psi_sys1-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
-# a_vec <- seq(0,5,0.1)
-# psi0_a_0 <- c()
-# psi0_a_1 <- c()
-# 
-# N = 10000
-# data_0_0 <- generate_data_2(n=N, a=0, z=0)
-# data_0_1 <- generate_data_2(n=N, a=0, z=1)
-# 
-# for (i in 1:length(a_vec)) {
-#   a <- a_vec[i]
-# 
-#   data_a_0 <- generate_data_2(n=N, a=a, z=0)
-#   psi0_a_0[i] <- mean(data_a_0$Y - data_0_0$Y)
-# 
-#   data_a_1 <- generate_data_2(n=N, a=a, z=1)
-#   psi0_a_1[i] <- mean(data_a_1$Y - data_0_1$Y)
-# }
-# 
-# psi0_pnt <- data.frame(a=rep(a_vec, 2), z=c(rep(1,length(a_vec)), rep(0,length(a_vec))), psi0 = c(psi0_a_1,psi0_a_0))
-# psi0_10pnt <- psi0_pnt[psi0_pnt$a %in% seq(0.5,5,0.5),]
-# 
-# save.image(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
-#------------------------------------------------------------------------------------
-load(file=here("data", "rdata", "02_simu_V3_sys2_psi0.RData"))
-source(here("scripts", "scripts_v3", "1_simu_functions.R"))
-#------------------------------------------------------------------------------------
+
+a_vec <- seq(0, 5, 0.1)
+psi0_a <- c()
+psi0_a <- c()
+
+N = 1e+07  
+data_0 <- generate_data_2(n=N, a=0)
+
+for (i in 1:length(a_vec)) {
+  a <- a_vec[i]
+  
+  data_a <- generate_data_2(n=N, a=a)
+  psi0_a[i] <- mean(data_a$Y) # - data_0$Y
+}
+
+psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
 
 
-## ----simu_sys2_n200-------------------------------------------------------------------------------------------------------------------
-nn=200
-# 
-# ## ----simu_sys2_n200_1_cv, fig.width=6, fig.height=4-----------------------------------------------------------------------------------
-# set.seed(123)
-# results <- run_simu_1round(generate_data_2, n=nn)
-# psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results), by=c("a", "z"))
-# 
-# 
-# ## ----simu_sys2_n200_B_cv, fig.width=6, fig.height=7-----------------------------------------------------------------------------------
-# set.seed(123)
-# simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V3_sys2_200_CV.RData"))
-# 
-# ## ----simu_sys2_n200_1_u, fig.width=6, fig.height=4------------------------------------------------------------------------------------
-# set.seed(123)
-# n = nn
-# results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth=T)
-# 
-# psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
-# cat(paste0("Undersmoothed lambda: ", unique(psi_10pnt$lambda), "\n which is ", unique(psi_10pnt$lambda_scaler), " * lambda_CV"))
-# 
-# 
-# ## ----simu_sys2_n200_B_u, fig.width=6, fig.height=7------------------------------------------------------------------------------------
-# set.seed(123)
-# simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V3_sys2_200_U.RData"))
-# 
-# 
-## ----simu_sys2_n200_1_u_local, fig.width=6, fig.height=4------------------------------------------------------------------------------------
+eval_points = seq(0,5,0.5)
+psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
+
+save.image(file=here("data", "rdata", "02_simu_V4_sys2_psi0.RData"))
+
+
+
+
+## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------
+n = 200
+
 set.seed(123)
-n = nn
-results_under <- run_simu_1round(generate_data_2, n=nn, undersmooth='local')
-psi_10pnt <- merge(as.data.frame(psi0_10pnt), as.data.frame(results_under), by=c("a", "z"))
+results <- run_simu_rep(generate_data_1, n=n, B=1000, return_all_rslts=T)
 
 
-## ----simu_sys2_n200_B_u_local, fig.width=6, fig.height=7------------------------------------------------------------------------------------
-set.seed(123)
-simu_results <- run_simu_rep(generate_data_2, n=nn, B=1000, return_all_rslts=T,  undersmooth='local')
+save.image(file=here("data", "rdata", "02_simu_V4_sys2_200.RData"))
+#
 
-save.image(file=here("data", "rdata", "02_simu_V3_sys2_200_U_l.RData"))
-# 
-# ## ----simu_sys2_n200_B_grid------------------------------------------------------------------------------------------------------------
-# set.seed(123)
-# 
-# lambda_scalers <- c(1.2, 1.1, 10^seq(from=0, to=-3, length=30))
-# 
-# simu_results_lists <- list()
-# for(i in 1:length(lambda_scalers)){
-#   scaler = lambda_scalers[i]
-#   simu_results_lists[[i]] <- run_simu_rep(generate_data_2, n=nn, B=1000, lambda_scaler=scaler, return_all_rslts=F,  undersmooth=F)
-# }
-# simu_results_all <- do.call("rbind", simu_results_lists) %>% as.data.frame()
-# 
-# save.image(file=here("data", "rdata", "02_simu_V3_sys2_200_grid.RData"))
