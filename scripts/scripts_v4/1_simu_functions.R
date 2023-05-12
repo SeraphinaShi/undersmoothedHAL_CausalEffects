@@ -459,3 +459,224 @@ run_simu_rep <- function(gen_data_functions, n, B, return_all_rslts = F){
 }
 
 
+
+
+
+
+
+
+run_simu_1round_scalers <- function(gen_data_functions, n, lambda_scalers){
+  
+  obs <- gen_data_functions(n)
+  eval_points = seq(0,5,0.5)
+  
+  y_name = "Y"
+  x_names = c("W", "A")
+  y_type = "binomial"
+  
+  
+  Y <- as.numeric(as.matrix(obs %>% select(all_of(y_name))))
+  X <- obs %>% 
+    select(all_of(x_names)) %>% 
+    mutate_if(sapply(., is.factor), as.numeric)
+  
+  
+  #================================CV-HAL================================
+  start <- Sys.time()
+  
+  hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
+                    return_x_basis = TRUE,
+                    num_knots = hal9001:::num_knots_generator(
+                      max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                      smoothness_orders = 1,
+                      base_num_knots_0 = 20,
+                      base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                    )
+  )
+  lambda_CV <- hal_CV$lambda_star
+  # print(sprintf('  CV lambda: %f', lambda_CV))
+  
+  end <- Sys.time()
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_cv_fit_time = hal_fit_time
+  
+  
+  #================================undersmoothing with scalers================================
+  
+  results = list()
+  for (i in 1:length(lambda_scalers)) {
+    start <- Sys.time()
+    
+    lambda_scaler = lambda_scalers[i]
+    # print(sprintf('     %i, lambda_scaler: %f', i, lambda_scaler))
+    lambda = lambda_CV * lambda_scaler
+    
+    hal_fit <- fit_hal(X = X, Y = Y, family = y_type,
+                       return_x_basis = TRUE,
+                       num_knots = hal9001:::num_knots_generator(
+                         max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                         smoothness_orders = 1,
+                         base_num_knots_0 = 20, #200
+                         base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                       ),
+                       fit_control = list(
+                         cv_select = FALSE,
+                         n_folds = 10,
+                         foldid = NULL,
+                         use_min = TRUE,
+                         lambda.min.ratio = 1e-4,
+                         prediction_bounds = "default"
+                       ),
+                       lambda = lambda)
+    
+    end <- Sys.time()
+    
+    hal_fit_time = end - start
+    if(units(hal_fit_time) == 'secs'){
+      hal_fit_time = as.numeric(hal_fit_time)
+    } else if (units(hal_fit_time) == 'mins'){
+      hal_fit_time = as.numeric(hal_fit_time)  * 60
+    } else if (units(hal_fit_time) == 'hours'){
+      hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+    }
+    
+    hal_scaled_fit_time = hal_cv_fit_time + hal_fit_time
+    
+    #--------------------------estimations---------------------------------
+    coef <- hal_fit$coefs
+    basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
+    
+    nonzero_idx <- which(coef != 0)
+    coef_nonzero <- coef[nonzero_idx]
+    basis_mat_nonzero <- as.matrix(basis_mat[, nonzero_idx])
+    
+    IC_beta <- cal_IC_for_beta(X = basis_mat_nonzero, 
+                               Y = Y, 
+                               Y_hat = predict(hal_fit, new_data = X, type = "response"),
+                               beta_n = coef_nonzero
+    )
+    
+    psi_hat_pnt = matrix(ncol = 5)
+    for (a in eval_points) {
+      X_new <- X
+      X_new$A = a
+      
+      Y_hat <- mean(predict(hal_fit, new_data = X_new))
+      
+      # efficient influence curve
+      x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
+      x_basis_a_nonzero <- as.matrix(cbind(1, x_basis_a)[, nonzero_idx])
+      
+      if(any(is.na(IC_beta))){
+        # empirical SE and 95% confidence interval
+        SE <- NA
+        ci_lwr <- NA
+        ci_upr <-NA
+      } else {
+        IC_EY <- cal_IC_for_EY(X_new = x_basis_a_nonzero, 
+                               beta_n = coef_nonzero, IC_beta = IC_beta)
+        
+        # empirical SE and 95% confidence interval
+        SE <- sqrt(var(IC_EY)/n)
+        ci_lwr <- Y_hat - 1.96 * SE
+        ci_upr <- Y_hat + 1.96 * SE
+      }
+      
+      psi_hat_pnt <- rbind(psi_hat_pnt, matrix(c(a, Y_hat, SE, ci_lwr, ci_upr), nrow = 1))
+    }
+    
+    psi_hat_pnt <- psi_hat_pnt[-1, ]
+    colnames(psi_hat_pnt) <- c("a", "y_hat", "SE", "ci_lwr", "ci_upr")
+    
+    hal_fit_time = hal_scaled_fit_time
+    psi_hat_pnt <- cbind(psi_hat_pnt, lambda, lambda_scaler, hal_fit_time)
+    
+    results[[i]] = psi_hat_pnt
+  }
+  
+  names(results) = paste0("scale=", round(lambda_scalers, 4))
+  
+  return(results)
+}
+
+
+run_simu_scaled_rep <- function(gen_data_functions, n, B, return_all_rslts = F){
+  lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+  result_list <- list()
+  for(b in 1:B){
+    print(paste0("round ", b))
+    result <- tryCatch({
+      run_simu_1round_scalers(gen_data_functions, n=n, lambda_scalers=lambda_scalers)
+    }, error = function(e) {
+      print(paste0("Error: ", e$message))
+      NULL
+    })
+    
+    while(is.null(result)) {
+      print('retry with a new generated data')
+      result <- tryCatch({
+        run_simu_1round_scalers(gen_data_functions, n=n, lambda_scalers=lambda_scalers)
+      }, error = function(e) {
+        print(paste0("Error: ", e$message))
+        NULL
+      })
+    }
+    
+    result_list[[b]] <- result
+  }
+  
+  results <- list()
+  no_empirical_CI_proportion <- c()
+  for (i in 1:length(lambda_scalers)){
+    
+    lambda_scaler = lambda_scalers[i]
+    
+    result_list_scale <- lapply(result_list, function(lst) lst[[i]])
+    no_empirical_CI_proportion[i] <- mean(sapply(result_list_scale, function(rlt) any(is.na(rlt[,colnames(rlt) == 'SE']))))
+    result_all <-  do.call("rbind", result_list_scale) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() %>%
+      mutate(hal_fit_time_unit = 'secs',
+             method = 'scale')
+    
+    if(return_all_rslts){
+      results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary,
+                                                                   all_results = result_list_scale)
+    } else {
+      results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary)
+    }
+  }
+  
+  result_summary <- results[[1]]$result_summary
+  for (i in 1:length(lambda_scalers)) {
+    result_summary <- rbind(result_summary, results[[2]]$result_summary)
+  }
+  results$result_summary <- result_summary
+  
+  results$no_empirical_CI_proportion <- no_empirical_CI_proportion
+  
+  return(results)
+}
+

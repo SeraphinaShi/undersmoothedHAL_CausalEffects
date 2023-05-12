@@ -64,44 +64,48 @@ generate_data_3 <- function(n, a=NA){
   return(O)
 }
 
+
+
 ## ----true_psi_sys3-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-a_vec <- seq(0,5,0.1)
-psi0_a <- c()
-psi0_a <- c()
+# a_vec <- seq(0,5,0.1)
+# psi0_a <- c()
+# psi0_a <- c()
+# 
+# N = 1e+07
+# data_0 <- generate_data_3(n=N, a=0)
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a <- generate_data_3(n=N, a=a)
+#   psi0_a[i] <- mean(data_a$Y) # - data_0$Y
+# }
+# 
+# psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
+# 
+# eval_points = seq(0,5,0.5)
+# psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
+# 
+# save.image(file=here("data", "rdata", "02_simu_V4_sys3_psi0.RData"))
 
-N = 1e+07
-data_0 <- generate_data_3(n=N, a=0)
+load(here("data", "rdata", "02_simu_V4_sys3_psi0.RData"))
+source(here("scripts", "scripts_v4", "1_simu_functions_hal9001.R"))
+source(here("scripts", "scripts_v4", "1_simu_functions.R"))
 
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-  
-  data_a <- generate_data_3(n=N, a=a)
-  psi0_a[i] <- mean(data_a$Y) # - data_0$Y
-}
-
-psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
-
-eval_points = seq(0,5,0.5)
-psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
-
-save.image(file=here("data", "rdata", "02_simu_V4_sys3_psi0.RData"))
-
-
-
-
-## ----simu_sys3_n500-------------------------------------------------------------------------------------------------------------------
+# 
+# ## ----simu_sys3_n500-------------------------------------------------------------------------------------------------------------------
 n = 500
-
+# 
 set.seed(123)
-results <- run_simu_rep(generate_data_3, n=n, B=1000, return_all_rslts=T)
-
-save.image(file=here("data", "rdata", "02_simu_V4_sys3_500.RData"))
-
-
+# results <- run_simu_rep(generate_data_3, n=n, B=1000, return_all_rslts=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_V4_sys3_500.RData"))
 
 
+results_grid <- run_simu_scaled_rep(generate_data_3, n=n, B=1000, return_all_rslts=T)
+save.image(file=here("data", "rdata", "02_simu_V4_sys3_500_grid.RData"))
 
 

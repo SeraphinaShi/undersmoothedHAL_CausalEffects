@@ -1,5 +1,5 @@
 
-plot_perforences_cv_u_gl_alla <- function(df, save_plot=NA){
+plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
   
   color_cv =  "#F8766D"
   color_u_g = "#00BA38"
@@ -8,6 +8,7 @@ plot_perforences_cv_u_gl_alla <- function(df, save_plot=NA){
   p_lambda <- ggplot(data=df, aes(x=a)) +
     geom_line(aes(y=lambda_scaler, color=method), alpha = 0.7) +
     geom_point(aes(y=lambda_scaler, color=method), shape=17, size=2, alpha= 0.7) +
+    ylim(0, 1.2) +
     labs(x="a", y="lambda_scaler", 
          title = "Lambda scaler",
          subtitle = paste0("upon CV_lambda ", round(mean(df$lambda[df$method == 'CV']), 6)))+
@@ -107,11 +108,11 @@ plot_perforences_cv_u_gl_alla <- function(df, save_plot=NA){
                                           c(4,4,4,5,5,5),
                                           c(4,4,4,5,5,5),
                                           c(4,4,4,5,5,5)),
-                    top = textGrob(paste0("HAL-based plug-in estimator performence for E[Y|a,W]"), 
-                                   gp=gpar(fontsize=15, fontface = 'bold')))
+                    top = textGrob(paste0("HAL-based plug-in estimator performences for E[Y|a,W] \n"), 
+                                   gp=gpar(fontsize=17)))
   
   if(!is.na(save_plot)){
-    ggsave(save_plot, plot=p, width = 8, height = 8)
+    ggsave(save_plot, plot=p, width = 8, height = 9, dpi = 1000)
   }
   return(p)
   
@@ -133,10 +134,14 @@ estimation_qqplot_cv_u_gl_alla <- function(results_list, save_plot=NA){
     labs(x = "Theoretical Quantiles",
          y = "Sample Quantiles",
          title = paste0("Q-Q Plot for Estimated E[Y|a,W]")) +
-    facet_grid(method ~ a)
+    facet_grid(method ~ a, scales = 'free') +
+    theme(plot.title = element_text(hjust = 0.5, size = 18),
+          axis.text = element_text(size=10),
+          axis.title = element_text(size=14),
+          strip.text = element_text(size = 12))
   
   if(!is.na(save_plot)){
-    ggsave(save_plot, plot=p, width = 15, height = 5, dpi = 1200)
+    ggsave(save_plot, plot=p, width = 13, height = 4, dpi = 1200)
   }
   
   return(p)
