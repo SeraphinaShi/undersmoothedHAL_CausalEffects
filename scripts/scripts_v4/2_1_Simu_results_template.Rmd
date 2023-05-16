@@ -40,7 +40,8 @@ ggplot() +
          title = "True Average Treatment Effect, P_0(E[Y|a,W])") +
         theme(plot.title = element_text(hjust = 0.5),
               panel.grid.major.x = element_blank(),
-              axis.text = element_text(size=7)) 
+              axis.text = element_text(size=7)) +
+  theme_bw()
 
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, height = 4, dpi = 1000)
 
@@ -70,6 +71,36 @@ plot(p)
 ```
 
 
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, "_grid.RData")))
+
+result_summary <- results_grid[[1]]$result_summary
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+for (i in 1:length(lambda_scalers)) {
+  result_summary <- rbind(result_summary, results_grid[[i]]$result_summary)
+}
+results_grid$result_summary <- result_summary
+
+
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+u_l_scalers = rep(NA, length(eval_points))
+for (i in 1:length(eval_points)) {
+  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+}
+
+p <- plot_perforences_alllambda(df = results_grid$result_summary,
+                                add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
 ## n = 500
 ```{r}
 nn=500
@@ -92,6 +123,37 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, "_grid.RData")))
+
+result_summary <- results_grid[[1]]$result_summary
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+for (i in 1:length(lambda_scalers)) {
+  result_summary <- rbind(result_summary, results_grid[[i]]$result_summary)
+}
+results_grid$result_summary <- result_summary
+
+
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+u_l_scalers = rep(NA, length(eval_points))
+for (i in 1:length(eval_points)) {
+  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+}
+
+p <- plot_perforences_alllambda(df = results_grid$result_summary,
+                                add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
 ## n = 1000
 ```{r }
 nn=1000
@@ -111,4 +173,36 @@ p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = her
 ```{r fig.height=4, fig.width=12}
 p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
 plot(p)
+```
+
+
+
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, "_grid.RData")))
+
+result_summary <- results_grid[[1]]$result_summary
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+for (i in 1:length(lambda_scalers)) {
+  result_summary <- rbind(result_summary, results_grid[[i]]$result_summary)
+}
+results_grid$result_summary <- result_summary
+
+
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+u_l_scalers = rep(NA, length(eval_points))
+for (i in 1:length(eval_points)) {
+  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+}
+
+p <- plot_perforences_alllambda(df = results_grid$result_summary,
+                                add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
 ```

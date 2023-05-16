@@ -671,7 +671,7 @@ run_simu_scaled_rep <- function(gen_data_functions, n, B, return_all_rslts = F){
   
   result_summary <- results[[1]]$result_summary
   for (i in 1:length(lambda_scalers)) {
-    result_summary <- rbind(result_summary, results[[2]]$result_summary)
+    result_summary <- rbind(result_summary, results[[i]]$result_summary)
   }
   results$result_summary <- result_summary
   

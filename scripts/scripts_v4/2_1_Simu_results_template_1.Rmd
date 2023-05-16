@@ -1,0 +1,97 @@
+
+```{r fig.width=10, fig.height=7}
+obs <- DGS(n=10000)
+print(summary(obs))
+  
+# check positivity violations
+cat("Summary of A given W < -1:")
+summary(obs$A[obs$W < -1])
+cat("Summary of A given -1 < W <= 0:")
+summary(obs$A[-1 <= obs$W & obs$W < 0])
+cat("Summary of A given 0 < W <= 1:")
+summary(obs$A[0 <= obs$W & obs$W < 1])
+cat("Summary of A given 1 < W:")
+summary(obs$A[1 <= obs$W])
+
+
+p1 = ggplot(obs, aes(W)) + geom_histogram(stat="bin",aes(y=..density..), color='lightyellow', fill='lightyellow') + geom_density(lwd=1) + theme_bw() + labs(y='Density')
+p2 = ggplot(obs, aes(A)) + geom_histogram(stat="bin",aes(y=..density..), color='lightyellow', fill='lightyellow') + geom_density(lwd=1) + theme_bw() + labs(y='Density')
+p3 = ggplot(obs %>% group_by(Y) %>% summarise(count = n()) %>% mutate(Proportion = count / 10000), 
+            aes(x = Y, y = Proportion)) + geom_bar(stat = "identity", fill='lightyellow', color='grey') + theme_bw()
+p4 = ggplot(obs, aes(W, A)) + geom_point() + theme_bw()
+p5 = ggplot(obs, aes(W, Y)) + geom_point() + theme_bw()
+p6 = ggplot(obs, aes(A, Y)) + geom_point() + theme_bw()
+
+p <- grid.arrange(p1, p2, p3, p4, p5, p6, 
+                  nrow=2, ncol=3,
+                  top = textGrob(sprintf('Variable distributions of simulation %i', sn), 
+                                   gp=gpar(fontsize=17)))
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_EDAs.png")), p, width = 10, height = 6, dpi = 1000)
+```
+
+
+```{r fig.width=5, fig.height=4}
+load(file=here("data", "rdata", paste0("02_simu_V4_sys", sn ,"_psi0.RData")))
+
+ggplot() +
+    geom_line(data=psi0_line, aes(x=a, y=psi0)) + 
+    geom_point(data=psi0_pnt, aes(x=a, y=psi0)) + 
+    labs(x="a", y="P_0(E[Y|a,W])",
+         title = "True Average Treatment Effect, P_0(E[Y|a,W])") +
+        theme(plot.title = element_text(hjust = 0.5),
+              panel.grid.major.x = element_blank(),
+              axis.text = element_text(size=7)) +
+  theme_bw()
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, height = 4, dpi = 1000)
+
+```
+
+
+## n = 200
+```{r}
+nn=200
+```
+
+```{r}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, ".RData")))
+
+print(sprintf('The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
+print(sprintf('The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
+print(sprintf('The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+```
+
+```{r fig.height=9, fig.width=9}
+p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
+```
+
+```{r fig.height=4, fig.width=12}
+p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
+plot(p)
+```
+
+
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, "_grid.RData")))
+
+result_summary <- results_grid[[1]]$result_summary
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+for (i in 1:length(lambda_scalers)) {
+  result_summary <- rbind(result_summary, results_grid[[i]]$result_summary)
+}
+results_grid$result_summary <- result_summary
+
+
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+u_l_scalers = rep(NA, length(eval_points))
+for (i in 1:length(eval_points)) {
+  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+}
+
+p <- plot_perforences_alllambda(df = results_grid$result_summary,
+                                add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+```

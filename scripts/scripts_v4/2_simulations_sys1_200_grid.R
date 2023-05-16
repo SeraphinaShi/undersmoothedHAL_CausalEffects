@@ -102,3 +102,10 @@ set.seed(123)
 
 results_grid <- run_simu_scaled_rep(generate_data_1, n=n, B=1000, return_all_rslts=T)
 save.image(file=here("data", "rdata", "02_simu_V4_sys1_200_grid.RData"))
+
+
+
+
+
+
+

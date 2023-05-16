@@ -149,109 +149,137 @@ estimation_qqplot_cv_u_gl_alla <- function(results_list, save_plot=NA){
 
 
 
-plot_perforences_alllambda_1a <- function(df, a_para, z_para, add_oracal=F, u_g_scaler=NA, u_l_scaler=NA){
-  df <- df %>% filter(a == a_para, z == z_para)
-  
-  p_est_avg <- ggplot(df) +  
-    geom_line(aes(x = lambda_scaler, y = psi_hat), color = "grey") + 
-    geom_point(aes(x = lambda_scaler, y = psi_hat)) + 
-    geom_hline(aes(yintercept=psi0)) +
-    labs(title="Estimation average") +
-    theme()
-  
-  p_bias <- ggplot(df, aes(x = lambda_scaler, y = bias)) +  
-    geom_line(color = "grey") + 
-    geom_point() + 
-    labs(title="Bias") 
-  
-  p_se <- ggplot(df, aes(x = lambda_scaler)) +  
-    geom_line(aes(y = SE), color = "grey") + 
-    geom_point(aes(y = SE, color = "Empirical")) + 
-    labs(title="Standard Error") + 
-    scale_color_manual(name='method',
-                       breaks=c('Empirical', 'Oracal'),
-                       values=c('Empirical'='black', 'Oracal'='#8B6508'))
+
+
+plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scalers=NA, save_plot=NA, max_bias_sd=NA){
   
   
-  p_bias_d_df <- ggplot(df, aes(x = lambda_scaler)) + 
-    geom_line(aes(y = bias_se_ratio), color = "grey") + 
-    geom_point(aes(y = bias_se_ratio, color = "Empirical")) + 
-    labs(title="|Bias| / Standard Error") + 
-    scale_color_manual(name='method',
-                       breaks=c('Empirical', 'Oracal'),
-                       values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
-    theme(legend.position='none') 
+  legend_undersmoothing = ggplot(df) +  
+    geom_line(aes(x = lambda_scaler, y = y_hat, color = "Global")) + 
+    geom_line(aes(x = lambda_scaler, y = y_hat, color = "Local")) + 
+    geom_line(aes(x = lambda_scaler, y = y_hat, color = "None")) + 
+    theme_bw() +
+    scale_colour_manual(name="Undersmoothing",
+                        values=c(Global="#00BA38", Local="#619CFF", None="#F8766D"))
+  legend_undersmoothing <- get_legend(legend_undersmoothing)
   
-  p_cr <- ggplot(df, aes(x = lambda_scaler)) +  
-    geom_line(aes(y = cover_rate), color = "grey") + 
-    geom_point(aes(y = cover_rate, color = "Empirical")) + 
-    labs(title="Coverage rate") + 
-    scale_color_manual(name='method',
-                       breaks=c('Empirical', 'Oracal'),
-                       values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
-    theme(legend.position='none')  
-  
-  if(!add_oracal){
-    legend <- get_legend(p_se)
-    p_se <- p_se + theme(legend.position='none')
-  } else {
-    p_se <- p_se + 
-      geom_line(aes(y = oracal_SE), color = "#EEC591") + 
-      geom_point(aes(y = oracal_SE, color = "Oracal")) 
-    
-    legend <- get_legend(p_se)
-    p_se <- p_se + theme(legend.position='none')
-    
-    p_bias_d_df <- p_bias_d_df +  
-      geom_line(aes(y = oracal_bias_se_ratio), color = "#EEC591") + 
-      geom_point(aes(y = oracal_bias_se_ratio, color = "Oracal")) 
-    
-    p_cr <- p_cr +  
-      geom_line(aes(y = oracal_cover_rate), color = "#EEC591") + 
-      geom_point(aes(y = oracal_cover_rate, color = "Oracal")) 
-  }
-  
-  if(!is.na(u_g_scaler)){
-    p_est_avg <- p_est_avg +
+  p_est_avg_list = list()
+  p_bias_list = list()
+  p_se_list = list()
+  p_bias_se_list = list()
+  p_cr_list = list()
+  legend = NA
+  for (i in 1:length(eval_points)) {
+    df_a <- df %>% filter(a == eval_points[i])
+    u_l_scaler = u_l_scalers[i]
+    p_est_avg = ggplot(df_a) +  
+      geom_line(aes(x = lambda_scaler, y = y_hat), color = "grey") + 
+      geom_point(aes(x = lambda_scaler, y = y_hat)) + 
+      geom_hline(aes(yintercept=psi0)) + 
       geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-      # geom_text(aes(x=u_g_scaler, label="Globally undersmoothed HAL\n", y=+Inf), colour="#00BA38", angle=90, text=element_text(size=5)) +
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
-    p_bias <- p_bias +
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
-    p_se <- p_se + 
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
-    p_bias_d_df <- p_bias_d_df +  
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
-    p_cr <- p_cr +
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38")+
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D")
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
+      scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+      theme_bw() +
+      labs(x = "", title = paste0('a = ', eval_points[i])) +
+      theme(axis.title=element_blank(),
+            plot.title = element_text(hjust = 0.5))
+    
+    p_bias <- ggplot(df_a, aes(x = lambda_scaler, y = bias)) +  
+      geom_line(color = "grey") + 
+      geom_point() + 
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
+      scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+      theme_bw()+
+      theme(axis.title=element_blank())
+    
+    p_se <- ggplot(df_a, aes(x = lambda_scaler)) +  
+      geom_line(aes(y = SE), color = "grey") + 
+      geom_point(aes(y = SE, color = "Empirical")) + 
+      geom_line(aes(y = oracal_SE), color = "#EEC591") + 
+      geom_point(aes(y = oracal_SE, color = "Oracal")) +
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
+      scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+      scale_color_manual(name='method',
+                         breaks=c('Empirical', 'Oracal'),
+                         values=c('Empirical'='black', 'Oracal'='#8B6508'))+
+      theme_bw()+
+      theme(axis.title=element_blank())
+    
+    legend <- get_legend(p_se)
+    p_se <- p_se + theme(legend.position='none')
+    
+    
+    p_bias_se <- ggplot(df_a, aes(x = lambda_scaler)) + 
+      geom_line(aes(y = bias_se_ratio), color = "grey") + 
+      geom_point(aes(y = bias_se_ratio, color = "Empirical")) +
+      geom_line(aes(y = oracal_bias_se_ratio), color = "#EEC591") + 
+      geom_point(aes(y = oracal_bias_se_ratio, color = "Oracal")) +
+      geom_hline(aes(yintercept=1/log(n))) +
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
+      scale_color_manual(name='method',
+                         breaks=c('Empirical', 'Oracal'),
+                         values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
+      scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+      theme_bw() +
+      theme(axis.title=element_blank(),
+            legend.position='none')
+    
+    if(!is.na(max_bias_sd)){
+      p_bias_se <- p_bias_se + ylim(0,max_bias_sd)
+    }
+    
+    p_cr <- ggplot(df_a, aes(x = lambda_scaler)) +  
+      geom_line(aes(y = cover_rate), color = "grey") + 
+      geom_point(aes(y = cover_rate, color = "Empirical")) + 
+      geom_line(aes(y = oracal_cover_rate), color = "#EEC591") + 
+      geom_point(aes(y = oracal_cover_rate, color = "Oracal")) +
+      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
+      scale_color_manual(name='method',
+                         breaks=c('Empirical', 'Oracal'),
+                         values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
+      scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+      theme_bw()  + 
+      theme(axis.title=element_blank(),
+            legend.position='none')
+    
+    p_est_avg_list[[i]] = p_est_avg
+    p_bias_list[[i]] = p_bias
+    p_se_list[[i]] = p_se
+    p_bias_se_list[[i]] = p_bias_se
+    p_cr_list[[i]] = p_cr
+  }
+
+  
+  g1 <- arrangeGrob(grobs = p_est_avg_list, nrow=1, left = grid::textGrob("Estimation average", rot=90, gp=gpar(fontsize=12)))
+  g2 <- arrangeGrob(grobs = p_bias_list, nrow=1, left = grid::textGrob("|Bias|", rot=90, gp=gpar(fontsize=12)))
+  g3 <- arrangeGrob(grobs = p_se_list, nrow=1, left = grid::textGrob("Standard Error", rot=90, gp=gpar(fontsize=12)))
+  g4 <- arrangeGrob(grobs = p_bias_se_list, nrow=1, left = grid::textGrob("|Bias| / Standard Error", rot=90, gp=gpar(fontsize=12)))
+  g5 <- arrangeGrob(grobs = p_cr_list, nrow=1, left = grid::textGrob("Coverage rate", rot=90, gp=gpar(fontsize=12)),
+                    bottom = grid::textGrob("lambda scalers", gp=gpar(fontsize=15)))
+  
+  p <- grid.arrange(g1, g2, g3, g4, g5, legend, legend_undersmoothing, 
+                    layout_matrix = rbind(c(1,NA),
+                                          c(2,7),
+                                          c(3,6),
+                                          c(4,NA),
+                                          c(5,NA)),
+                    widths=c(13, 1), 
+                    top = textGrob("HAL-based plug-in estimator performances for E[Y|a,W] \n", 
+                                   gp=gpar(fontsize=18)))  
+  
+  if(!is.na(save_plot)){
+    ggsave(save_plot, plot=p, width = 25, height = 9, dpi = 1200)
   }
   
-  if(!is.na(u_l_scaler)){
-    p_est_avg <- p_est_avg +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") 
-    p_bias <- p_bias +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
-    p_se <- p_se + 
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
-    p_bias_d_df <- p_bias_d_df +  
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
-    p_cr <- p_cr +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF")
-  }
-  
-  p <- grid.arrange(p_est_avg, p_bias, p_se, p_bias_d_df, p_cr, legend, 
-                    layout_matrix = rbind(c(NA,1,1,NA),
-                                          c(NA,1,1,6),
-                                          c(2,2,3,3),
-                                          c(2,2,3,3),
-                                          c(4,4,5,5),
-                                          c(4,4,5,5)),
-                    top = textGrob(paste0("HAL-based plug in estimator performence for a=", a_para, ", z=", z_para), 
-                                   gp=gpar(fontsize=11, fontface = 'bold')))
   return(p)
 }
 
