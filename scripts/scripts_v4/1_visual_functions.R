@@ -176,9 +176,6 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
       geom_line(aes(x = lambda_scaler, y = y_hat), color = "grey") + 
       geom_point(aes(x = lambda_scaler, y = y_hat)) + 
       geom_hline(aes(yintercept=psi0)) + 
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
       theme_bw() +
       labs(x = "", title = paste0('a = ', eval_points[i])) +
@@ -188,9 +185,6 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
     p_bias <- ggplot(df_a, aes(x = lambda_scaler, y = bias)) +  
       geom_line(color = "grey") + 
       geom_point() + 
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
       theme_bw()+
       theme(axis.title=element_blank())
@@ -200,9 +194,6 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
       geom_point(aes(y = SE, color = "Empirical")) + 
       geom_line(aes(y = oracal_SE), color = "#EEC591") + 
       geom_point(aes(y = oracal_SE, color = "Oracal")) +
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
       scale_color_manual(name='method',
                          breaks=c('Empirical', 'Oracal'),
@@ -220,9 +211,6 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
       geom_line(aes(y = oracal_bias_se_ratio), color = "#EEC591") + 
       geom_point(aes(y = oracal_bias_se_ratio, color = "Oracal")) +
       geom_hline(aes(yintercept=1/log(n))) +
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
       scale_color_manual(name='method',
                          breaks=c('Empirical', 'Oracal'),
                          values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
@@ -240,9 +228,6 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
       geom_point(aes(y = cover_rate, color = "Empirical")) + 
       geom_line(aes(y = oracal_cover_rate), color = "#EEC591") + 
       geom_point(aes(y = oracal_cover_rate, color = "Oracal")) +
-      geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-      geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-      geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
       scale_color_manual(name='method',
                          breaks=c('Empirical', 'Oracal'),
                          values=c('Empirical'='black', 'Oracal'='#8B6508')) + 
@@ -250,6 +235,35 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
       theme_bw()  + 
       theme(axis.title=element_blank(),
             legend.position='none')
+    
+    if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
+      p_est_avg <- p_est_avg +      
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+      
+      p_bias <- p_bias +      
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+      
+      p_se <- p_se +      
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+      
+      p_bias_se <- p_bias_se +      
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+      
+      p_cr <- p_cr +      
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+      
+        
+    }
     
     p_est_avg_list[[i]] = p_est_avg
     p_bias_list[[i]] = p_bias

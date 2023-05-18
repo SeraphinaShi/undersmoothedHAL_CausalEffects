@@ -94,4 +94,74 @@ p <- plot_perforences_alllambda(df = results_grid$result_summary,
                                 add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
                                 max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+## n = 500
+```{r}
+nn=500
+```
+
+
+
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, "_grid.RData")))
+
+result_summary <- results_grid[[1]]$result_summary
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+for (i in 1:length(lambda_scalers)) {
+  result_summary <- rbind(result_summary, results_grid[[i]]$result_summary)
+}
+results_grid$result_summary <- result_summary
+
+
+u_g_scaler = NA
+u_l_scalers = NA
+
+p <- plot_perforences_alllambda(df = results_grid$result_summary,
+                                add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+## n = 1000
+```{r }
+nn=1000
+```
+
+
+
+
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V4_sys", sn, "_", nn, "_grid.RData")))
+
+result_summary <- results_grid[[1]]$result_summary
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+for (i in 1:length(lambda_scalers)) {
+  result_summary <- rbind(result_summary, results_grid[[i]]$result_summary)
+}
+results_grid$result_summary <- result_summary
+
+
+u_g_scaler = NA
+u_l_scalers = NA
+
+p <- plot_perforences_alllambda(df = results_grid$result_summary,
+                                add_oracal=T, u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
 ```
