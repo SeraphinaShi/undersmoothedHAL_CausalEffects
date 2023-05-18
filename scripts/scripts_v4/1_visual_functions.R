@@ -277,7 +277,7 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
                                    gp=gpar(fontsize=18)))  
   
   if(!is.na(save_plot)){
-    ggsave(save_plot, plot=p, width = 25, height = 9, dpi = 1200)
+    ggsave(save_plot, plot=p, width = 25, height = 9, dpi = 500)
   }
   
   return(p)
