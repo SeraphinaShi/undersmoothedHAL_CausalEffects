@@ -23,8 +23,8 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
   
   p_est_avg <- ggplot(data=df, aes(x=a)) +
     geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
-    geom_errorbar(aes(ymin=ci_lwr, ymax=ci_upr, color=method, linetype='Empirical'), width=0.7) +
-    geom_errorbar(aes(ymin=oracal_ci_lwr, ymax=oracal_ci_upr, color=method, linetype = "Oracal"), width=0.7) +
+    geom_ribbon(aes(ymin=ci_lwr, ymax=ci_upr, color=method, fill=method, linetype='Empirical'), width=0.7, alpha=0.1) +
+    geom_ribbon(aes(ymin=oracal_ci_lwr, ymax=oracal_ci_upr, color=method, fill=method, linetype = "Oracal"),  width=0.7, alpha=0.1) +
     geom_point(aes(y=psi0), color = "black") +
     geom_point(aes(y=y_hat, color=method), shape=17, size=2, alpha= 0.7) +
     labs(x="a", y="E[Y|a, W]", title = "Estimation") +
@@ -35,10 +35,8 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     scale_linetype_manual(breaks=c('Empirical', 'Oracal'),
                           values=c('Empirical'= 1, 'Oracal'=2)) +
     theme_bw() +
-    theme(legend.box = "horizontal")
-  
-  legend <- get_legend(p_est_avg)
-  p_est_avg <- p_est_avg + theme(legend.position='none')
+    theme(legend.box = "horizontal",
+          legend.position='none')
   
   p_bias <- ggplot(df, aes(x = a, y = bias)) +  
     geom_line(aes(color=method)) +
@@ -63,8 +61,11 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
     scale_linetype_manual(breaks=c('Empirical', 'Oracal'),
                           values=c('Empirical'= 1, 'Oracal'=2))+
-    theme_bw() +
-    theme(legend.position='none') 
+    theme_bw() + 
+    theme(legend.box = "horizontal")
+  
+  legend <- get_legend(p_se)
+  p_se <- p_se + theme(legend.position='none')
   
   
   p_bias_d_df <- ggplot(df, aes(x = a)) +  
@@ -112,7 +113,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
                                    gp=gpar(fontsize=17)))
   
   if(!is.na(save_plot)){
-    ggsave(save_plot, plot=p, width = 8, height = 9, dpi = 1000)
+    ggsave(save_plot, plot=p, width = 8, height = 9, dpi = 800)
   }
   return(p)
   
@@ -141,7 +142,7 @@ estimation_qqplot_cv_u_gl_alla <- function(results_list, save_plot=NA){
           strip.text = element_text(size = 12))
   
   if(!is.na(save_plot)){
-    ggsave(save_plot, plot=p, width = 13, height = 4, dpi = 1200)
+    ggsave(save_plot, plot=p, width = 13, height = 4, dpi = 800)
   }
   
   return(p)
@@ -173,6 +174,7 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
     df_a <- df %>% filter(a == eval_points[i])
     u_l_scaler = u_l_scalers[i]
     p_est_avg = ggplot(df_a) +  
+      geom_ribbon(aes(x = lambda_scaler, ymin=ci_lwr, ymax=ci_upr),  color='grey', fill = 'lightyellow', width=0.7, alpha=0.8) +
       geom_line(aes(x = lambda_scaler, y = y_hat), color = "grey") + 
       geom_point(aes(x = lambda_scaler, y = y_hat)) + 
       geom_hline(aes(yintercept=psi0)) + 
@@ -273,7 +275,7 @@ plot_perforences_alllambda <- function(df, add_oracal=T, u_g_scaler=NA, u_l_scal
   }
 
   
-  g1 <- arrangeGrob(grobs = p_est_avg_list, nrow=1, left = grid::textGrob("Estimation average", rot=90, gp=gpar(fontsize=12)))
+  g1 <- arrangeGrob(grobs = p_est_avg_list, nrow=1, left = grid::textGrob("Estimation, 95% CI", rot=90, gp=gpar(fontsize=12)))
   g2 <- arrangeGrob(grobs = p_bias_list, nrow=1, left = grid::textGrob("|Bias|", rot=90, gp=gpar(fontsize=12)))
   g3 <- arrangeGrob(grobs = p_se_list, nrow=1, left = grid::textGrob("Standard Error", rot=90, gp=gpar(fontsize=12)))
   g4 <- arrangeGrob(grobs = p_bias_se_list, nrow=1, left = grid::textGrob("|Bias| / Standard Error", rot=90, gp=gpar(fontsize=12)))
