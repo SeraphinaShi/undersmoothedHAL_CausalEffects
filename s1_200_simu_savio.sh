@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=sys3_n500
+#SBATCH --job-name=sys1_n200
 #SBATCH --account=co_biostat
 #SBATCH --partition=savio3
 #SBATCH --nodes=1
@@ -9,4 +9,4 @@
 #SBATCH --mail-user=junming_shi@berkeley.edu
 ## Command(s) to run:
 
-R CMD BATCH --no-save scripts/scripts_v3/2_simulations_sys3_500.R scripts/scripts_v3/2_simulations_sys3_500.Rout
+R CMD BATCH --no-save scripts/scripts_v5/2_simulations_sys1_200.R scripts/scripts_v5/2_simulations_sys1_200.Rout
