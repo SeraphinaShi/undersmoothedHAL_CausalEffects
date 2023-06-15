@@ -1,9 +1,5 @@
-#' Undersmoothed HAL
-#'
-#' Note: Current undersmoothed HAL use a global criterion.
-#' Future work need to be done for user-specified criterion driven by the target parameter.
-#'
-#'
+
+
 ###############################################################################
 #'  implement undersmoothed HAL
 #'
@@ -27,7 +23,6 @@ undersmooth_hal <- function(X,
                             Y,
                             fit_init,
                             basis_mat,
-                            criterion = NULL,
                             a = NULL,
                             Nlam = 20,
                             family = "gaussian"){
@@ -40,11 +35,6 @@ undersmooth_hal <- function(X,
   # refit on new lambda sequence
   us_lambda <- fit_init$lambda_star*10^seq(from=0, to=-3, length=Nlam)
   us_fit <- glmnet(fit_init$x_basis, Y, lambda=us_lambda, family = family, standardize = FALSE)
-  # >   us_fit <- glmnet(fit_init$x_basis, Y, lambda=us_lambda, family = family, standardize = FALSE)
-  # Warning messages:
-  #   1: from glmnet C++ code (error code -1); Convergence for 1th lambda value not reached after maxit=100000 iterations; solutions for larger lambdas returned 
-  # 2: In getcoef(fit, nvars, nx, vnames) :
-  #   an empty model has been returned; probably a convergence issue
 
   
   if(identical(us_fit$df, 0)){
@@ -54,25 +44,22 @@ undersmooth_hal <- function(X,
     return(res)
   }
   
-  # check the criterion (global)
-  # TBD user-specified criterion (e.g. target parameter driven)
-  if (is.null(criterion)){
-    
-    if (family != "binomial"){
-      pred_mat <- predict(us_fit, fit_init$x_basis)
-    }else {
-      pred_mat <- predict(us_fit, fit_init$x_basis, type = "response")
-    }
-    resid_mat <- pred_mat - Y
-    
-    max_score <- get_maxscore(basis_mat = basis_mat,
-                              resid_mat = resid_mat,
-                              sd_est = sd_est,
-                              Nlam = Nlam, us_fit = us_fit)
-    
-    # get the first lambda that satisfies the criteria
-    lambda_under <- us_lambda[max_score <= 1/(sqrt(n)*log(n))][1] # over under-smoothing 
-  } 
+
+  if (family != "binomial"){
+    pred_mat <- predict(us_fit, fit_init$x_basis)
+  }else {
+    pred_mat <- predict(us_fit, fit_init$x_basis, type = "response")
+  }
+  resid_mat <- pred_mat - Y
+  
+  max_score <- get_maxscore(basis_mat = basis_mat,
+                            resid_mat = resid_mat,
+                            sd_est = sd_est,
+                            Nlam = Nlam, us_fit = us_fit)
+  
+  # get the first lambda that satisfies the criteria
+  lambda_under <- us_lambda[max_score <= 1/(sqrt(n)*log(n))][1] # over under-smoothing 
+  
   
   # collect results
   coef_mat <- as.matrix(us_fit$beta)
@@ -118,10 +105,254 @@ get_maxscore <- function(basis_mat, resid_mat, sd_est, Nlam, us_fit){
 
 
 
+###############################################################################
+#'  fit and return CV HAL, globally undersmoothed HAL, and locally undersmoothed HAL
 
-########################
+
+fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
+  #================================CV-HAL================================
+  
+  start <- Sys.time()
+  
+  hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
+                    return_x_basis = TRUE,
+                    num_knots = hal9001:::num_knots_generator(
+                      max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                      smoothness_orders = 1,
+                      base_num_knots_0 = 20,
+                      base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                    )
+  )
+  lambda_CV <- hal_CV$lambda_star
+  print(sprintf('  CV lambda: %f', lambda_CV))
+  
+  end <- Sys.time()
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_cv_fit_time = hal_fit_time
+  
+  #================================global undersmoothing================================
+  start <- Sys.time()
+  
+  CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
+  # if all coefs are zero, skip undersmooth and use the initial fit
+  if (length(CV_nonzero_col) == 0){
+    lambda_u_g = lambda_CV
+  }else{
+    CV_basis_mat <- as.matrix(hal_CV$x_basis)
+    CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
+    
+    hal_undersmooth <- undersmooth_hal(X, Y,
+                                       fit_init = hal_CV,
+                                       basis_mat = CV_basis_mat,
+                                       family = y_type)
+    lambda_u_g = hal_undersmooth$lambda_under
+  }
+  print(sprintf('  globally u lambdas: %f', lambda_u_g))
+  
+  hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
+                     return_x_basis = TRUE,
+                     num_knots = hal9001:::num_knots_generator(
+                       max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                       smoothness_orders = 1,
+                       base_num_knots_0 = 20, #200
+                       base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                     ),
+                     fit_control = list(
+                       cv_select = FALSE,
+                       n_folds = 10,
+                       foldid = NULL,
+                       use_min = TRUE,
+                       lambda.min.ratio = 1e-4,
+                       prediction_bounds = "default"
+                     ),
+                     lambda = lambda_u_g)
+  
+  end <- Sys.time()
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_u_g_fit_time = hal_fit_time + hal_cv_fit_time
+  
+  #================================local undersmoothing================================
+  start <- Sys.time()
+  
+  CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
+  # if all coefs are zero, skip undersmooth and use the initial fit
+  if (length(CV_nonzero_col) == 0){
+    lambda = lambda_CV
+  }else{
+    
+    lambdas_u_l = rep(NA, length(eval_points))
+    
+    for(i in 1:length(eval_points)){
+      X_local <- X
+      X_local$A = eval_points[i]
+      
+      CV_basis_mat_local <- make_design_matrix(as.matrix(X_local), hal_CV$basis_list, p_reserve = 0.75)
+      CV_basis_mat_local <- as.matrix(cbind(1, CV_basis_mat_local)[, CV_nonzero_col])
+      
+      hal_undersmooth_local <- undersmooth_hal(X_local, Y,
+                                               fit_init = hal_CV,
+                                               basis_mat = CV_basis_mat_local,
+                                               family = y_type)
+      lambda_local = hal_undersmooth_local$lambda_under
+      lambdas_u_l[i] = lambda_local
+    }
+    print(sprintf('  locally u lambdas: %s', paste(round(lambdas_u_l, 6), collapse = ", ")))
+    
+    lambda_u_l = unique(lambdas_u_l)
+    lambda_u_l_idx = match(lambdas_u_l, lambda_u_l)
+    
+    hal_u_l = list()
+    for(i in 1:length(lambda_u_l)){
+      hal_u_l[[i]] <- fit_hal(X = X, Y = Y, family = y_type,
+                              return_x_basis = TRUE,
+                              num_knots = hal9001:::num_knots_generator(
+                                max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                                smoothness_orders = 1,
+                                base_num_knots_0 = 20, #200
+                                base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                              ),
+                              fit_control = list(
+                                cv_select = FALSE,
+                                n_folds = 10,
+                                foldid = NULL,
+                                use_min = TRUE,
+                                lambda.min.ratio = 1e-4,
+                                prediction_bounds = "default"
+                              ),
+                              lambda = lambda_u_l[i])
+    }
+  }
+  
+  end <- Sys.time()
+  
+  hal_fit_time = end - start
+  if(units(hal_fit_time) == 'secs'){
+    hal_fit_time = as.numeric(hal_fit_time)
+  } else if (units(hal_fit_time) == 'mins'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60
+  } else if (units(hal_fit_time) == 'hours'){
+    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
+  }
+  
+  hal_u_l_fit_time = hal_fit_time + hal_cv_fit_time
+  
+  #================================return================================
+  hal_fit_list <- list(hal_CV = hal_CV, hal_u_g = hal_u_g, hal_u_l = hal_u_l)
+  lambda_list <- list(lambda_CV = lambda_CV, lambda_u_g = lambda_u_g, lambda_u_l = lambda_u_l)
+  hal_fit_time_list <- list(hal_cv_fit_time = hal_cv_fit_time, hal_u_g_fit_time = hal_u_g_fit_time, hal_u_l_fit_time = hal_u_l_fit_time)
+  
+  return(list(hal_fit_list = hal_fit_list, lambda_list = lambda_list, hal_fit_time_list = hal_fit_time_list, lambda_u_l_idx = lambda_u_l_idx))
+}
+
+
+###############################################################################
+#'  With given fitted HAL object and evaluation points, return the empirical SE
+
+IC_based_se <- function(hal_fit, eval_points){
+  
+  coef <- hal_fit$coefs
+  basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
+  
+  nonzero_idx <- which(coef != 0)
+  
+  if(length(nonzero_idx) > 0) {
+    coef_nonzero <- coef[nonzero_idx]
+    basis_mat_nonzero <- as.matrix(basis_mat[, nonzero_idx])
+    
+    IC_beta <- cal_IC_for_beta(X = basis_mat_nonzero, 
+                               Y = Y, 
+                               Y_hat = predict(hal_fit, new_data = X, type = "response"),
+                               beta_n = coef_nonzero
+    )
+    
+    se <- c()
+    
+    for (i in 1:length(eval_points)) {
+      X_new <- X
+      X_new$A = eval_points[i]
+      
+      # efficient influence curve
+      x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
+      x_basis_a_nonzero <- as.matrix(cbind(1, x_basis_a)[, nonzero_idx])
+      
+      IC_EY <- cal_IC_for_EY(X_new = x_basis_a_nonzero, 
+                             beta_n = coef_nonzero, IC_beta = IC_beta)
+      
+      # empirical SE
+      se[i] <- sqrt(var(IC_EY)/n)
+      #ci_lwr <- Y_hat - 1.96 * SE
+      #ci_upr <- Y_hat + 1.96 * SE
+      
+    }
+  } else {
+    se <- NA
+  }
+  
+  return(se)
+}
+
+###############################################################################
+
+IC_based_se_u_l <- function(hal_fit, single_eval_point){
+  
+  coef <- hal_fit$coefs
+  basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
+  
+  nonzero_idx <- which(coef != 0)
+  
+  if(length(nonzero_idx) > 0) {
+    coef_nonzero <- coef[nonzero_idx]
+    basis_mat_nonzero <- as.matrix(basis_mat[, nonzero_idx])
+    
+    IC_beta <- cal_IC_for_beta(X = basis_mat_nonzero, 
+                               Y = Y, 
+                               Y_hat = predict(hal_fit, new_data = X, type = "response"),
+                               beta_n = coef_nonzero
+    )
+    
+    X_new <- X
+    X_new$A = eval_points[i]
+    
+    # efficient influence curve
+    x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
+    x_basis_a_nonzero <- as.matrix(cbind(1, x_basis_a)[, nonzero_idx])
+    
+    IC_EY <- cal_IC_for_EY(X_new = x_basis_a_nonzero, 
+                           beta_n = coef_nonzero, IC_beta = IC_beta)
+    
+    # empirical SE
+    se <- sqrt(var(IC_EY)/n)
+    
+  } else {
+    se <- NA
+  }
+  
+  return(se)
+}
+
+
+
+###############################################################################
 # calculating efficient influence curves
-########################
+
 cal_IC_for_beta <- function(X, Y, Y_hat, beta_n, family = 'binomial'){
   n <- dim(X)[1] 
   p <- length(beta_n)
@@ -192,9 +423,341 @@ cal_IC_for_ATE <- function(X_new_a, X_new_0, beta_n, IC_beta, family = 'binomial
 }
 
 
-########################
+###############################################################################
+
+bootstrap_inference <- function(X, Y, eval_points, hal_fit, y_type, B = 200){
+  
+  basis_list <- hal_fit$basis_list
+  
+  y_hat_B <- matrix(ncol = length(eval_points))
+  
+  for (b in 1:B) {
+    #--------------data--------------
+    idx <- sample(1:length(Y), length(Y), replace = T)
+    Xb <- X[idx,]
+    Yb <- Y[idx]
+    
+    if (length(basis_list) > 0) {
+      # generate basis matrix
+      x_basis <- hal9001::make_design_matrix(as.matrix(Xb), basis_list)
+      
+      #--------------fit--------------
+      lasso_fit <- tryCatch({
+        lasso_fit <- glmnet::glmnet(x = x_basis, y = Yb, 
+                                    family = y_type, 
+                                    lambda = hal_fit$lambda_star,
+                                    intercept = FALSE, standardize = FALSE)
+      },
+      error = function(){
+        lasso_fit <- NA
+      })
+      
+      y_hat_b <- c()
+      for (i in 1:length(eval_points)) {
+        X_new <- Xb
+        X_new$A = eval_points[i]
+        
+        x_basis_a <- hal9001::make_design_matrix(as.matrix(X_new), hal_fit$basis_list)
+        
+        #--------------prediction--------------
+        if (y_type == "binomial") {
+          preds <- predict(lasso_fit, x_basis_a, type = "response")
+        } else {
+          preds <- predict(lasso_fit, x_basis_a)
+        }
+        
+        y_hat_b[i] = mean(preds)
+      }
+    } else {
+      y_hat_b = rep(NA, length(eval_points))
+    }
+    
+    y_hat_B <- rbind(y_hat_B, y_hat_b)
+  }
+  
+  #--------------confidence bounds--------------
+  y_hat_B <- y_hat_B[-1,]
+  lower_bd <- apply(y_hat_B, 2, quantile, probs = 0.05/2, na.rm = T)
+  upper_bd <- apply(y_hat_B, 2, quantile, probs = 1-0.05/2, na.rm = T)
+  
+  return(list(lower_bd=lower_bd, upper_bd=upper_bd))
+  #   
+  #   basis_list <- hal_fit$basis_list
+  #   # copy_map <- hal_fit$copy_map
+  #   
+  #   y_hat_B <- matrix(ncol = length(eval_points))
+  #   for (b in 1:B) {
+  #     #--------------data--------------
+  #     idx <- sample(1:length(Y), length(Y), replace = T)
+  #     Xb <- X[idx,]
+  #     Yb <- Y[idx]
+  #     
+  #     # generate basis matrix
+  #     if (length(basis_list) > 0) {
+  #       x_basis <- hal9001::make_design_matrix(as.matrix(Xb), basis_list)
+  #       # unique_columns <- as.numeric(names(copy_map))
+  #       # x_basis <- x_basis[, unique_columns]
+  #     } else {
+  #       x_basis <- matrix(1, ncol = 2, nrow = nrow(Xb))
+  #     }
+  #     x_basis <- as.matrix(x_basis)
+  #     
+  #     #--------------fit--------------
+  #     is_glmnet = T
+  #     if (dim(x_basis)[2] <= 1) {
+  #       # dim of X_basis < 2. make it larger
+  #       x_basis <- cbind(matrix(1, ncol = 1, nrow = nrow(X)), x_basis)
+  #       x_basis <- cbind(matrix(0, ncol = 1, nrow = nrow(X)), x_basis)
+  #       lasso_fit <- glm(Yb ~ x_basis, x = FALSE, y = FALSE, family = y_type)
+  #       is_glmnet = F
+  #     } else {
+  #       lasso_fit <- tryCatch({
+  #         lasso_fit <- glmnet::glmnet(x = x_basis, y = Yb, 
+  #                                     family = y_type, 
+  #                                     lambda = hal_fit$lambda_star,
+  #                                     intercept = FALSE, standardize = FALSE)
+  #       },
+  #       error = function(){
+  #         lasso_fit <- glm.fit(x = x_basis, y = Yb, family = y_type)
+  #         lasso_fit <- glm(Yb ~ x_basis, x = FALSE, y = FALSE, family = y_type)
+  #         is_glmnet = F
+  #       })
+  #     }
+  #     
+  #     #--------------predictions, 95% lower and upper bounds--------------
+  #     y_hat_b <- c()
+  #     for (i in 1:length(eval_points)) {
+  #       X_new <- Xb
+  #       X_new$A = eval_points[i]
+  #       
+  #       # generate basis matrix
+  #       if (length(basis_list) > 0){
+  #         x_basis_a <- hal9001::make_design_matrix(as.matrix(X_new), hal_fit$basis_list)
+  #         # x_basis_a <- hal9001::apply_copy_map(x_basis_a, hal_fit$copy_map)
+  #         
+  #         if(dim(x_basis)[2] <= 1){
+  #           x_basis_a <- cbind(matrix(1, ncol = 1, nrow = nrow(X)), x_basis_a)
+  #           x_basis_a <- cbind(matrix(0, ncol = 1, nrow = nrow(X)), x_basis_a)
+  #         }
+  #       } else {
+  #         x_basis_a <- matrix(1, ncol = 2, nrow = nrow(X_new))
+  #       }
+  # 
+  #       # prediction
+  #       #-----
+  #       if (y_type == "binomial") {
+  #         preds <- predict(lasso_fit, x_basis_a, type = "response")
+  #       } else {
+  #         preds <- predict(lasso_fit, x_basis_a)
+  #       }
+  #       #-----
+  #       # beta_hat <- stats::coef(lasso_fit)
+  #       # beta_hat[is.na(beta_hat)] <- 0
+  #       # beta_hat <- as.matrix(beta_hat)
+  #       # preds <- as.vector(
+  #       #   Matrix::tcrossprod(x = x_basis_a, y = beta_hat[-1]) + beta_hat[1]
+  #       # )
+  #       # if (y_type == "binomial") preds <- stats::plogis(preds)
+  #       #-----
+  #       y_hat_b[i] = mean(preds)
+  #     }
+  #     y_hat_B <- rbind(y_hat_B, y_hat_b)
+  #   }
+  #   
+  # y_hat_B <- y_hat_B[-1,]
+  # lower_bd <- apply(y_hat_B, 2, quantile, probs = 0.05/2)
+  # upper_bd <- apply(y_hat_B, 2, quantile, probs = 1-0.05/2)
+  # 
+  # return(list(lower_bd=lower_bd, upper_bd=upper_bd))
+  
+}
+
+
+###############################################################################
+
+bootstrap_inference_u_l <- function(X, Y, eval_points, hal_fit, y_type, lambda_u_l_idx, B = 200){
+  
+  y_hat_B <- matrix(ncol = length(eval_points))
+  
+  for (b in 1:B) {
+    #--------------data--------------
+    idx <- sample(1:length(Y), length(Y), replace = T)
+    Xb <- X[idx,]
+    Yb <- Y[idx]
+    
+    
+    x_basis <- list()
+    lasso_fit <- list()
+    
+    for (i in 1:length(hal_fit)) {
+      
+      # generate basis matrix
+      basis_list <- hal_fit[[i]]$basis_list
+      
+      # --------------fit glmnet--------------
+      if (length(basis_list) > 0) {
+        
+        x_basis_l <- hal9001::make_design_matrix(as.matrix(Xb), basis_list)
+        
+        lasso_fit_l <- tryCatch({
+          lasso_fit_l <- glmnet::glmnet(x = x_basis_l, 
+                                        y = Yb, 
+                                        family = y_type, 
+                                        lambda = hal_fit[[i]]$lambda_star,
+                                        intercept = FALSE, standardize = FALSE)
+        },
+        error = function(){
+          lasso_fit_l <- NA
+        })
+        
+      } else {
+        
+        x_basis_l <- NA
+        lasso_fit_l <- NA
+        
+      } 
+      
+      x_basis[[i]] = x_basis_l
+      lasso_fit[[i]] = lasso_fit_l
+      
+    }
+    
+    #--------------predictions, 95% lower and upper bounds--------------
+    y_hat_b <- c()
+    for (i in 1:length(eval_points)) {
+      X_new <- Xb
+      X_new$A = eval_points[i]
+      u_l_idx = lambda_u_l_idx[i]
+      
+      if (length(basis_list) > 0){
+        
+        # generate basis matrix
+        x_basis_a <- hal9001::make_design_matrix(as.matrix(X_new), hal_fit[[u_l_idx]]$basis_list)
+        
+        # prediction
+        if(any(!is.na(lasso_fit[[u_l_idx]]))){
+          
+          if (y_type == "binomial") {
+            preds <- predict(lasso_fit[[u_l_idx]], x_basis_a, type = "response")
+          } else {
+            preds <- predict(lasso_fit[[u_l_idx]], x_basis_a)
+          }
+          
+          y_hat_b[i] = mean(preds)
+          
+        } else {
+          y_hat_b[i] = NA
+        }
+        
+      } else {
+        y_hat_b[i] = NA
+      }
+      
+    }
+    y_hat_B <- rbind(y_hat_B, y_hat_b)
+  }
+  
+  y_hat_B <- y_hat_B[-1,]
+  lower_bd <- apply(y_hat_B, 2, quantile, probs = 0.05/2, na.rm = T)
+  upper_bd <- apply(y_hat_B, 2, quantile, probs = 1-0.05/2, na.rm = T)
+  
+  return(list(lower_bd=lower_bd, upper_bd=upper_bd))
+  #   
+  #   y_hat_B <- matrix(ncol = length(eval_points))
+  #   for (b in 1:B) {
+  #     #--------------data--------------
+  #     idx <- sample(1:length(Y), length(Y), replace = T)
+  #     Xb <- X[idx,]
+  #     Yb <- Y[idx]
+  #     
+  #     
+  #     x_basis <- list()
+  #     is_glmnet <- list()
+  #     lasso_fit <- list()
+  #     
+  #     for (i in 1:length(hal_fit)) {
+  #       
+  #       # generate basis matrix
+  #       basis_list <- hal_fit[[i]]$basis_list
+  #       if (length(basis_list) > 0) {
+  #         x_basis_l <- hal9001::make_design_matrix(as.matrix(Xb), basis_list)
+  #       } else {
+  #         x_basis_l <- matrix(1, ncol = 2, nrow = nrow(Xb))
+  #       }
+  #       x_basis[[i]] <- as.matrix(x_basis_l)
+  #       
+  #       #--------------fit--------------
+  #       is_glmnet_l = T
+  #       
+  #       if (dim(x_basis_l)[2] <= 1) {
+  #         # dim of X_basis < 2. make it larger
+  #         x_basis_l <- cbind(matrix(1, ncol = 1, nrow = nrow(X)), x_basis_l)
+  #         x_basis_l <- cbind(matrix(0, ncol = 1, nrow = nrow(X)), x_basis_l)
+  #         lasso_fit_l <- glm(Yb ~ x_basis_l, x = FALSE, y = FALSE, family = y_type)
+  #         is_glmnet_l = F
+  #       } else {
+  #         lasso_fit_l <- tryCatch({
+  #           lasso_fit_l <- glmnet::glmnet(x = x_basis_l, y = Yb, 
+  #                                       family = y_type, 
+  #                                       lambda = hal_fit[[i]]$lambda_star,
+  #                                       intercept = FALSE, standardize = FALSE)
+  #         },
+  #         error = function(){
+  #           lasso_fit_l <- glm.fit(x = x_basis_l, y = Yb, family = y_type)
+  #           lasso_fit_l <- glm(Yb ~ x_basis_l, x = FALSE, y = FALSE, family = y_type)
+  #           is_glmnet_l = F
+  #         })
+  #       }
+  #       is_glmnet[[i]] = is_glmnet_l
+  #       lasso_fit[[i]] = lasso_fit_l
+  #       
+  #     }
+  #     
+  #     
+  #     #--------------predictions, 95% lower and upper bounds--------------
+  #     y_hat_b <- c()
+  #     for (i in 1:length(eval_points)) {
+  #       X_new <- Xb
+  #       X_new$A = eval_points[i]
+  #       u_l_idx = lambda_u_l_idx[i]
+  #       
+  #       # generate basis matrix
+  #       if (length(basis_list) > 0){
+  #         x_basis_a <- hal9001::make_design_matrix(as.matrix(X_new), hal_fit[[u_l_idx]]$basis_list)
+  # 
+  #         if(dim(x_basis[[u_l_idx]])[2] <= 1){
+  #           x_basis_a <- cbind(matrix(1, ncol = 1, nrow = nrow(X)), x_basis_a)
+  #           x_basis_a <- cbind(matrix(0, ncol = 1, nrow = nrow(X)), x_basis_a)
+  #         }
+  #       } else {
+  #         x_basis_a <- matrix(1, ncol = 2, nrow = nrow(X_new))
+  #       }
+  #       
+  #       # prediction
+  #       if (y_type == "binomial") {
+  #         preds <- predict(lasso_fit[[u_l_idx]], x_basis_a, type = "response")
+  #       } else {
+  #         preds <- predict(lasso_fit[[u_l_idx]], x_basis_a)
+  #       }
+  # 
+  #       
+  #       y_hat_b[i] = mean(preds)
+  #     }
+  #     y_hat_B <- rbind(y_hat_B, y_hat_b)
+  #   }
+  #   
+  #   y_hat_B <- y_hat_B[-1,]
+  #   lower_bd <- apply(y_hat_B, 2, quantile, probs = 0.05/2)
+  #   upper_bd <- apply(y_hat_B, 2, quantile, probs = 1-0.05/2)
+  #   
+  #   return(list(lower_bd=lower_bd, upper_bd=upper_bd))
+  #   
+}
+
+
+
+###############################################################################
 # Auto-undersmoothing HAL
-########################
 
 AU_HAL_fit <- function(X,Y,
                        family='binomial',
