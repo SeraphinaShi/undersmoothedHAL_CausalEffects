@@ -266,7 +266,7 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
 ###############################################################################
 #'  With given fitted HAL object and evaluation points, return the empirical SE
 
-IC_based_se <- function(hal_fit, eval_points){
+IC_based_se <- function(X, Y, hal_fit, eval_points){
   
   coef <- hal_fit$coefs
   basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
@@ -311,7 +311,7 @@ IC_based_se <- function(hal_fit, eval_points){
 
 ###############################################################################
 
-IC_based_se_u_l <- function(hal_fit, single_eval_point){
+IC_based_se_u_l <- function(X, Y, hal_fit, single_eval_point){
   
   coef <- hal_fit$coefs
   basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
@@ -479,8 +479,9 @@ bootstrap_inference <- function(X, Y, eval_points, hal_fit, y_type, B = 200){
   y_hat_B <- y_hat_B[-1,]
   lower_bd <- apply(y_hat_B, 2, quantile, probs = 0.05/2, na.rm = T)
   upper_bd <- apply(y_hat_B, 2, quantile, probs = 1-0.05/2, na.rm = T)
+  SE <- sqrt(apply(y_hat_B, 2, var, na.rm = T))
   
-  return(list(lower_bd=lower_bd, upper_bd=upper_bd))
+  return(list(lower_bd=lower_bd, upper_bd=upper_bd, SE=SE))
   #   
   #   basis_list <- hal_fit$basis_list
   #   # copy_map <- hal_fit$copy_map
@@ -660,8 +661,9 @@ bootstrap_inference_u_l <- function(X, Y, eval_points, hal_fit, y_type, lambda_u
   y_hat_B <- y_hat_B[-1,]
   lower_bd <- apply(y_hat_B, 2, quantile, probs = 0.05/2, na.rm = T)
   upper_bd <- apply(y_hat_B, 2, quantile, probs = 1-0.05/2, na.rm = T)
+  SE <- sqrt(apply(y_hat_B, 2, var, na.rm = T))
   
-  return(list(lower_bd=lower_bd, upper_bd=upper_bd))
+  return(list(lower_bd=lower_bd, upper_bd=upper_bd, SE=SE))
   #   
   #   y_hat_B <- matrix(ncol = length(eval_points))
   #   for (b in 1:B) {
