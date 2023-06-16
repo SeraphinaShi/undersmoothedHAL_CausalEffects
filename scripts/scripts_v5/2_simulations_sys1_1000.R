@@ -97,13 +97,13 @@ save.image(file=here("data", "rdata", "02_simu_v5_sys1_psi0.RData"))
 source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
-n = 200
+n = 1000
 
 set.seed(123)
 results <- run_simu_rep(generate_data_1, n=n, rounds=500, return_all_rslts=T)
 
 
-save.image(file=here("data", "rdata", "02_simu_v5_sys1_200.RData"))
+save.image(file=here("data", "rdata", "02_simu_v5_sys1_1000.RData"))
 
 
 ## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------
@@ -112,5 +112,5 @@ rm(results)
 set.seed(123)
 results_grid <- run_simu_scaled_rep(generate_data_1, n=n, rounds=500, return_all_rslts=T)
 
-save.image(file=here("data", "rdata", "02_simu_V5_sys1_200_grid.RData"))
+save.image(file=here("data", "rdata", "02_simu_V5_sys1_1000_grid.RData"))
 
