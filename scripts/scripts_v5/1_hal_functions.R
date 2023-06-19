@@ -224,9 +224,13 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
                                                basis_mat = CV_basis_mat_local,
                                                family = y_type)
       lambda_local = hal_undersmooth_local$lambda_under
-      lambdas_u_l[i] = lambda_local
+      lambdas_u_l[i] = lambda_loqcal
     }
     print(sprintf('  locally u lambdas: %s', paste(round(lambdas_u_l, 6), collapse = ", ")))
+    if(any(is.na(lambdas_u_l))){
+      lambdas_u_l[is.na(lambdas_u_l)] = lambda_CV
+      print(sprintf('  locally u lambdas: %s', paste(round(lambdas_u_l, 6), collapse = ", ")))
+    }
     
     lambda_u_l = unique(lambdas_u_l)
     lambda_u_l_idx = match(lambdas_u_l, lambda_u_l)
