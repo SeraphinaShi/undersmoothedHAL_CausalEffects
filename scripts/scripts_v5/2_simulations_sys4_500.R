@@ -104,6 +104,8 @@ generate_data_4 <- function(n, a=NA){
 load(here("data", "rdata", "02_simu_V5_sys4_psi0.RData"))
 source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
+
+
 n = 500
 
 set.seed(123)

@@ -78,30 +78,35 @@ generate_data_5 <- function(n, a=NA){
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-a_vec <- seq(0,5,0.1)
-psi0_a <- c()
-psi0_a <- c()
+# a_vec <- seq(0,5,0.1)
+# psi0_a <- c()
+# psi0_a <- c()
+# 
+# N = 1e+07
+# 
+# for (i in 1:length(a_vec)) {
+#   a <- a_vec[i]
+# 
+#   data_a <- generate_data_5(n=N, a=a)
+#   psi0_a[i] <- mean(data_a$Y) # - data_0$Y
+# }
+# 
+# psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
+# # plot(psi0_line$a, psi0_line$psi0)
+# 
+# eval_points = seq(0,5,0.5)
+# psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
+# 
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_psi0.RData"))
 
-N = 1e+07
-
-for (i in 1:length(a_vec)) {
-  a <- a_vec[i]
-
-  data_a <- generate_data_5(n=N, a=a)
-  psi0_a[i] <- mean(data_a$Y) # - data_0$Y
-}
-
-psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
-# plot(psi0_line$a, psi0_line$psi0)
-
-eval_points = seq(0,5,0.5)
-psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
-
-save.image(file=here("data", "rdata", "02_simu_V5_sys5_psi0.RData"))
 
 
+## -----------------------------------------------------------------------------------------------------------------------
+load(here("data", "rdata", "02_simu_V5_sys5_psi0.RData"))
+source(here("scripts", "scripts_v5", "1_hal_functions.R"))
+source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
-## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------
+
 n = 200
 
 set.seed(123)
