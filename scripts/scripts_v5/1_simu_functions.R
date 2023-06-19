@@ -6,11 +6,10 @@
 #       - sample size n
 # returns the estimated ATE and empirical 95% CI
 ##############################################################
-run_simu_1round <- function(gen_data_functions, n){
+run_simu_1round <- function(gen_data_functions, eval_points, y_type, n){
   
   obs <- gen_data_functions(n)
-  eval_points = seq(0,5,0.5)
-  
+
   y_name = "Y"
   x_names = names(obs)[names(obs) != 'Y']
   y_type = "binomial"
@@ -138,14 +137,14 @@ run_simu_1round <- function(gen_data_functions, n){
 
 # returns the estimated ATE, empirical 95% CI, and coverage rates
 ##############################################################
-run_simu_rep <- function(gen_data_functions, n, rounds, return_all_rslts = F){
+run_simu_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
   
   result_list <- list()
   
   for(r in 1:rounds){
     print(paste0("round ", r))
     result <- tryCatch({
-      run_simu_1round(gen_data_functions, n=n)
+      run_simu_1round(gen_data_functions, eval_points, y_type, n=n)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -154,7 +153,7 @@ run_simu_rep <- function(gen_data_functions, n, rounds, return_all_rslts = F){
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_1round(gen_data_functions, n=n)
+        run_simu_1round(gen_data_functions, eval_points, y_type, n=n)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL
@@ -203,22 +202,13 @@ run_simu_rep <- function(gen_data_functions, n, rounds, return_all_rslts = F){
 
 
 
-
-
-
-
 ##############################################################
-
-
-run_simu_1round_scalers <- function(gen_data_functions, n, lambda_scalers){
+run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, lambda_scalers){
   
   obs <- gen_data_functions(n)
-  eval_points = seq(0,5,0.5)
-  
+
   y_name = "Y"
   x_names = names(obs)[names(obs) != 'Y']
-  y_type = "binomial"
-  
   
   Y <- as.numeric(as.matrix(obs %>% select(all_of(y_name))))
   X <- obs %>% 
@@ -340,13 +330,13 @@ run_simu_1round_scalers <- function(gen_data_functions, n, lambda_scalers){
 
 ##############################################################
 
-run_simu_scaled_rep <- function(gen_data_functions, n, rounds, return_all_rslts = F){
+run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
   lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
   result_list <- list()
   for(r in 1:rounds){
     print(paste0("round ", b))
     result <- tryCatch({
-      run_simu_1round_scalers(gen_data_functions, n=n, lambda_scalers=lambda_scalers)
+      run_simu_1round_scalers(gen_data_functions, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -355,7 +345,7 @@ run_simu_scaled_rep <- function(gen_data_functions, n, rounds, return_all_rslts 
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_1round_scalers(gen_data_functions, n=n, lambda_scalers=lambda_scalers)
+        run_simu_1round_scalers(gen_data_functions, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL

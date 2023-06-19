@@ -102,7 +102,7 @@ n = 500
 
 set.seed(123)
 
-results <- run_simu_rep(generate_data_2, n=n, rounds=500, return_all_rslts=T)
+results <- run_simu_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 save.image(file=here("data", "rdata", "02_simu_V5_sys2_500.RData"))
 
 
@@ -110,7 +110,7 @@ save.image(file=here("data", "rdata", "02_simu_V5_sys2_500.RData"))
 rm(results)
 
 set.seed(123)
-results_grid <- run_simu_scaled_rep(generate_data_2, n=n, rounds=500, return_all_rslts=T)
+results_grid <- run_simu_scaled_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 
 save.image(file=here("data", "rdata", "02_simu_V5_sys2_500_grid.RData"))
 
