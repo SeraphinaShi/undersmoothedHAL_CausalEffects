@@ -146,6 +146,9 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
   # if all coefs are zero, skip undersmooth and use the initial fit
   if (length(CV_nonzero_col) == 0){
     lambda_u_g = lambda_CV
+    
+    print(sprintf('  globally u lambdas: %f (same as CV-HAL)', lambda_u_g))
+    hal_u_g <- hal_CV
   }else{
     CV_basis_mat <- as.matrix(hal_CV$x_basis)
     CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
@@ -155,27 +158,28 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
                                        basis_mat = CV_basis_mat,
                                        family = y_type)
     lambda_u_g = hal_undersmooth$lambda_under
+    
+    print(sprintf('  globally u lambdas: %f', lambda_u_g))
+    
+    hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
+                       return_x_basis = TRUE,
+                       num_knots = hal9001:::num_knots_generator(
+                         max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                         smoothness_orders = 1,
+                         base_num_knots_0 = 20, #200
+                         base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                       ),
+                       fit_control = list(
+                         cv_select = FALSE,
+                         n_folds = 10,
+                         foldid = NULL,
+                         use_min = TRUE,
+                         lambda.min.ratio = 1e-4,
+                         prediction_bounds = "default"
+                       ),
+                       lambda = lambda_u_g)
   }
-  print(sprintf('  globally u lambdas: %f', lambda_u_g))
-  
-  hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
-                     return_x_basis = TRUE,
-                     num_knots = hal9001:::num_knots_generator(
-                       max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                       smoothness_orders = 1,
-                       base_num_knots_0 = 20, #200
-                       base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                     ),
-                     fit_control = list(
-                       cv_select = FALSE,
-                       n_folds = 10,
-                       foldid = NULL,
-                       use_min = TRUE,
-                       lambda.min.ratio = 1e-4,
-                       prediction_bounds = "default"
-                     ),
-                     lambda = lambda_u_g)
-  
+
   end <- Sys.time()
   
   hal_fit_time = end - start
@@ -195,7 +199,15 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
   CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
   # if all coefs are zero, skip undersmooth and use the initial fit
   if (length(CV_nonzero_col) == 0){
-    lambda = lambda_CV
+    lambdas_u_l = list()
+    hal_u_l = list()
+    
+    lambdas_u_l[[1]] = lambda_CV
+
+    print(sprintf('  locally u lambdas: %s (same as CV-HAL)', lambdas_u_l))
+    hal_u_l[[1]] <- hal_CV
+    lambda_u_l_idx = rep(1, length(eval_points))
+    
   }else{
     
     lambdas_u_l = rep(NA, length(eval_points))

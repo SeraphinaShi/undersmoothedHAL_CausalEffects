@@ -30,14 +30,14 @@ run_simu_1round <- function(gen_data_functions, n){
                                               mean(predict(fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, new_data = X_new)) } )
 
   psi_hat_pnt_cv <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV, 1, fit_hal_all_criteria_rslts$hal_fit_time_list$hal_cv_fit_time)
-  colnames(psi_hat_pnt_cv) <- c("a", "Y_hat", "lambda", "lambda_scaler", "hal_fit_time")
+  colnames(psi_hat_pnt_cv) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time")
 
     # IC-based inference
   psi_hat_pnt_cv_se <- IC_based_se(X, Y, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, eval_points)
   psi_hat_pnt_cv <- as.data.frame(psi_hat_pnt_cv) %>% 
     mutate(SE = psi_hat_pnt_cv_se,
-           ci_lwr = Y_hat - 1.96 * SE,
-           ci_upr = Y_hat + 1.96 * SE)
+           ci_lwr = y_hat - 1.96 * SE,
+           ci_upr = y_hat + 1.96 * SE)
 
   # bootstrap-based inference
   psi_hat_pnt_cv_bt_bds <- bootstrap_inference(X, Y, eval_points, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, y_type)
@@ -55,14 +55,14 @@ run_simu_1round <- function(gen_data_functions, n){
     
     lambda_scaler = fit_hal_all_criteria_rslts$lambda_list$lambda_u_g / lambda_CV
     psi_hat_pnt_u_g <- cbind(eval_points, matrix(psi_hat, ncol=1), fit_hal_all_criteria_rslts$lambda_list$lambda_u_g, lambda_scaler, fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_g_fit_time)
-    colnames(psi_hat_pnt_u_g) <- c("a", "Y_hat", "lambda", "lambda_scaler", "hal_fit_time")
+    colnames(psi_hat_pnt_u_g) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time")
     
     # IC-based inference
     psi_hat_pnt_u_g_se <- IC_based_se(X, Y, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, eval_points)
     psi_hat_pnt_u_g <- as.data.frame(psi_hat_pnt_u_g) %>% 
       mutate(SE = psi_hat_pnt_u_g_se,
-             ci_lwr = Y_hat - 1.96 * SE,
-             ci_upr = Y_hat + 1.96 * SE)
+             ci_lwr = y_hat - 1.96 * SE,
+             ci_upr = y_hat + 1.96 * SE)
     
     # bootstrap-based inference
     psi_hat_pnt_u_g_bt_bds <- bootstrap_inference(X, Y, eval_points, fit_hal_all_criteria_rslts$hal_fit_list$hal_u_g, y_type)
@@ -101,14 +101,14 @@ run_simu_1round <- function(gen_data_functions, n){
       
       X_new <- X
       X_new$A = a
-      Y_hat <- mean(predict(hal_fit, new_data = X_new))
+      y_hat <- mean(predict(hal_fit, new_data = X_new))
 
       # IC-based inference
       SE <- IC_based_se_u_l(X, Y, hal_fit, a)
-      ci_lwr <- Y_hat - 1.96 * SE
-      ci_upr <- Y_hat + 1.96 * SE
+      ci_lwr <- y_hat - 1.96 * SE
+      ci_upr <- y_hat + 1.96 * SE
       
-      psi_hat_pnt_u_l[i,] = c(a, Y_hat, lambda, lambda_scaler, fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_l_fit_time, SE, ci_lwr, ci_upr)
+      psi_hat_pnt_u_l[i,] = c(a, y_hat, lambda, lambda_scaler, fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_l_fit_time, SE, ci_lwr, ci_upr)
     } else {
       psi_hat_pnt_u_l[i,] <- c(a, NA, lambda, lambda_scaler, fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_l_fit_time, NA, NA, NA)
     }
@@ -309,14 +309,14 @@ run_simu_1round_scalers <- function(gen_data_functions, n, lambda_scalers){
                                                   mean(predict(hal_fit, new_data = X_new)) } )
       
       psi_hat_pnt_scaled <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV, lambda_scaler, hal_scaled_fit_time)
-      colnames(psi_hat_pnt_scaled) <- c("a", "Y_hat", "lambda", "lambda_scaler", "hal_fit_time")
+      colnames(psi_hat_pnt_scaled) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time")
       
       # IC-based inference
       psi_hat_pnt_scaled_se <- IC_based_se(X, Y, hal_fit, eval_points)
       psi_hat_pnt_scaled <- as.data.frame(psi_hat_pnt_scaled) %>% 
         mutate(SE = psi_hat_pnt_scaled_se,
-               ci_lwr = Y_hat - 1.96 * SE,
-               ci_upr = Y_hat + 1.96 * SE)
+               ci_lwr = y_hat - 1.96 * SE,
+               ci_upr = y_hat + 1.96 * SE)
       
       
       # bootstrap-based inference
@@ -327,7 +327,7 @@ run_simu_1round_scalers <- function(gen_data_functions, n, lambda_scalers){
       
     } else {
       psi_hat_pnt_scaled = as.data.frame(cbind(eval_points, NA, lambda_CV, lambda_scaler, hal_scaled_fit_time, NA, NA, NA, NA, NA, NA))
-      names(psi_hat_pnt_scaled) = c("a", "Y_hat", "lambda", "lambda_scaler", "hal_fit_time", "SE", "ci_lwr", "ci_upr", "ci_lwr_bt", "ci_upr_bt", "SE_bt")
+      names(psi_hat_pnt_scaled) = c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "SE", "ci_lwr", "ci_upr", "ci_lwr_bt", "ci_upr_bt", "SE_bt")
     }
     results[[i]] = psi_hat_pnt_scaled
   }
