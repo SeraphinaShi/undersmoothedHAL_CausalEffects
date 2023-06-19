@@ -33,7 +33,7 @@ knitr::opts_chunk$set(
   duplicate.label="allow"
 )
 
-source(here("scripts", "scripts_v5", "1_simu_functions_hal9001.R"))
+source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
 
