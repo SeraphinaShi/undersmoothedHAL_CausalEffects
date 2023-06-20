@@ -68,7 +68,7 @@ generate_data_6 <- function(n, a=NA){
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-a_vec <- seq(0, 1, 0.01)
+a_vec <- seq(0.05, 1, 0.01)
 psi0_a <- c()
 psi0_a <- c()
 
@@ -84,7 +84,7 @@ for (i in 1:length(a_vec)) {
 psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
 plot(psi0_line$a, psi0_line$psi0)
 
-eval_points = seq(0,1,0.05)
+eval_points = seq(0.05,1,0.05)
 
 psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
 

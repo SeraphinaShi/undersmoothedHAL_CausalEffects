@@ -67,7 +67,7 @@ generate_data_6 <- function(n, a=NA){
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-# a_vec <- seq(0, 1, 0.01)
+# a_vec <- seq(0.05, 1, 0.01)
 # psi0_a <- c()
 # psi0_a <- c()
 # 
@@ -75,7 +75,7 @@ generate_data_6 <- function(n, a=NA){
 # 
 # for (i in 1:length(a_vec)) {
 #   a <- a_vec[i]
-# 
+#   
 #   data_a <- generate_data_6(n=N, a=a)
 #   psi0_a[i] <- mean(data_a$Y) # - data_0$Y
 # }
@@ -88,7 +88,6 @@ generate_data_6 <- function(n, a=NA){
 # psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
 # 
 # save.image(file=here("data", "rdata", "02_simu_V5_sys6_psi0.RData"))
-
 
 ## -----------------------------------------------------------------------------------------------------------------------
 load(here("data", "rdata", "02_simu_V5_sys6_psi0.RData"))
