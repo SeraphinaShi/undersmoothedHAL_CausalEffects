@@ -160,24 +160,30 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
     lambda_u_g = hal_undersmooth$lambda_under
     
     print(sprintf('  globally u lambdas: %f', lambda_u_g))
-    
-    hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
-                       return_x_basis = TRUE,
-                       num_knots = hal9001:::num_knots_generator(
-                         max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                         smoothness_orders = 1,
-                         base_num_knots_0 = 20, #200
-                         base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                       ),
-                       fit_control = list(
-                         cv_select = FALSE,
-                         n_folds = 10,
-                         foldid = NULL,
-                         use_min = TRUE,
-                         lambda.min.ratio = 1e-4,
-                         prediction_bounds = "default"
-                       ),
-                       lambda = lambda_u_g)
+    if(is.na(lambda_u_g)){
+      lambda_u_g <- lambda_CV
+      print(sprintf('  globally u lambdas: %f', lambda_u_g))
+      
+      hal_u_g <- hal_CV
+    } else {
+      hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
+                         return_x_basis = TRUE,
+                         num_knots = hal9001:::num_knots_generator(
+                           max_degree = ifelse(ncol(X) >= 20, 2, 3),
+                           smoothness_orders = 1,
+                           base_num_knots_0 = 20, #200
+                           base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
+                         ),
+                         fit_control = list(
+                           cv_select = FALSE,
+                           n_folds = 10,
+                           foldid = NULL,
+                           use_min = TRUE,
+                           lambda.min.ratio = 1e-4,
+                           prediction_bounds = "default"
+                         ),
+                         lambda = lambda_u_g)
+    }
   }
 
   end <- Sys.time()
