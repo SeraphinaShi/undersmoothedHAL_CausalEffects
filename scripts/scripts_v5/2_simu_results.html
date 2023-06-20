@@ -1529,7 +1529,9 @@ max=5)\)</span></li>
 2.25A -0.5WA)]\)</span></li>
 </ul></li>
 </ul>
-<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span></p>
+<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span>,
+<span class="math inline">\(a \in [0,5]\)</span>, the causal
+dose-response curve</p>
 </div>
 <div id="simulation-2" class="section level1">
 <h1>Simulation 2</h1>
@@ -1561,7 +1563,9 @@ max=5)\)</span></li>
 5sin(A^{1.5}) + 2WA)]\)</span></li>
 </ul></li>
 </ul>
-<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span></p>
+<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span>,
+<span class="math inline">\(a \in [0,5]\)</span>, the causal
+dose-response curve</p>
 </div>
 <div id="simulation-3" class="section level1">
 <h1>Simulation 3</h1>
@@ -1593,7 +1597,9 @@ max=5)\)</span></li>
 4A + \mathbf{I}(A&gt;2) * 5sin((0.8A)^2 - 2.6) )]\)</span></li>
 </ul></li>
 </ul>
-<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span></p>
+<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span>,
+<span class="math inline">\(a \in [0,5]\)</span>, the causal
+dose-response curve</p>
 </div>
 <div id="simulation-4" class="section level1">
 <h1>Simulation 4</h1>
@@ -1632,7 +1638,9 @@ W_5, A, Y)\)</span></p>
 </ul></li>
 </ul></li>
 </ul>
-<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span></p>
+<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span>,
+<span class="math inline">\(a \in [0,5]\)</span>, the causal
+dose-response curve</p>
 </div>
 <div id="simulation-5" class="section level1">
 <h1>Simulation 5</h1>
@@ -1672,7 +1680,45 @@ W_5, A, Y)\)</span></p>
 </ul></li>
 </ul></li>
 </ul>
-<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span></p>
+<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span>,
+<span class="math inline">\(a \in [0,5]\)</span>, the causal
+dose-response curve</p>
+</div>
+<div id="simulation-6" class="section level1">
+<h1>Simulation 6</h1>
+<p>Data structure: <span class="math inline">\(O = (W_1, W_2, W_3, A,
+Y)\)</span></p>
+<ul>
+<li>W - baseline covariates</li>
+<li>A - treatment level based on W, continuous between 0 and 1</li>
+<li>Y - outcome, indicator of an event</li>
+</ul>
+<p>Underlying data generating process, <span class="math inline">\(P_{U,X}\)</span></p>
+<ul>
+<li>Structural equations F and endogenous variables:
+<ul>
+<li><span class="math inline">\(W_1 \sim Uniform(o,1)\)</span></li>
+<li><span class="math inline">\(W_2 \sim Bernoulli(\mu=0, \sigma^2 =
+2^2)\)</span></li>
+<li><span class="math inline">\(W_3 \sim N(W_1,
+0.25*exp(2W_1))\)</span></li>
+<li><span class="math inline">\(A \sim Beta(v(W)\mu(W),
+v(W)[1-v(W)])\)</span></li>
+<li><span class="math inline">\(Y \sim Bernoulli(Q_0(A,W))\)</span>
+<ul>
+<li>where:</li>
+<li><span class="math inline">\(v(W) = exp(1 +
+2W_1expit(W3))\)</span></li>
+<li><span class="math inline">\(\mu(W) = expit(0.03 - 0.8log(1+W_2) +
+0.9exp(W_1)W_2 - 0.4arctan(W_3+2)W_2W_1)\)</span></li>
+<li><span class="math inline">\(\bar{Q}_0(A,W) = expit(-2 + 1.5A + 5A^3
+- 2.5W_1 + 0.5AW_2 - log(A)W_1W_2 + 0.5A^{3/4}W_1W_3)\)</span></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Outcome of interest: <span class="math inline">\(E_0[Y|a,W]\)</span>,
+<span class="math inline">\(a \in [0,1]\)</span>, the causal
+dose-response curve</p>
 </div>
 
 

@@ -46,7 +46,7 @@ expit <- function(x){
 generate_data_6 <- function(n, a=NA){
   W1 <- runif(n)
   W2 <- rbinom(n, size=1, prob =0.7)
-  W3 <- rnorm(W1, 0.25*exp(2*W2))
+  W3 <- rnorm(W1, 0.25*exp(2*W1))
   
   v_W <- exp(1 + 2*W1*expit(W3))
   mu_W <- expit(0.03 - 0.8*log(1+W2) + 0.9*exp(W1)*W2 - 0.4*atan(W3+2)*W2*W1)
@@ -56,14 +56,13 @@ generate_data_6 <- function(n, a=NA){
     A <- a
   }
   
-
-  Q <- expit(-2 + 1.5*A + 5*A^3 - 2.5*W1 + 0.5*A*W2 - log(A)*W1*W2 + 0.5*(A^(2/4))*W1*W3)
+  
+  Q <- expit(-2 + 1.5*A + 5*A^3 - 2.5*W1 + 0.5*A*W2 - log(A)*W1*W2 + 0.5*(A^(3/4))*W1*W3)
   Y <- rbinom(n, size = 1, prob = Q)
-
+  
   O <- data.frame(W1, W2,W3, A, Y)
   return(O)
 }
-
 ## ----true_psi_sys6-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
