@@ -381,7 +381,7 @@ Data structure:  $O = (W_1, W_2, W_3, A, Y)$
     - $\mu(W) = expit(0.03 - 0.8log(1+W_2) + 0.9exp(W_1)W_2 - 0.4arctan(W_3+2)W_2W_1)$
     - $\bar{Q}_0(A,W) = expit(-2 + 1.5A + 5A^3 - 2.5W_1 + 0.5AW_2 - log(A)W_1W_2 + 0.5A^{3/4}W_1W_3)$
 
-Outcome of interest: $E_0[Y|a,W]$, $a \in [0,1]$, the causal dose-response curve
+Outcome of interest: $E_0[Y|a,W]$, $a \in (0,1])$, the causal dose-response curve
 
 ```{r check_sys6}
 expit <- function(x){
