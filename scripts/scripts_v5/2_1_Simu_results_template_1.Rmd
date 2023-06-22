@@ -1,0 +1,49 @@
+
+```{r fig.width=10, fig.height=7}
+obs <- DGS(n=10000)
+print(summary(obs))
+  
+# check positivity violations
+cat("Summary of A given W < -1:")
+summary(obs$A[obs$W < -1])
+cat("Summary of A given -1 < W <= 0:")
+summary(obs$A[-1 <= obs$W & obs$W < 0])
+cat("Summary of A given 0 < W <= 1:")
+summary(obs$A[0 <= obs$W & obs$W < 1])
+cat("Summary of A given 1 < W:")
+summary(obs$A[1 <= obs$W])
+
+
+p1 = ggplot(obs, aes(W)) + geom_histogram(stat="bin",aes(y=..density..), color='lightyellow', fill='lightyellow') + geom_density(lwd=1) + theme_bw() + labs(y='Density')
+p2 = ggplot(obs, aes(A)) + geom_histogram(stat="bin",aes(y=..density..), color='lightyellow', fill='lightyellow') + geom_density(lwd=1) + theme_bw() + labs(y='Density')
+p3 = ggplot(obs %>% group_by(Y) %>% summarise(count = n()) %>% mutate(Proportion = count / 10000), 
+            aes(x = Y, y = Proportion)) + geom_bar(stat = "identity", fill='lightyellow', color='grey') + theme_bw()
+p4 = ggplot(obs, aes(W, A)) + geom_point() + theme_bw()
+p5 = ggplot(obs, aes(W, Y)) + geom_point() + theme_bw()
+p6 = ggplot(obs, aes(A, Y)) + geom_point() + theme_bw()
+
+p <- grid.arrange(p1, p2, p3, p4, p5, p6, 
+                  nrow=2, ncol=3,
+                  top = textGrob(sprintf('Variable distributions of simulation %i', sn), 
+                                   gp=gpar(fontsize=17)))
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_EDAs.png")), p, width = 10, height = 6, dpi = 1000)
+```
+
+
+```{r fig.width=5, fig.height=4}
+load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+
+ggplot() +
+    geom_line(data=psi0_line, aes(x=a, y=psi0)) + 
+    geom_point(data=psi0_pnt, aes(x=a, y=psi0)) + 
+    labs(x="a", y="P_0(E[Y|a,W])",
+         title = "True Average Treatment Effect, P_0(E[Y|a,W])") +
+        theme(plot.title = element_text(hjust = 0.5),
+              panel.grid.major.x = element_blank(),
+              axis.text = element_text(size=7)) +
+  theme_bw()
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, height = 4, dpi = 1000)
+
+```
+

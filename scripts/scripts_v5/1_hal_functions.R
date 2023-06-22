@@ -351,7 +351,7 @@ IC_based_se_u_l <- function(X, Y, hal_fit, single_eval_point){
     )
     
     X_new <- X
-    X_new$A = eval_points[i]
+    X_new$A = single_eval_point
     
     # efficient influence curve
     x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
