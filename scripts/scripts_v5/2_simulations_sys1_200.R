@@ -103,7 +103,7 @@ set.seed(123)
 results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 
 
-qsave.image(file=here("data", "rdata", "02_simu_v5_sys1_200.RData"))
+save.image(file=here("data", "rdata", "02_simu_v5_sys1_200.RData"))
 
 
 ## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------

@@ -374,7 +374,7 @@ Data structure:  $O = (W_1, W_2, W_3, A, Y)$
   + $W_1 \sim Uniform(o,1)$
   + $W_2 \sim Bernoulli(\mu=0, \sigma^2 = 2^2)$
   + $W_3 \sim  N(W_1, 0.25*exp(2W_1))$
-  + $A \sim Beta(v(W)\mu(W), v(W)[1-v(W)])$
+  + $A \sim Beta(v(W)\mu(W), v(W)[1-\mu(W)])$
   + $Y \sim Bernoulli(Q_0(A,W))$
     - where:
     - $v(W) = exp(1 + 2W_1expit(W3))$
