@@ -334,7 +334,7 @@ run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, roun
   lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
   result_list <- list()
   for(r in 1:rounds){
-    print(paste0("round ", b))
+    print(paste0("round ", r))
     result <- tryCatch({
       run_simu_1round_scalers(gen_data_functions, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
     }, error = function(e) {

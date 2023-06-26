@@ -463,6 +463,8 @@ bootstrap_inference <- function(X, Y, eval_points, hal_fit, y_type, B = 200){
       # generate basis matrix
       x_basis <- hal9001::make_design_matrix(as.matrix(Xb), basis_list)
       
+      # maybe
+      
       #--------------fit--------------
       lasso_fit <- tryCatch({
         lasso_fit <- glmnet::glmnet(x = x_basis, y = Yb, 
