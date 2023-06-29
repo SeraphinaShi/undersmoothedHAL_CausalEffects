@@ -305,25 +305,30 @@ IC_based_se <- function(X, Y, hal_fit, eval_points){
                                beta_n = coef_nonzero
     )
     
-    se <- c()
-    
-    for (i in 1:length(eval_points)) {
-      X_new <- X
-      X_new$A = eval_points[i]
+    if(any(! is.na(IC_beta))){
+      se <- c()
       
-      # efficient influence curve
-      x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
-      x_basis_a_nonzero <- as.matrix(cbind(1, x_basis_a)[, nonzero_idx])
-      
-      IC_EY <- cal_IC_for_EY(X_new = x_basis_a_nonzero, 
-                             beta_n = coef_nonzero, IC_beta = IC_beta)
-      
-      # empirical SE
-      se[i] <- sqrt(var(IC_EY)/n)
-      #ci_lwr <- Y_hat - 1.96 * SE
-      #ci_upr <- Y_hat + 1.96 * SE
-      
+      for (i in 1:length(eval_points)) {
+        X_new <- X
+        X_new$A = eval_points[i]
+        
+        # efficient influence curve
+        x_basis_a <- make_design_matrix(as.matrix(X_new), hal_fit$basis_list, p_reserve = 0.75)
+        x_basis_a_nonzero <- as.matrix(cbind(1, x_basis_a)[, nonzero_idx])
+        
+        IC_EY <- cal_IC_for_EY(X_new = x_basis_a_nonzero, 
+                               beta_n = coef_nonzero, IC_beta = IC_beta)
+        
+        # empirical SE
+        se[i] <- sqrt(var(IC_EY)/n)
+        #ci_lwr <- Y_hat - 1.96 * SE
+        #ci_upr <- Y_hat + 1.96 * SE
+        
+      }
+    } else {
+      se <- NA
     }
+    
   } else {
     se <- NA
   }
