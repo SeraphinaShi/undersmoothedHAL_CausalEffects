@@ -48,135 +48,135 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, 
 ```
 
 
-## n = 200
-```{r}
-nn=200
-```
+<!-- ## n = 200 -->
+<!-- ```{r} -->
+<!-- nn=200 -->
+<!-- ``` -->
 
-```{r}
-load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
-
-
-cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV'])
-u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
-u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
-
-eval_points = seq(0,5,0.5)
-u_l_lambdas = rep(NA, length(eval_points))
-u_l_scalers = rep(NA, length(eval_points))
-
-for (i in 1:length(eval_points)) {
-  u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
-  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
-}
-
-cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda))
-cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler))
-cat(paste0(' The average lambdatime of locally undersmoothed HAL:', 
-           '       ', paste0(round(u_l_lambdas, 4), collapse = ", "),
-           '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV'))
-
-cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
-cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
-cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+<!-- ```{r} -->
+<!-- load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData"))) -->
 
 
-```
+<!-- cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV']) -->
+<!-- u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G']) -->
+<!-- u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G']) -->
 
-```{r fig.height=9, fig.width=9}
-p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
-```
+<!-- eval_points = seq(0,5,0.5) -->
+<!-- u_l_lambdas = rep(NA, length(eval_points)) -->
+<!-- u_l_scalers = rep(NA, length(eval_points)) -->
 
-```{r fig.height=4, fig.width=12}
-p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
-plot(p)
-```
+<!-- for (i in 1:length(eval_points)) { -->
+<!--   u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]]) -->
+<!--   u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]]) -->
+<!-- } -->
 
+<!-- cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda)) -->
+<!-- cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler)) -->
+<!-- cat(paste0(' The average lambdatime of locally undersmoothed HAL:',  -->
+<!--            '       ', paste0(round(u_l_lambdas, 4), collapse = ", "), -->
+<!--            '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV')) -->
 
-## n = 500
-```{r}
-nn=500
-```
-
-```{r}
-load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
-
-
-cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV'])
-u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
-u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
-
-eval_points = seq(0,5,0.5)
-u_l_lambdas = rep(NA, length(eval_points))
-u_l_scalers = rep(NA, length(eval_points))
-for (i in 1:length(eval_points)) {
-  u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
-  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
-}
-
-cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda))
-cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler))
-cat(paste0(' The average lambdatime of locally undersmoothed HAL:', 
-           '       ', paste0(round(u_l_lambdas, 4), collapse = ", "),
-           '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV'))
-
-cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
-cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
-cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+<!-- cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV']))) -->
+<!-- cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G']))) -->
+<!-- cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L']))) -->
 
 
-```
+<!-- ``` -->
 
-```{r fig.height=9, fig.width=9}
-p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
-```
+<!-- ```{r fig.height=9, fig.width=9} -->
+<!-- p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png"))) -->
+<!-- ``` -->
 
-```{r fig.height=4, fig.width=12}
-p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
-plot(p)
-```
-
-
-## n = 1000
-```{r}
-nn=1000
-```
-
-```{r}
-load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+<!-- ```{r fig.height=4, fig.width=12} -->
+<!-- p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png"))) -->
+<!-- plot(p) -->
+<!-- ``` -->
 
 
-cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV'])
-u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
-u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+<!-- ## n = 500 -->
+<!-- ```{r} -->
+<!-- nn=500 -->
+<!-- ``` -->
 
-eval_points = seq(0,5,0.5)
-u_l_lambdas = rep(NA, length(eval_points))
-u_l_scalers = rep(NA, length(eval_points))
-for (i in 1:length(eval_points)) {
-  u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
-  u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
-}
-
-cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda))
-cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler))
-cat(paste0(' The average lambdatime of locally undersmoothed HAL:', 
-           '       ', paste0(round(u_l_lambdas, 4), collapse = ", "),
-           '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV'))
-
-cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
-cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
-cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+<!-- ```{r} -->
+<!-- load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData"))) -->
 
 
-```
+<!-- cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV']) -->
+<!-- u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G']) -->
+<!-- u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G']) -->
 
-```{r fig.height=9, fig.width=9}
-p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
-```
+<!-- eval_points = seq(0,5,0.5) -->
+<!-- u_l_lambdas = rep(NA, length(eval_points)) -->
+<!-- u_l_scalers = rep(NA, length(eval_points)) -->
+<!-- for (i in 1:length(eval_points)) { -->
+<!--   u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]]) -->
+<!--   u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]]) -->
+<!-- } -->
 
-```{r fig.height=4, fig.width=12}
-p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
-plot(p)
-```
+<!-- cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda)) -->
+<!-- cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler)) -->
+<!-- cat(paste0(' The average lambdatime of locally undersmoothed HAL:',  -->
+<!--            '       ', paste0(round(u_l_lambdas, 4), collapse = ", "), -->
+<!--            '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV')) -->
+
+<!-- cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV']))) -->
+<!-- cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G']))) -->
+<!-- cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L']))) -->
+
+
+<!-- ``` -->
+
+<!-- ```{r fig.height=9, fig.width=9} -->
+<!-- p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png"))) -->
+<!-- ``` -->
+
+<!-- ```{r fig.height=4, fig.width=12} -->
+<!-- p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png"))) -->
+<!-- plot(p) -->
+<!-- ``` -->
+
+
+<!-- ## n = 1000 -->
+<!-- ```{r} -->
+<!-- nn=1000 -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData"))) -->
+
+
+<!-- cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV']) -->
+<!-- u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G']) -->
+<!-- u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G']) -->
+
+<!-- eval_points = seq(0,5,0.5) -->
+<!-- u_l_lambdas = rep(NA, length(eval_points)) -->
+<!-- u_l_scalers = rep(NA, length(eval_points)) -->
+<!-- for (i in 1:length(eval_points)) { -->
+<!--   u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]]) -->
+<!--   u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]]) -->
+<!-- } -->
+
+<!-- cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda)) -->
+<!-- cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler)) -->
+<!-- cat(paste0(' The average lambdatime of locally undersmoothed HAL:',  -->
+<!--            '       ', paste0(round(u_l_lambdas, 4), collapse = ", "), -->
+<!--            '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV')) -->
+
+<!-- cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV']))) -->
+<!-- cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G']))) -->
+<!-- cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L']))) -->
+
+
+<!-- ``` -->
+
+<!-- ```{r fig.height=9, fig.width=9} -->
+<!-- p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png"))) -->
+<!-- ``` -->
+
+<!-- ```{r fig.height=4, fig.width=12} -->
+<!-- p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png"))) -->
+<!-- plot(p) -->
+<!-- ``` -->
 

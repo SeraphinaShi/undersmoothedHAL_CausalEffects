@@ -37,7 +37,7 @@ cv_lambda = unique(results$result_summary$lambda[results$result_summary$method =
 u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
 u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
 
-eval_points = seq(0,5,0.5)
+eval_points <- sort(unique(results$result_summary$a))
 u_l_lambdas = rep(NA, length(eval_points))
 u_l_scalers = rep(NA, length(eval_points))
 for (i in 1:length(eval_points)) {

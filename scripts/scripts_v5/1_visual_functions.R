@@ -5,6 +5,8 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
   color_u_g = "#00BA38"
   color_u_l = '#619CFF'
   
+  a_max <- max(df$a)
+  
   p_lambda <- ggplot(data=df, aes(x=a)) +
     geom_line(aes(y=lambda_scaler, color=method), alpha = 0.7) +
     geom_point(aes(y=lambda_scaler, color=method), shape=17, size=2, alpha= 0.7) +
@@ -12,7 +14,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     labs(x="a", y="lambda_scaler", 
          title = "Lambda scaler",
          subtitle = paste0("upon CV_lambda ", round(mean(df$lambda[df$method == 'CV']), 6)))+
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
@@ -29,7 +31,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_point(aes(y=psi0), color = "black") +
     geom_point(aes(y=y_hat, color=method), shape=17, size=2, alpha= 0.7) +
     labs(x="a", y="E[Y|a, W]", title = "Estimation") +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
@@ -43,7 +45,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_line(aes(color=method)) +
     geom_point(aes(color=method)) + 
     labs(title="|Bias|") +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
@@ -58,7 +60,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_line(aes(y = oracal_SE, color=method, linetype='Oracal'),alpha=0.7) +
     geom_point(aes(y = oracal_SE, color=method, linetype='Oracal'),alpha=0.7) + 
     labs(title="Standard Error") +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
@@ -79,7 +81,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_line(aes(y = oracal_bias_se_ratio, color=method, linetype='Oracal'), alpha=0.7) +
     geom_point(aes(y = oracal_bias_se_ratio, color=method, linetype='Oracal'), alpha=0.7) + 
     labs(title="|Bias| / Standard Error") +
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
@@ -96,7 +98,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_line(aes(y = oracal_cover_rate, color=method, linetype='Oracal'), alpha=0.7) +
     geom_point(aes(y = oracal_cover_rate, color=method, linetype='Oracal'), alpha=0.7) + 
     labs(title="95% CI Coverage Rate")+
-    scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
