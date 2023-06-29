@@ -16,8 +16,8 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
-    scale_linetype_manual(breaks=c('Empirical', 'Bootstrap'),
-                          values=c('Empirical'= 1, 'Bootstrap'=2)) +
+    scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                          values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
     theme_bw()+
     theme(legend.position='none') 
   
@@ -25,6 +25,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
     geom_ribbon(aes(ymin=ci_lwr, ymax=ci_upr, color=method, fill=method, linetype='Empirical'), width=0.7, alpha=0.1) +
     geom_ribbon(aes(ymin=ci_lwr_bt, ymax=ci_upr_bt, color=method, fill=method, linetype = "Bootstrap"),  width=0.7, alpha=0.1) +
+    geom_ribbon(aes(ymin=oracal_ci_lwr, ymax=oracal_ci_upr, color=method, fill=method, linetype = "Oracal"),  width=0.7, alpha=0.1) +
     geom_point(aes(y=psi0), color = "black") +
     geom_point(aes(y=y_hat, color=method), shape=17, size=2, alpha= 0.7) +
     labs(x="a", y="E[Y|a, W]", title = "Estimation") +
@@ -32,8 +33,8 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
-    scale_linetype_manual(breaks=c('Empirical', 'Bootstrap'),
-                          values=c('Empirical'= 1, 'Bootstrap'=2)) +
+    scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                          values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
     theme_bw() +
     theme(legend.box = "horizontal",
           legend.position='none')
@@ -54,13 +55,15 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_point(aes(y = SE, color=method, linetype='Empirical'),alpha=0.7) + 
     geom_line(aes(y = SE_bt, color=method, linetype='Bootstrap'),alpha=0.7) +
     geom_point(aes(y = SE_bt, color=method, linetype='Bootstrap'),alpha=0.7) + 
+    geom_line(aes(y = oracal_SE, color=method, linetype='Oracal'),alpha=0.7) +
+    geom_point(aes(y = oracal_SE, color=method, linetype='Oracal'),alpha=0.7) + 
     labs(title="Standard Error") +
     scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
-    scale_linetype_manual(breaks=c('Empirical', 'Bootstrap'),
-                          values=c('Empirical'= 1, 'Bootstrap'=2))+
+    scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                          values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
     theme_bw() + 
     theme(legend.box = "horizontal")
   
@@ -73,13 +76,15 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_point(aes(y = bias_se_ratio, color=method, linetype='Empirical'), alpha=0.7) + 
     geom_line(aes(y = bias_se_ratio_bt, color=method, linetype='Bootstrap'), alpha=0.7) +
     geom_point(aes(y = bias_se_ratio_bt, color=method, linetype='Bootstrap'), alpha=0.7) + 
+    geom_line(aes(y = oracal_bias_se_ratio, color=method, linetype='Oracal'), alpha=0.7) +
+    geom_point(aes(y = oracal_bias_se_ratio, color=method, linetype='Oracal'), alpha=0.7) + 
     labs(title="|Bias| / Standard Error") +
     scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
-    scale_linetype_manual(breaks=c('Empirical', 'Bootstrap'),
-                          values=c('Empirical'= 1, 'Bootstrap'=2))+
+    scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                          values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
     theme_bw() +
     theme(legend.position='none') 
   
@@ -88,13 +93,15 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     geom_point(aes(y = cover_rate, color=method, linetype='Empirical'), alpha=0.7) + 
     geom_line(aes(y = cover_rate_bt, color=method, linetype='Bootstrap'), alpha=0.7) +
     geom_point(aes(y = cover_rate_bt, color=method, linetype='Bootstrap'), alpha=0.7) + 
+    geom_line(aes(y = oracal_cover_rate, color=method, linetype='Oracal'), alpha=0.7) +
+    geom_point(aes(y = oracal_cover_rate, color=method, linetype='Oracal'), alpha=0.7) + 
     labs(title="95% CI Coverage Rate")+
     scale_x_continuous(limits = c(0, 5), breaks = 0:5) +
     scale_color_manual(name='Method',
                        breaks=c('CV', 'U_G', 'U_L'),
                        values=c('CV'=color_cv, 'U_G'=color_u_g, 'U_L'=color_u_l)) +
-    scale_linetype_manual(breaks=c('Empirical', 'Bootstrap'),
-                          values=c('Empirical'= 1, 'Bootstrap'=2))+
+    scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                          values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
     theme_bw() +
     theme(legend.position='none') 
   
@@ -129,7 +136,7 @@ estimation_qqplot_cv_u_gl_alla <- function(results_list, save_plot=NA){
     df <- rbind(df, result_all)
   }
   
-  
+  df <- df[!is.na(df$a), ]
   p <- ggplot(df, aes(sample = y_hat)) + 
     stat_qq() + stat_qq_line() +
     labs(x = "Theoretical Quantiles",
