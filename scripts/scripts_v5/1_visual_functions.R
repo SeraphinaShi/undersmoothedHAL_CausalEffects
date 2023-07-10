@@ -91,6 +91,7 @@ plot_performences_cv_u_gl_alla <- function(df, save_plot=NA){
     theme(legend.position='none') 
   
   p_cr <- ggplot(df, aes(x = a)) +  
+    geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=0.95,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
     geom_line(aes(y = cover_rate, color=method, linetype='Empirical'), alpha=0.7) +
     geom_point(aes(y = cover_rate, color=method, linetype='Empirical'), alpha=0.7) + 
     geom_line(aes(y = cover_rate_bt, color=method, linetype='Bootstrap'), alpha=0.7) +
@@ -175,20 +176,30 @@ plot_perforences_alllambda <- function(df, u_g_scaler=NA, u_l_scalers=NA, save_p
   p_bias_se_list = list()
   p_cr_list = list()
   legend = NA
+  
   for (i in 1:length(eval_points)) {
     df_a <- df %>% filter(a == eval_points[i])
     u_l_scaler = u_l_scalers[i]
+    
     p_est_avg = ggplot(df_a) +  
-      geom_ribbon(aes(x = lambda_scaler, ymin=ci_lwr, ymax=ci_upr),  color='grey', fill = 'lightyellow', width=0.7, alpha=0.8) +
+      geom_ribbon(aes(x = lambda_scaler, ymin=ci_lwr, ymax=ci_upr, color='Empirical', fill = 'Empirical'), width=0.7, alpha=0.5) +
+      geom_ribbon(aes(x = lambda_scaler, ymin=ci_lwr_bt, ymax=ci_upr_bt,  color='Bootstrap', fill = 'Bootstrap'), width=0.7, alpha=0.5) +
+      geom_ribbon(aes(x = lambda_scaler, ymin=oracal_ci_lwr, ymax=oracal_ci_upr,  color='Oracal', fill = 'Oracal'), width=0.7, alpha=0.5) +
       geom_line(aes(x = lambda_scaler, y = y_hat), color = "grey") + 
       geom_point(aes(x = lambda_scaler, y = y_hat)) + 
       geom_hline(aes(yintercept=psi0)) + 
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+      scale_color_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                         values=c('Oracal'='darkolivegreen3', 'Empirical'='lightsalmon', 'Bootstrap'='darkorchid')) +
+      scale_fill_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                         values=c('Oracal'='darkolivegreen3', 'Empirical'='lightsalmon', 'Bootstrap'='darkorchid')) +
       theme_bw() +
       labs(x = "", title = paste0('a = ', eval_points[i])) +
       theme(axis.title=element_blank(),
-            plot.title = element_text(hjust = 0.5))
-    
+            plot.title = element_text(hjust = 0.5),
+            legend.position='none')
+
+
     p_bias <- ggplot(df_a, aes(x = lambda_scaler, y = bias)) +  
       geom_line(color = "grey") + 
       geom_point() + 
@@ -197,14 +208,16 @@ plot_perforences_alllambda <- function(df, u_g_scaler=NA, u_l_scalers=NA, save_p
       theme(axis.title=element_blank())
     
     p_se <- ggplot(df_a, aes(x = lambda_scaler)) +  
-      geom_line(aes(y = SE), color = "grey") + 
-      geom_point(aes(y = SE, color = "Empirical")) + 
-      geom_line(aes(y = SE_bt), color = "#EEC591") + 
-      geom_point(aes(y = SE_bt, color = "Bootstrap")) +
+      geom_line(aes(y = SE, color='Empirical')) + 
+      geom_point(aes(y = SE, color='Empirical')) + 
+      geom_line(aes(y = SE_bt, color='Bootstrap')) + 
+      geom_point(aes(y = SE_bt, color='Bootstrap')) +
+      geom_line(aes(y = oracal_SE, color='Oracal')) + 
+      geom_point(aes(y = oracal_SE, color='Oracal')) +
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
       scale_color_manual(name='method',
-                         breaks=c('Empirical', 'Bootstrap'),
-                         values=c('Empirical'='black', 'Bootstrap'='#8B6508'))+
+                         breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                         values=c('Oracal'='darkolivegreen3', 'Empirical'='lightsalmon', 'Bootstrap'='darkorchid')) +
       theme_bw()+
       theme(axis.title=element_blank())
     
@@ -213,14 +226,16 @@ plot_perforences_alllambda <- function(df, u_g_scaler=NA, u_l_scalers=NA, save_p
     
     
     p_bias_se <- ggplot(df_a, aes(x = lambda_scaler)) + 
-      geom_line(aes(y = bias_se_ratio), color = "grey") + 
+      geom_line(aes(y = bias_se_ratio, color = "Empirical")) + 
       geom_point(aes(y = bias_se_ratio, color = "Empirical")) +
-      geom_line(aes(y = bias_se_ratio_bt), color = "#EEC591") + 
+      geom_line(aes(y = bias_se_ratio_bt, color = "Bootstrap")) + 
       geom_point(aes(y = bias_se_ratio_bt, color = "Bootstrap")) +
+      geom_line(aes(y = oracal_bias_se_ratio, color = "Oracal")) + 
+      geom_point(aes(y = oracal_bias_se_ratio, color = "Oracal")) +
       geom_hline(aes(yintercept=1/log(n))) +
       scale_color_manual(name='method',
-                         breaks=c('Empirical', 'Bootstrap'),
-                         values=c('Empirical'='black', 'Bootstrap'='#8B6508')) + 
+                         breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                         values=c('Oracal'='darkolivegreen3', 'Empirical'='lightsalmon', 'Bootstrap'='darkorchid')) +
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
       theme_bw() +
       theme(axis.title=element_blank(),
@@ -231,13 +246,16 @@ plot_perforences_alllambda <- function(df, u_g_scaler=NA, u_l_scalers=NA, save_p
     }
     
     p_cr <- ggplot(df_a, aes(x = lambda_scaler)) +  
-      geom_line(aes(y = cover_rate), color = "grey") + 
+      geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=0.95,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
+      geom_line(aes(y = cover_rate, color = "Empirical")) + 
       geom_point(aes(y = cover_rate, color = "Empirical")) + 
-      geom_line(aes(y = cover_rate_bt), color = "#EEC591") + 
+      geom_line(aes(y = cover_rate_bt, color = "Bootstrap")) + 
       geom_point(aes(y = cover_rate_bt, color = "Bootstrap")) +
+      geom_line(aes(y = oracal_cover_rate, color = "Oracal")) + 
+      geom_point(aes(y = oracal_cover_rate, color = "Oracal")) +
       scale_color_manual(name='method',
-                         breaks=c('Empirical', 'Bootstrap'),
-                         values=c('Empirical'='black', 'Bootstrap'='#8B6508')) + 
+                         breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                         values=c('Oracal'='darkolivegreen3', 'Empirical'='lightsalmon', 'Bootstrap'='darkorchid')) +
       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
       theme_bw()  + 
       theme(axis.title=element_blank(),
