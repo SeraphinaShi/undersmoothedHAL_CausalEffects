@@ -138,6 +138,7 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
   }
   
   hal_cv_fit_time = hal_fit_time
+  num_basis_CV <- sum(hal_CV$coefs[-1] != 0)
   
   #================================global undersmoothing================================
   start <- Sys.time()
@@ -199,6 +200,8 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
   
   hal_u_g_fit_time = hal_fit_time + hal_cv_fit_time
   
+  num_basis_u_g <- sum(hal_u_g$coefs[-1] != 0)
+  
   #================================local undersmoothing================================
   start <- Sys.time()
   
@@ -242,6 +245,7 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
     lambda_u_l_idx = match(lambdas_u_l, lambda_u_l)
     
     hal_u_l = list()
+    num_basis_u_l <- c()
     for(i in 1:length(lambda_u_l)){
       hal_u_l[[i]] <- fit_hal(X = X, Y = Y, family = y_type,
                               return_x_basis = TRUE,
@@ -260,6 +264,7 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
                                 prediction_bounds = "default"
                               ),
                               lambda = lambda_u_l[i])
+      num_basis_u_l[i] <- sum(hal_u_l[[i]]$coefs[-1] != 0)
     }
   }
   
@@ -275,13 +280,15 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
   }
   
   hal_u_l_fit_time = hal_fit_time + hal_cv_fit_time
+  num_basis_u_l = num_basis_u_l[lambda_u_l_idx]
   
   #================================return================================
   hal_fit_list <- list(hal_CV = hal_CV, hal_u_g = hal_u_g, hal_u_l = hal_u_l)
   lambda_list <- list(lambda_CV = lambda_CV, lambda_u_g = lambda_u_g, lambda_u_l = lambda_u_l)
   hal_fit_time_list <- list(hal_cv_fit_time = hal_cv_fit_time, hal_u_g_fit_time = hal_u_g_fit_time, hal_u_l_fit_time = hal_u_l_fit_time)
+  num_basis_list <- list(num_basis_CV = num_basis_CV, num_basis_u_g = num_basis_u_g, num_basis_u_l = num_basis_u_l)
   
-  return(list(hal_fit_list = hal_fit_list, lambda_list = lambda_list, hal_fit_time_list = hal_fit_time_list, lambda_u_l_idx = lambda_u_l_idx))
+  return(list(hal_fit_list = hal_fit_list, lambda_list = lambda_list, hal_fit_time_list = hal_fit_time_list, lambda_u_l_idx = lambda_u_l_idx, num_basis_list = num_basis_list))
 }
 
 
