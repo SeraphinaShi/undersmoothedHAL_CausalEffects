@@ -137,7 +137,6 @@ plot(p)
 ```
 
 
-
 ## n = 1000
 ```{r}
 nn=1000
@@ -180,5 +179,4 @@ p <- plot_performences_cv_u_gl_alla(df = results$result_summary, save_plot = her
 p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
 plot(p)
 ```
-
 

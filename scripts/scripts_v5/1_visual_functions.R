@@ -322,3 +322,231 @@ plot_perforences_alllambda <- function(df, u_g_scaler=NA, u_l_scalers=NA, save_p
   return(p)
 }
 
+
+
+plot_estimations_uHAL_gam_poly <- function(df, save_plot=NA){
+  
+  # color_cv =  "#F8766D"
+  color_u_g = "#00BA38"
+  # color_u_l = '#619CFF'
+  color_gam = 'chocolate2'
+  color_poly = 'blueviolet'
+  
+  df <- df[df$method %in% c("U_G", "GAM", "Poly"), ]
+  
+  a_max <- max(df$a)
+  
+  #-------------------------------------------------
+  ci_min = min(df$ci_lwr, df$ci_lwr_bt, df$oracal_ci_lwr)
+  ci_max = max(df$ci_upr, df$ci_upr_bt, df$oracal_ci_upr)
+    
+  p_est_avg <- list()
+  for(i in 1:3){
+    p_est_avg[[i]] <- ggplot(data=df, aes(x=a)) +
+      geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
+      geom_point(aes(y=psi0), color = "black") +
+      geom_point(aes(y=y_hat, color=method), shape=17, size=2, alpha= 0.7) +
+      labs(x="a") +
+      scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+      scale_y_continuous(limits = c(ci_min, ci_max)) +
+      scale_color_manual(name='Method',
+                         breaks=c('U_G', 'GAM', 'Poly'),
+                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+      scale_fill_manual(name='Method',
+                        breaks=c('U_G', 'GAM', 'Poly'),
+                        values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+      scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                            values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
+      theme_bw() +
+      theme(legend.box = "horizontal", legend.position='none',
+            plot.title = element_text(hjust = 0.5)) 
+  }
+  
+  p_est_avg[[1]] <- p_est_avg[[1]] + geom_ribbon(aes(ymin=ci_lwr, ymax=ci_upr, color=method, fill=method, linetype='Empirical'), width=0.7, alpha=0.1) +
+    labs(title = "Empirical", y="E[Y|a, W] ")
+  p_est_avg[[2]] <- p_est_avg[[2]] + geom_ribbon(aes(ymin=ci_lwr_bt, ymax=ci_upr_bt, color=method, fill=method, linetype = "Bootstrap"),  width=0.7, alpha=0.1) +
+    labs(title = "Bootstrapped",  y="")
+  p_est_avg[[3]] <- p_est_avg[[3]] + geom_ribbon(aes(ymin=oracal_ci_lwr, ymax=oracal_ci_upr, color=method, fill=method, linetype = "Oracal"),  width=0.7, alpha=0.1) +
+    labs(title = "Oracal",  y="" )
+  
+  #-------------------------------------------------
+  p_bias <- ggplot(df, aes(x = a, y = bias)) +  
+    geom_line(aes(color=method)) +
+    geom_point(aes(color=method)) + 
+    labs(title="|Bias|", x="a", y="|bias|") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='Method',
+                       breaks=c('U_G', 'GAM', 'Poly'),
+                       values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+    theme_bw()
+  
+  legend <- get_legend(p_bias)
+  p_bias <- p_bias + theme(legend.position='none')
+  
+  #-------------------------------------------------
+  p <- grid.arrange(p_est_avg[[1]], p_est_avg[[2]], p_est_avg[[3]], legend, 
+                    nrow = 1,
+                    widths = c(1,1,1,0.4),
+                    top = textGrob(paste0("Estimated values and 95% CI \nbased on U-HAL, GAM, and polynomial regression"), 
+                                   gp=gpar(fontsize=17)))
+  
+  if(!is.na(save_plot)){
+    ggsave(save_plot, plot=p, width = 12, height = 4, dpi = 800)
+  }
+}
+
+
+
+
+
+
+
+plot_performances_uHAL_gam_poly <- function(df, save_plot=NA){
+  
+  # color_cv =  "#F8766D"
+  color_u_g = "#00BA38"
+  # color_u_l = '#619CFF'
+  color_gam = 'chocolate2'
+  color_poly = 'blueviolet'
+  
+  df <- df[df$method %in% c("U_G", "GAM", "Poly"), ]
+  
+  a_max <- max(df$a)
+  #-------------------------------------------------
+  p_bias <- ggplot(df, aes(x = a, y = bias)) +  
+    geom_line(aes(color=method)) +
+    geom_point(aes(color=method)) + 
+    labs(title="", x="a", y="|bias|") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='Method',
+                       breaks=c('U_G', 'GAM', 'Poly'),
+                       values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+    theme_bw()
+  
+  legend <- get_legend(p_bias)
+  p_bias <- p_bias + theme(legend.position='none')
+  
+  
+  #-------------------------------------------------
+  se_min = min(df$SE, df$SE_bt, df$oracal_SE)
+  se_max = max(df$SE, df$SE_bt, df$oracal_SE)
+  
+  p_se <- list()
+  
+  p_se[[1]] <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = SE, color=method, linetype='Empirical'),alpha=0.7) +
+    geom_point(aes(y = SE, color=method, linetype='Empirical'),alpha=0.7) + 
+    labs(title = "Empirical", y = "SE")
+  p_se[[2]] <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = SE_bt, color=method, linetype='Bootstrap'),alpha=0.7) +
+    geom_point(aes(y = SE_bt, color=method, linetype='Bootstrap'),alpha=0.7) +
+    labs(title = "Bootstrapped", y = "")
+  p_se[[3]] <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = oracal_SE, color=method, linetype='Oracal'),alpha=0.7) +
+    geom_point(aes(y = oracal_SE, color=method, linetype='Oracal'),alpha=0.7) + 
+    labs(title = "Oracal", y = "")
+  
+  for(i in 1:3){
+    p_se[[i]] <- p_se[[i]] +
+      labs(x="a") +
+      scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+      scale_y_continuous(limits = c(se_min, se_max)) +
+      scale_color_manual(name='Method',
+                         breaks=c('U_G', 'GAM', 'Poly'),
+                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+      scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                            values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
+      theme_bw() + 
+      theme(legend.box = "horizontal", legend.position='none',
+            plot.title = element_text(hjust = 0.5))
+  }
+  
+  #-------------------------------------------------
+  bias_se_min = min(df$bias_se_ratio, df$bias_se_ratio_bt, df$oracal_bias_se_ratio)
+  bias_se_max = max(df$bias_se_ratio, df$bias_se_ratio_bt, df$oracal_bias_se_ratio)
+  
+  p_bias_sd <- list()
+  
+  p_bias_sd[[1]] <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = bias_se_ratio, color=method, linetype='Empirical'), alpha=0.7) +
+    geom_point(aes(y = bias_se_ratio, color=method, linetype='Empirical'), alpha=0.7) + 
+    labs(y = "|Bias| / Standard Error") 
+  
+  p_bias_sd[[2]] <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = bias_se_ratio_bt, color=method, linetype='Bootstrap'), alpha=0.7) +
+    geom_point(aes(y = bias_se_ratio_bt, color=method, linetype='Bootstrap'), alpha=0.7) + 
+    labs(y="") 
+  
+  p_bias_sd[[3]] <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = oracal_bias_se_ratio, color=method, linetype='Oracal'), alpha=0.7) +
+    geom_point(aes(y = oracal_bias_se_ratio, color=method, linetype='Oracal'), alpha=0.7) + 
+    labs(y="") 
+  
+  for(i in 1:3){
+    p_bias_sd[[i]] <- p_bias_sd[[i]] +  
+      labs(x='a', title="") +
+      scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+      scale_color_manual(name='Method',
+                         breaks=c('U_G', 'GAM', 'Poly'),
+                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+      scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                            values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
+      theme_bw() +
+      theme(legend.position='none') 
+  }
+  
+  #-------------------------------------------------
+  p_cr <- list()
+  
+  p_cr[[1]] <- ggplot(df, aes(x = a)) +  
+    geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=0.95,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
+    geom_line(aes(y = cover_rate, color=method, linetype='Empirical'), alpha=0.7) +
+    geom_point(aes(y = cover_rate, color=method, linetype='Empirical'), alpha=0.7) + 
+    labs(y="95% CI Coverage Rate")
+  
+  p_cr[[2]] <- ggplot(df, aes(x = a)) +  
+    geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=0.95,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
+    geom_line(aes(y = cover_rate_bt, color=method, linetype='Bootstrap'), alpha=0.7) +
+    geom_point(aes(y = cover_rate_bt, color=method, linetype='Bootstrap'), alpha=0.7) + 
+    labs(y = "")
+  
+  p_cr[[3]] <- ggplot(df, aes(x = a)) +  
+    geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=0.95,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
+    geom_line(aes(y = oracal_cover_rate, color=method, linetype='Oracal'), alpha=0.7) +
+    geom_point(aes(y = oracal_cover_rate, color=method, linetype='Oracal'), alpha=0.7) + 
+    labs(y = "")
+  
+  for (i in 1:3) {
+    p_cr[[i]] <- p_cr[[i]] +
+      labs(x='a', title="")+
+      scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+      scale_y_continuous(limits = c(0, 1)) +
+      scale_color_manual(name='Method',
+                         breaks=c('U_G', 'GAM', 'Poly'),
+                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+      scale_linetype_manual(breaks=c('Oracal', 'Empirical', 'Bootstrap'),
+                            values=c('Oracal'=1, 'Empirical'=5, 'Bootstrap'=3)) +
+      theme_bw() +
+      theme(legend.position='none') 
+  }
+  
+  
+  #-------------------------------------------------
+  p <- grid.arrange(p_bias, legend, 
+                    p_se[[1]], p_se[[2]], p_se[[3]],
+                    p_bias_sd[[1]], p_bias_sd[[2]], p_bias_sd[[3]],
+                    p_cr[[1]], p_cr[[2]], p_cr[[3]],
+                    layout_matrix = rbind(c(1, NA, 2),
+                                          c(3, 4, 5),
+                                          c(6, 7, 8),
+                                          c(9, 10, 11)),
+                    top = textGrob(paste0("Compare estimator performences for E[Y|a,W] \nbased on U-HAL, GAM, and polynomial regression"), 
+                                   gp=gpar(fontsize=17)))
+  
+  if(!is.na(save_plot)){
+    ggsave(save_plot, plot=p, width = 8, height = 9, dpi = 800)
+  }
+  return(p)
+  
+}
+

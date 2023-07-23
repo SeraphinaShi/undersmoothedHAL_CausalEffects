@@ -92,6 +92,24 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+```{r}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
+
+results_poly$result_summary$method = "Poly"
+
+results_all <- rbind(results_gam$result_summary, 
+                     results_poly$result_summary[, names(results_poly$result_summary)], 
+                     results$result_summary[, names(results_poly$result_summary)])
+```
+
+```{r fig.height=4, fig.width=12}
+p1 <- plot_estimations_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_estimates.png")) )
+```
+
+```{r fig.height=9, fig.width=8}
+p <- plot_performances_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
+```
 
 ## n = 500
 ```{r}
@@ -136,6 +154,25 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+```{r}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
+
+results_poly$result_summary$method = "Poly"
+
+results_all <- rbind(results_gam$result_summary, 
+                     results_poly$result_summary[, names(results_poly$result_summary)], 
+                     results$result_summary[, names(results_poly$result_summary)])
+```
+
+
+```{r fig.height=4, fig.width=12}
+p1 <- plot_estimations_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_estimates.png")) )
+```
+
+```{r fig.height=9, fig.width=8}
+p <- plot_performances_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
+```
 
 ## n = 1000
 ```{r}
@@ -180,3 +217,21 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+```{r}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
+
+results_poly$result_summary$method = "Poly"
+
+results_all <- rbind(results_gam$result_summary, 
+                     results_poly$result_summary[, names(results_poly$result_summary)], 
+                     results$result_summary[, names(results_poly$result_summary)])
+```
+
+```{r fig.height=4, fig.width=12}
+p1 <- plot_estimations_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_estimates.png")) )
+```
+
+```{r fig.height=9, fig.width=8}
+p <- plot_performances_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
+```

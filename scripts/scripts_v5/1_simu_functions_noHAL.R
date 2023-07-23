@@ -157,7 +157,7 @@ run_simu_gam_poly_rep <- function(gen_data_functions, eval_points, y_type, n, ro
            oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
     summarise(across(where(is.numeric), mean)) %>% 
     ungroup() %>%
-    mutate(method = "GAM")
+    mutate(method = method)
   
   if(return_all_rslts){
     results <- list(result_summary = result_summary,
