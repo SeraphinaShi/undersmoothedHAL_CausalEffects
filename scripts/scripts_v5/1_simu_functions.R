@@ -1,4 +1,144 @@
 
+run_simu_smooth_orders_1round <- function(gen_data_functions, eval_points, y_type, n){
+  
+  obs <- gen_data_functions(n)
+  
+  y_name = "Y"
+  x_names = names(obs)[names(obs) != 'Y']
+  y_type = "binomial"
+  
+  Y <- as.numeric(as.matrix(obs %>% select(all_of(y_name))))
+  X <- obs %>% 
+    select(all_of(x_names)) %>% 
+    mutate_if(sapply(., is.factor), as.numeric)
+  
+  #--- SL
+  task <- make_sl3_Task(
+    data = obs,
+    outcome = y_name,
+    covariates = x_names
+  )
+  
+  lrn_hal0 <- Lrnr_hal9001$new(smoothness_orders = 0, return_x_basis = TRUE)
+  lrn_hal1 <- Lrnr_hal9001$new(smoothness_orders = 1, return_x_basis = TRUE)
+  lrn_hal2 <- Lrnr_hal9001$new(smoothness_orders = 2, return_x_basis = TRUE)
+  lrn_hal3 <- Lrnr_hal9001$new(smoothness_orders = 3, return_x_basis = TRUE)
+  lrn_hal4 <- Lrnr_hal9001$new(smoothness_orders = 4, return_x_basis = TRUE)
+  lrn_hal5 <- Lrnr_hal9001$new(smoothness_orders = 5, return_x_basis = TRUE)
+  
+  learners <- c(lrn_hal0, lrn_hal1, lrn_hal2, lrn_hal3, lrn_hal4, lrn_hal5)
+  names(learners) <- c("halcv0", "halcv1", "halcv2", "halcv3", "halcv4", "halcv5")
+  stack <- make_learner(Stack, learners)
+  
+  cv_selector <- Lrnr_cv_selector$new(eval_function = loss_loglik_binomial) # https://tlverse.org/sl3/reference/loss_functions.html
+  dSL <- Lrnr_sl$new(learners = stack, metalearner = cv_selector)
+  
+  set.seed(4197)
+  dSL_fit <- dSL$train(task)
+  
+  # -- 
+  results <- list()
+  
+  for (i in 1:length(dSL_fit$learner_fits)) {
+    
+    hal_CV <- dSL_fit$learner_fits[[i]]$fit_object
+    
+    # lambda
+    lambda_CV <- hal_CV$lambda_star
+    
+    num_basis_CV <- sum(hal_CV$coefs[-1] != 0)
+    
+    # prediction
+    psi_hat <- sapply(eval_points, function(a){ X_new <- X
+    X_new$A = a
+    mean(predict(hal_CV, new_data = X_new)) } )
+    
+    # IC-based inference
+    psi_hat_pnt_cv_se <- IC_based_se(X, Y, hal_CV, eval_points)
+    
+    # returns
+    psi_hat_pnt_cv <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV, 1, 
+                            num_basis_CV, psi_hat_pnt_cv_se)
+    
+    colnames(psi_hat_pnt_cv) <- c("a", "y_hat", "lambda", "lambda_scaler", "n_basis", "SE")
+    
+    psi_hat_pnt_cv <- as.data.frame(psi_hat_pnt_cv) %>% 
+      mutate(ci_lwr = y_hat - 1.96 * SE,
+             ci_upr = y_hat + 1.96 * SE,
+             smooth_order = i - 1,
+             sl_pick = as.numeric(dSL_fit$coefficients[i]==1))
+    
+    results[[i]] <- psi_hat_pnt_cv
+  }
+  
+  names(results) = paste0("smooth_order = ", 0:5)
+  
+  return(results)
+}
+
+run_simu_smooth_orders_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
+  
+  result_list <- list()
+  
+  for(r in 1:rounds){
+    print(paste0("round ", r))
+    result <- tryCatch({
+      run_simu_smooth_orders_1round(gen_data_functions, eval_points, y_type, n=n)
+    }, error = function(e) {
+      print(paste0("Error: ", e$message))
+      NULL
+    })
+    
+    while(is.null(result)) {
+      print('retry with a new generated data')
+      result <- tryCatch({
+        run_simu_smooth_orders_1round(gen_data_functions, eval_points, y_type, n=n)
+      }, error = function(e) {
+        print(paste0("Error: ", e$message))
+        NULL
+      })
+    }
+    
+    result_list[[r]] <- result
+  }
+  
+  results <- list()
+  smooth_orders = paste0("smooth_order = ", 0:5)
+  
+  for (s in smooth_orders){
+    result_list_method <- lapply(result_list, function(lst) lst[[s]])
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() %>%
+      mutate(hal_fit_time_unit = 'secs')
+    
+    if(return_all_rslts){
+      results[[s]] <- list(result_summary = result_summary,
+                           all_results = result_list_method)
+    } else {
+      results[[s]] <- list(result_summary = result_summary)
+    }
+  }
+  
+  results$result_summary <- rbind(results[[1]]$result_summary, results[[2]]$result_summary, results[[3]]$result_summary, 
+                                  results[[4]]$result_summary, results[[5]]$result_summary, results[[6]]$result_summary)
+  
+  return(results)
+}
+
 
 ##############################################################
 # This function runs the simulation with given:

@@ -99,6 +99,12 @@ source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
 n = 500
 
+# set.seed(123)
+# results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=10, return_all_rslts=T)
+# printf("num basis with non_zero coefficients from CV-HAL: %s", unique(results$result_summary$n_basis[results$result_summary$method=='CV']))
+# printf("num basis with non_zero coefficients from U_G-HAL: %s", unique(results$result_summary$n_basis[results$result_summary$method=='U_G']))
+# printf("num basis with non_zero coefficients from U_L-HAL: %s", paste(results$result_summary$n_basis[results$result_summary$method=='U_L'], collapse = ", "))
+
 set.seed(123)
 results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 
