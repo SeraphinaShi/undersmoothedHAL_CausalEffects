@@ -1,3 +1,4 @@
+library(sl3)
 
 run_simu_smooth_orders_1round <- function(gen_data_functions, eval_points, y_type, n){
   
