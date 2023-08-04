@@ -492,10 +492,10 @@ run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, 
       
       
       # bootstrap-based inference
-      psi_hat_pnt_scaled_bt_bds <- bootstrap_inference(X, Y, eval_points, hal_fit, y_type)
-      psi_hat_pnt_scaled$ci_lwr_bt <- psi_hat_pnt_scaled_bt_bds$lower_bd
-      psi_hat_pnt_scaled$ci_upr_bt <- psi_hat_pnt_scaled_bt_bds$upper_bd
-      psi_hat_pnt_scaled$SE_bt <- psi_hat_pnt_scaled_bt_bds$SE
+      # psi_hat_pnt_scaled_bt_bds <- bootstrap_inference(X, Y, eval_points, hal_fit, y_type)
+      # psi_hat_pnt_scaled$ci_lwr_bt <- psi_hat_pnt_scaled_bt_bds$lower_bd
+      # psi_hat_pnt_scaled$ci_upr_bt <- psi_hat_pnt_scaled_bt_bds$upper_bd
+      # psi_hat_pnt_scaled$SE_bt <- psi_hat_pnt_scaled_bt_bds$SE
       
     } else {
       psi_hat_pnt_scaled = as.data.frame(cbind(eval_points, NA, lambda_CV, lambda_scaler, hal_scaled_fit_time, NA, NA, NA, NA, NA, NA))
@@ -553,9 +553,9 @@ run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, roun
       filter(SE != 0) %>% 
       mutate(bias = abs(y_hat - psi0),
              bias_se_ratio = bias / SE,
-             bias_se_ratio_bt = bias / SE_bt,
-             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr),
-             cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt)) %>% 
+             # bias_se_ratio_bt = bias / SE_bt,
+             # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt) ,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
       group_by(a) %>% 
       mutate(oracal_SE = sqrt(var(y_hat)),
              oracal_bias_se_ratio = bias / oracal_SE,
