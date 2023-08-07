@@ -337,9 +337,9 @@ run_simu_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, ret
         filter(SE != 0) %>% 
         mutate(bias = abs(y_hat - psi0),
                bias_se_ratio = bias / SE,
-               bias_se_ratio_bt = bias / SE_bt,
-               cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr),
-               cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt)) %>% 
+               # bias_se_ratio_bt = bias / SE_bt,
+               # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt),
+               cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
         group_by(a) %>% 
         mutate(oracal_SE = sqrt(var(y_hat)),
                oracal_bias_se_ratio = bias / oracal_SE,
@@ -536,53 +536,54 @@ run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, roun
     
     result_list[[r]] <- result
   }
-  
-  results <- list()
-  no_empirical_CI_proportion <- c()
-  
-  for (i in 1:length(lambda_scalers)){
-    
-    lambda_scaler = lambda_scalers[i]
-    
-    result_list_scale <- lapply(result_list, function(lst) lst[[i]])
-    no_empirical_CI_proportion[i] <- mean(sapply(result_list_scale, function(rlt) any(is.na(rlt[,colnames(rlt) == 'SE']))))
-    result_all <-  do.call("rbind", result_list_scale) %>% as.data.frame()
-    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
-    
-    result_summary <- result_all %>% 
-      filter(SE != 0) %>% 
-      mutate(bias = abs(y_hat - psi0),
-             bias_se_ratio = bias / SE,
-             # bias_se_ratio_bt = bias / SE_bt,
-             # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt) ,
-             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-      group_by(a) %>% 
-      mutate(oracal_SE = sqrt(var(y_hat)),
-             oracal_bias_se_ratio = bias / oracal_SE,
-             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
-             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
-             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-      summarise(across(where(is.numeric), mean)) %>% 
-      ungroup() %>%
-      mutate(hal_fit_time_unit = 'secs',
-             method = 'scale')
-    
-    if(return_all_rslts){
-      results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary,
-                                                                   all_results = result_list_scale)
-    } else {
-      results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary)
-    }
-  }
-  
-  result_summary <- results[[1]]$result_summary
-  for (i in 1:length(lambda_scalers)) {
-    result_summary <- rbind(result_summary, results[[i]]$result_summary)
-  }
-  results$result_summary <- result_summary
-  
-  results$no_empirical_CI_proportion <- no_empirical_CI_proportion
-  
-  return(results)
+  return(result_list)
+  # 
+  # results <- list()
+  # no_empirical_CI_proportion <- c()
+  # 
+  # for (i in 1:length(lambda_scalers)){
+  #   
+  #   lambda_scaler = lambda_scalers[i]
+  #   
+  #   result_list_scale <- lapply(result_list, function(lst) lst[[i]])
+  #   no_empirical_CI_proportion[i] <- mean(sapply(result_list_scale, function(rlt) any(is.na(rlt[,colnames(rlt) == 'SE']))))
+  #   result_all <-  do.call("rbind", result_list_scale) %>% as.data.frame()
+  #   result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+  #   
+  #   result_summary <- result_all %>% 
+  #     filter(SE != 0) %>% 
+  #     mutate(bias = abs(y_hat - psi0),
+  #            bias_se_ratio = bias / SE,
+  #            # bias_se_ratio_bt = bias / SE_bt,
+  #            # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt) ,
+  #            cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+  #     group_by(a) %>% 
+  #     mutate(oracal_SE = sqrt(var(y_hat)),
+  #            oracal_bias_se_ratio = bias / oracal_SE,
+  #            oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+  #            oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+  #            oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+  #     summarise(across(where(is.numeric), mean)) %>% 
+  #     ungroup() %>%
+  #     mutate(hal_fit_time_unit = 'secs',
+  #            method = 'scale')
+  #   
+  #   if(return_all_rslts){
+  #     results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary,
+  #                                                                  all_results = result_list_scale)
+  #   } else {
+  #     results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary)
+  #   }
+  # }
+  # 
+  # result_summary <- results[[1]]$result_summary
+  # for (i in 2:length(lambda_scalers)) {
+  #   result_summary <- rbind(result_summary, results[[i]]$result_summary)
+  # }
+  # results$result_summary <- result_summary
+  # 
+  # results$no_empirical_CI_proportion <- no_empirical_CI_proportion
+  # 
+  # return(results)
 }
 
