@@ -94,7 +94,7 @@ load(here("data", "rdata", "02_simu_V5_sys3_psi0.RData"))
 source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
-n= 1000
+n= 500
 # 
 # set.seed(123)
 
@@ -114,6 +114,3 @@ set.seed(123)
 
 results_grid <- run_simu_scaled_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 save.image(file=here("data", "rdata", "02_simu_V5_sys3_500_grid.RData"))
-
-
-
