@@ -41,14 +41,14 @@ source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 generate_data_2 <- function(n, a=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
-  U_A <- rnorm(n, 0, 2)
+  U_A <- rnorm(n, 0, 1.3)
   U_Y <- runif(n, 0, 1)
   
   # endogenous variables
   W <- U_W
   
   if(is.na(a)){
-    A <-  2 - 0.5*W + U_A
+    A <- 2.5 - 0.5*W + U_A
     A[A<=0] = 0
     A[A>=5] = 5
   } else {
@@ -56,18 +56,20 @@ generate_data_2 <- function(n, a=NA){
   }
   
   
-  Y <- as.numeric(U_Y < plogis(-10 + 2*W + 5*sin(A^1.5) + 2 * W * A ))
+  Y <- as.numeric(U_Y < plogis(-8 + 2*W + 3*sin(1.5*A^1.5) + 2 * W * A ))
   
   # data frame
   O <- data.frame(W, A, Y)
   return(O)
 }
+# 
+# df = generate_data_2(n=1000000)
+# hist(df$A)
 
 ## ----true_psi_sys1-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
-
-
+# 
 # a_vec <- seq(0, 5, 0.1)
 # psi0_a <- c()
 # psi0_a <- c()
@@ -77,41 +79,47 @@ generate_data_2 <- function(n, a=NA){
 # 
 # for (i in 1:length(a_vec)) {
 #   a <- a_vec[i]
-# 
+#   
 #   data_a <- generate_data_2(n=N, a=a)
 #   psi0_a[i] <- mean(data_a$Y) # - data_0$Y
 # }
 # 
 # psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
-# 
+# # plot(psi0_line$a, psi0_line$psi0, type = "l")
 # 
 # eval_points = seq(0,5,0.5)
 # psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
 # 
 # save.image(file=here("data", "rdata", "02_simu_V4_sys2_psi0.RData"))
-# 
-# 
 
-## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------
+
+
+##-------------------------------------------------------------------------------------------------------------------
 load(here("data", "rdata", "02_simu_V4_sys2_psi0.RData"))
 source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
-
 n = 500
 
-# set.seed(123)
-# 
-# results <- run_simu_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-# save.image(file=here("data", "rdata", "02_simu_V5_sys2_500.RData"))
-# 
-# 
-# ## ----simu_sys2_n500-------------------------------------------------------------------------------------------------------------------
-# rm(results)
+set.seed(123)
+
+results <- run_simu_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+save.image(file=here("data", "rdata", "02_simu_V5_sys2_500.RData"))
+
+
+## -----------------------------------------------------------------------------------------------------------------------
+rm(results)
 
 set.seed(123)
 results_grid <- run_simu_scaled_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 
 save.image(file=here("data", "rdata", "02_simu_V5_sys2_500_grid.RData"))
 
+## -----------------------------------------------------------------------------------------------------------------------
+rm(results_grid)
+
+set.seed(123)
+results_so <- run_simu_smooth_orders_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys2_500_SO.RData"))
 
