@@ -92,6 +92,43 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+### grid of scalers
+```{r fig.width=25, fig.height=9}
+
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
+
+results_grid_sum = results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(df = results_grid_sum$result_summary,
+                                u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+### grid of smooth orders
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
+
+print(unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]))
+
+p <- plot_performences_cv_SO(df = results_so$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
+
+no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+
+### vs GAM & Polynomial regression
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
@@ -110,6 +147,9 @@ p1 <- plot_estimations_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plot
 ```{r fig.height=9, fig.width=8}
 p <- plot_performances_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
+
+
+
 
 ## n = 500
 ```{r}
@@ -154,6 +194,41 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+
+### grid of scalers
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
+
+results_grid_sum = results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(df = results_grid_sum$result_summary,
+                                u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+### grid of smooth orders
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
+
+print(unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]))
+
+p <- plot_performences_cv_SO(df = results_so$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
+
+no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+
+### vs GAM & Polynomial regression
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
@@ -164,7 +239,6 @@ results_all <- rbind(results_gam$result_summary,
                      results_poly$result_summary[, names(results_poly$result_summary)], 
                      results$result_summary[, names(results_poly$result_summary)])
 ```
-
 
 ```{r fig.height=4, fig.width=12}
 p1 <- plot_estimations_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_estimates.png")) )
@@ -217,6 +291,40 @@ p <- estimation_qqplot_cv_u_gl_alla(results_list = results, save_plot = here(get
 plot(p)
 ```
 
+### grid of scalers
+```{r fig.width=25, fig.height=9}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
+
+results_grid_sum = results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(df = results_grid_sum$result_summary,
+                                u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+### grid of smooth orders
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
+
+print(unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]))
+
+p <- plot_performences_cv_SO(df = results_so$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
+
+no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+
+### vs GAM & Polynomial regression
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))

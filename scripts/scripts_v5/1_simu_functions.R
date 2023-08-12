@@ -468,6 +468,8 @@ run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, 
     
     hal_scaled_fit_time = hal_cv_fit_time + hal_fit_time
     
+    num_basis <- sum(hal_fit$coefs[-1] != 0)
+    
     #--------------------------estimations---------------------------------
     coef <- hal_fit$coefs
     basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
@@ -480,8 +482,8 @@ run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, 
                                                   X_new$A = a
                                                   mean(predict(hal_fit, new_data = X_new)) } )
       
-      psi_hat_pnt_scaled <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV, lambda_scaler, hal_scaled_fit_time)
-      colnames(psi_hat_pnt_scaled) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time")
+      psi_hat_pnt_scaled <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV, lambda_scaler, hal_scaled_fit_time, num_basis)
+      colnames(psi_hat_pnt_scaled) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "n_basis")
       
       # IC-based inference
       psi_hat_pnt_scaled_se <- IC_based_se(X, Y, hal_fit, eval_points)
@@ -498,8 +500,8 @@ run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, 
       # psi_hat_pnt_scaled$SE_bt <- psi_hat_pnt_scaled_bt_bds$SE
       
     } else {
-      psi_hat_pnt_scaled = as.data.frame(cbind(eval_points, NA, lambda_CV, lambda_scaler, hal_scaled_fit_time, NA, NA, NA, NA, NA, NA))
-      names(psi_hat_pnt_scaled) = c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "SE", "ci_lwr", "ci_upr", "ci_lwr_bt", "ci_upr_bt", "SE_bt")
+      psi_hat_pnt_scaled = as.data.frame(cbind(eval_points, NA, lambda_CV, lambda_scaler, hal_scaled_fit_time, NA, NA, NA, NA, NA, NA, NA))
+      names(psi_hat_pnt_scaled) = c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "n_basis", "SE", "ci_lwr", "ci_upr", "ci_lwr_bt", "ci_upr_bt", "SE_bt")
     }
     results[[i]] = psi_hat_pnt_scaled
   }
@@ -536,54 +538,53 @@ run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, roun
     
     result_list[[r]] <- result
   }
-  return(result_list)
-  # 
-  # results <- list()
-  # no_empirical_CI_proportion <- c()
-  # 
-  # for (i in 1:length(lambda_scalers)){
-  #   
-  #   lambda_scaler = lambda_scalers[i]
-  #   
-  #   result_list_scale <- lapply(result_list, function(lst) lst[[i]])
-  #   no_empirical_CI_proportion[i] <- mean(sapply(result_list_scale, function(rlt) any(is.na(rlt[,colnames(rlt) == 'SE']))))
-  #   result_all <-  do.call("rbind", result_list_scale) %>% as.data.frame()
-  #   result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
-  #   
-  #   result_summary <- result_all %>% 
-  #     filter(SE != 0) %>% 
-  #     mutate(bias = abs(y_hat - psi0),
-  #            bias_se_ratio = bias / SE,
-  #            # bias_se_ratio_bt = bias / SE_bt,
-  #            # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt) ,
-  #            cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-  #     group_by(a) %>% 
-  #     mutate(oracal_SE = sqrt(var(y_hat)),
-  #            oracal_bias_se_ratio = bias / oracal_SE,
-  #            oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
-  #            oracal_ci_upr = y_hat + 1.96 * oracal_SE,
-  #            oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-  #     summarise(across(where(is.numeric), mean)) %>% 
-  #     ungroup() %>%
-  #     mutate(hal_fit_time_unit = 'secs',
-  #            method = 'scale')
-  #   
-  #   if(return_all_rslts){
-  #     results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary,
-  #                                                                  all_results = result_list_scale)
-  #   } else {
-  #     results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary)
-  #   }
-  # }
-  # 
-  # result_summary <- results[[1]]$result_summary
-  # for (i in 2:length(lambda_scalers)) {
-  #   result_summary <- rbind(result_summary, results[[i]]$result_summary)
-  # }
-  # results$result_summary <- result_summary
-  # 
-  # results$no_empirical_CI_proportion <- no_empirical_CI_proportion
-  # 
-  # return(results)
+
+  results <- list()
+  no_empirical_CI_proportion <- c()
+
+  for (i in 1:length(lambda_scalers)){
+
+    lambda_scaler = lambda_scalers[i]
+
+    result_list_scale <- lapply(result_list, function(lst) lst[[i]][c('a', 'y_hat', 'lambda', 'lambda_scaler', 'hal_fit_time', 'n_basis', 'SE', 'ci_lwr', 'ci_upr')])
+    no_empirical_CI_proportion[i] <- mean(sapply(result_list_scale, function(rlt) any(is.na(rlt[,colnames(rlt) == 'SE']))))
+    result_all <-  do.call("rbind", result_list_scale) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    result_summary <- result_all %>%
+      filter((SE != 0) | (is.na(SE))) %>%
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             # bias_se_ratio_bt = bias / SE_bt,
+             # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt) ,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>%
+      group_by(a) %>%
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>%
+      ungroup() %>%
+      mutate(hal_fit_time_unit = 'secs',
+             method = 'scale')
+
+    if(return_all_rslts){
+      results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary,
+                                                                   all_results = result_list_scale)
+    } else {
+      results[[paste0("scale=", round(lambda_scaler, 4))]] <- list(result_summary = result_summary)
+    }
+  }
+
+  result_summary <- results[[1]]$result_summary
+  for (i in 2:length(lambda_scalers)) {
+    result_summary <- rbind(result_summary, results[[i]]$result_summary)
+  }
+  results$result_summary <- result_summary
+
+  results$no_empirical_CI_proportion <- no_empirical_CI_proportion
+
+  return(results)
 }
 
