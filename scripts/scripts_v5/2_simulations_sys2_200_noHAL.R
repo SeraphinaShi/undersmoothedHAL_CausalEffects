@@ -41,14 +41,14 @@ source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 generate_data_2 <- function(n, a=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
-  U_A <- rnorm(n, 0, 2)
+  U_A <- rnorm(n, 0, 1.3)
   U_Y <- runif(n, 0, 1)
   
   # endogenous variables
   W <- U_W
   
   if(is.na(a)){
-    A <-  2 - 0.5*W + U_A
+    A <- 2.5 - 0.5*W + U_A
     A[A<=0] = 0
     A[A>=5] = 5
   } else {
@@ -56,7 +56,7 @@ generate_data_2 <- function(n, a=NA){
   }
   
   
-  Y <- as.numeric(U_Y < plogis(-10 + 2*W + 5*sin(A^1.5) + 2 * W * A ))
+  Y <- as.numeric(U_Y < plogis(-8 + 2*W + 3*sin(1.5*A^1.5) + 2 * W * A ))
   
   # data frame
   O <- data.frame(W, A, Y)
@@ -117,9 +117,9 @@ source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
 
 set.seed(123)
 results_gam <- run_simu_gam_poly_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
-save.image(file=here("data", "rdata", "02_simu_V5_sys1_200_GAM.RData"))
+save.image(file=here("data", "rdata", "02_simu_V5_sys2_200_GAM.RData"))
 
 rm(results_gam)
 set.seed(123)
 results_poly <- run_simu_gam_poly_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
-save.image(file=here("data", "rdata", "02_simu_V5_sys1_200_poly.RData"))
+save.image(file=here("data", "rdata", "02_simu_V5_sys2_200_poly.RData"))

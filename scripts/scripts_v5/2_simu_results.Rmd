@@ -116,13 +116,13 @@ Data structure:  $O = (W, A, Y)$
 
 * Exogenous variables:
   + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$
-  + $U_A \sim Normal(\mu=0, \sigma^2 = 2^2)$
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 1.3^2)$
   + $U_Y \sim Uniform(min = 0, max = 1)$
 
 * Structural equations F and endogenous variables:
   + $W =  U_W$
-  + $A = bound(2 - 0.5W + U_A, min=0, max=5)$
-  + $Y = \mathbf{I}[U_Y < expit(-10 + 2W + 5sin(A^{1.5}) + 2WA)]$
+  + $A = bound(2.5 - 0.5W + U_A, min=0, max=5)$
+  + $Y = \mathbf{I}[U_Y < expit(-8 + 2W + 3sin(1.5A^{1.5}) + 2WA)]$
   
 Outcome of interest: $E_0[Y|a,W]$, $a \in [0,5]$, the causal dose-response curve
 
@@ -130,14 +130,14 @@ Outcome of interest: $E_0[Y|a,W]$, $a \in [0,5]$, the causal dose-response curve
 generate_data_2 <- function(n, a=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
-  U_A <- rnorm(n, 0, 2)
+  U_A <- rnorm(n, 0, 1.3)
   U_Y <- runif(n, 0, 1)
   
   # endogenous variables
   W <- U_W
   
   if(is.na(a)){
-    A <-  2 - 0.5*W + U_A
+    A <- 2.5 - 0.5*W + U_A
     A[A<=0] = 0
     A[A>=5] = 5
   } else {
@@ -145,12 +145,37 @@ generate_data_2 <- function(n, a=NA){
   }
   
   
-  Y <- as.numeric(U_Y < plogis(-10 + 2*W + 5*sin(A^1.5) + 2 * W * A ))
+  Y <- as.numeric(U_Y < plogis(-8 + 2*W + 3*sin(1.5*A^1.5) + 2 * W * A ))
   
   # data frame
   O <- data.frame(W, A, Y)
   return(O)
 }
+
+# generate_data_2 <- function(n, a=NA){
+#   # exogenous variables
+#   U_W <- rnorm(n, 0, 1)
+#   U_A <- rnorm(n, 0, 2)
+#   U_Y <- runif(n, 0, 1)
+#   
+#   # endogenous variables
+#   W <- U_W
+#   
+#   if(is.na(a)){
+#     A <-  2 - 0.5*W + U_A
+#     A[A<=0] = 0
+#     A[A>=5] = 5
+#   } else {
+#     A <- rep(a, n)
+#   }
+#   
+#   
+#   Y <- as.numeric(U_Y < plogis(-10 + 2*W + 5*sin(A^1.5) + 2 * W * A ))
+#   
+#   # data frame
+#   O <- data.frame(W, A, Y)
+#   return(O)
+# }
 
 
 DGS <- generate_data_2
@@ -214,8 +239,9 @@ DGS <- generate_data_3
 sn = 3
 ```
 
-```{r child = '2_1_Simu_results_template_s3.Rmd'}
+```{r child = '2_1_Simu_results_template_s1.Rmd'}
 ```
+
 
 # Simulation 4
 ```{r}

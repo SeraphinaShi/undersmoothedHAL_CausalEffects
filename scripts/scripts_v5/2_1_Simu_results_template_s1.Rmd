@@ -93,40 +93,73 @@ plot(p)
 ```
 
 ### grid of scalers
-```{r fig.width=25, fig.height=9}
+```{r fig.width=25, fig.height=11}
 
 lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
 
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
 
-results_grid_sum = results_grid_summary(results_grid)
+# results_grid_sum = results_grid_summary(results_grid)
 
-p <- plot_perforences_alllambda_noBT(df = results_grid_sum$result_summary,
+results_grid_s <- results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
                                 max_bias_sd=NA)
 
-no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
 names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
 print("proportion of simulations that cannot compute empirical SD:")
 print(no_empirical_CI_proportion)
+```
+```{r}
+# results_grid_s = results_grid_s[,c("lambda_scaler", "n_basis")] %>% unique() 
+# 
+# p_n_basis <- ggplot(results_grid_s, aes(x = lambda_scaler)) +  
+#       geom_line(aes(y = n_basis)) + 
+#       geom_point(aes(y = n_basis)) + 
+#       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+#       theme_bw()  + 
+#       theme(axis.title=element_blank(),
+#             legend.position='none')
+# 
+# if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
+#       p_est_avg <- p_est_avg +      
+#         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+#         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+#         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+# }
 ```
 
 ### grid of smooth orders
 ```{r fig.width=8, fig.height=12}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
 
-print(unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]))
+df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
+print(df_so_n_basis)
 
 p <- plot_performences_cv_SO(df = results_so$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
 
-no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
-names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
-print("proportion of simulations that cannot compute empirical SD:")
-print(no_empirical_CI_proportion)
+
+p <- plot_performences_cv_SO_123(df = results_so$result_summary,
+                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
 ```
 
+```{r}
+p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+      geom_line(aes(y = n_basis)) + 
+      geom_point(aes(y = n_basis)) + 
+      theme_bw()  + 
+  labs(x = "Smooth order", y = "Number of bases") +
+      theme(legend.position='none')
+
+
+p_n_basis
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 8, height = 12, dpi = 800)
+```
 
 ### vs GAM & Polynomial regression
 ```{r}
@@ -196,17 +229,20 @@ plot(p)
 
 
 ### grid of scalers
-```{r fig.width=25, fig.height=9}
+```{r fig.width=25, fig.height=11}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
 
-results_grid_sum = results_grid_summary(results_grid)
+# results_grid_sum = results_grid_summary(results_grid)
 
-p <- plot_perforences_alllambda_noBT(df = results_grid_sum$result_summary,
+results_grid_s <- results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
                                 max_bias_sd=NA)
 
-no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+
 names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
 print("proportion of simulations that cannot compute empirical SD:")
 print(no_empirical_CI_proportion)
@@ -216,17 +252,30 @@ print(no_empirical_CI_proportion)
 ```{r fig.width=8, fig.height=12}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
 
-print(unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]))
+df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
+print(df_so_n_basis)
 
 p <- plot_performences_cv_SO(df = results_so$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
 
-no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
-names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
-print("proportion of simulations that cannot compute empirical SD:")
-print(no_empirical_CI_proportion)
+p <- plot_performences_cv_SO_123(df = results_so$result_summary,
+                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
 ```
 
+```{r}
+p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+      geom_line(aes(y = n_basis)) + 
+      geom_point(aes(y = n_basis)) + 
+      theme_bw()  + 
+  labs(x = "Smooth order", y = "Number of bases") +
+      theme(legend.position='none')
+
+
+p_n_basis
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 8, height = 12, dpi = 800)
+
+```
 
 ### vs GAM & Polynomial regression
 ```{r}
@@ -247,6 +296,7 @@ p1 <- plot_estimations_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plot
 ```{r fig.height=9, fig.width=8}
 p <- plot_performances_uHAL_gam_poly(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
+
 
 ## n = 1000
 ```{r}
@@ -292,17 +342,19 @@ plot(p)
 ```
 
 ### grid of scalers
-```{r fig.width=25, fig.height=9}
+```{r fig.width=25, fig.height=11}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
 
-results_grid_sum = results_grid_summary(results_grid)
+# results_grid_sum = results_grid_summary(results_grid)
 
-p <- plot_perforences_alllambda_noBT(df = results_grid_sum$result_summary,
+results_grid_s <- results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, u_l_scalers=u_l_scalers, 
                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
                                 max_bias_sd=NA)
 
-no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
 names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
 print("proportion of simulations that cannot compute empirical SD:")
 print(no_empirical_CI_proportion)
@@ -312,17 +364,29 @@ print(no_empirical_CI_proportion)
 ```{r fig.width=8, fig.height=12}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
 
-print(unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]))
+df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
+print(df_so_n_basis)
 
 p <- plot_performences_cv_SO(df = results_so$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
+p <- plot_performences_cv_SO_123(df = results_so$result_summary,
+                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
 
-no_empirical_CI_proportion <- results_grid_sum$no_empirical_CI_proportion
-names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
-print("proportion of simulations that cannot compute empirical SD:")
-print(no_empirical_CI_proportion)
 ```
 
+```{r}
+p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+      geom_line(aes(y = n_basis)) + 
+      geom_point(aes(y = n_basis)) + 
+      theme_bw()  + 
+  labs(x = "Smooth order", y = "Number of bases") +
+      theme(legend.position='none')
+
+
+p_n_basis
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 8, height = 12, dpi = 800)
+```
 
 ### vs GAM & Polynomial regression
 ```{r}
