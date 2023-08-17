@@ -108,18 +108,18 @@ save.image(file=here("data", "rdata", "02_simu_V5_sys2_1000.RData"))
 
 
 # ## -----------------------------------------------------------------------------------------------------------------------
-# rm(results)
-# 
-# set.seed(123)
-# results_grid <- run_simu_scaled_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=1000, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V5_sys2_1000_grid.RData"))
-# 
-# ## -----------------------------------------------------------------------------------------------------------------------
-# rm(results_grid)
-# 
-# set.seed(123)
-# results_so <- run_simu_smooth_orders_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=1000, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V5_sys2_1000_SO.RData"))
+rm(results)
+
+set.seed(123)
+results_grid <- run_simu_scaled_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=1000, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys2_1000_grid.RData"))
+
+## -----------------------------------------------------------------------------------------------------------------------
+rm(results_grid)
+
+set.seed(123)
+results_so <- run_simu_smooth_orders_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=1000, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys2_1000_SO.RData"))
 
