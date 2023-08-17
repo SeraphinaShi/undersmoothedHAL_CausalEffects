@@ -95,25 +95,18 @@ source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
 n= 5000
-# 
-# set.seed(123)
 
-# results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=10, return_all_rslts=T)
-# printf("num basis with non_zero coefficients from CV-HAL: %s", unique(results$result_summary$n_basis[results$result_summary$method=='CV']))
-# printf("num basis with non_zero coefficients from U_G-HAL: %s", unique(results$result_summary$n_basis[results$result_summary$method=='U_G']))
-# printf("num basis with non_zero coefficients from U_L-HAL: %s", paste(results$result_summary$n_basis[results$result_summary$method=='U_L'], collapse = ", "))
-#
-# set.seed(123)
-# results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V5_sys3_5000.RData"))
-# 
-# ## -----------------------------------------------------------------------------------------------------------------------
-rm(results)
 set.seed(123)
+results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 
-results_grid <- run_simu_scaled_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-save.image(file=here("data", "rdata", "02_simu_V5_sys3_5000_grid.RData"))
+save.image(file=here("data", "rdata", "02_simu_V5_sys3_5000.RData"))
 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results)
+# set.seed(123)
+# 
+# results_grid <- run_simu_scaled_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys3_5000_grid.RData"))
+# 
 
 

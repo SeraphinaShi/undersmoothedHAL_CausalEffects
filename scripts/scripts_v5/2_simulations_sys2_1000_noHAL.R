@@ -92,7 +92,7 @@ generate_data_2 <- function(n, a=NA){
 # 
 
 ## ----simu_sys1_n200-------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simu_V4_sys2_psi0.RData"))
+load(here("data", "rdata", "02_simu_V5_sys2_psi0.RData"))
 source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
