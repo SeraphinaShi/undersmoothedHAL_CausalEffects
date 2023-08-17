@@ -162,7 +162,7 @@ run_simu_1round <- function(gen_data_functions, eval_points, y_type, n){
     mutate_if(sapply(., is.factor), as.numeric)
   
   
-  fit_hal_all_criteria_rslts <- fit_hal_all_criteria(X, Y, y_type, eval_points)
+  fit_hal_all_criteria_rslts <- fit_hal_CV_U(X, Y, y_type, eval_points)
   
   #================================CV-HAL================================
   lambda_CV <- fit_hal_all_criteria_rslts$lambda_list$lambda_CV
