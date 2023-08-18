@@ -101,10 +101,10 @@ source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
 n = 200
 
-set.seed(123)
-
-results <- run_simu_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-save.image(file=here("data", "rdata", "02_simu_V5_sys2_200.RData"))
+# set.seed(123)
+# 
+# results <- run_simu_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys2_200.RData"))
 
 
 # ## -----------------------------------------------------------------------------------------------------------------------
@@ -122,4 +122,13 @@ save.image(file=here("data", "rdata", "02_simu_V5_sys2_200.RData"))
 # results_so <- run_simu_smooth_orders_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 # 
 # save.image(file=here("data", "rdata", "02_simu_V5_sys2_200_SO.RData"))
+
+## -----------------------------------------------------------------------------------------------------------------------
+set.seed(123)
+results_adapt <- run_simu_smoothness_adaptive_HAL_rep(generate_data_2, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+save.image(file=here("data", "rdata", "02_simu_v5_sys2_200_adapt.RData"))
+
+
+
+
 

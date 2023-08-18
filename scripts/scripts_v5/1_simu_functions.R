@@ -1,8 +1,268 @@
 library(sl3)
 
-run_simu_smooth_orders_1round <- function(gen_data_functions, eval_points, y_type, n){
+
+run_simu_smoothness_adaptive_HAL_1round <- function(gen_data_func, eval_points, y_type, n){
   
-  obs <- gen_data_functions(n)
+  obs <- gen_data_func(n)
+
+  y_name = "Y"
+  x_names = names(obs)[names(obs) != 'Y']
+  y_type = "binomial"
+  
+  Y <- as.numeric(as.matrix(obs %>% select(all_of(y_name))))
+  X <- obs %>% 
+    select(all_of(x_names)) %>% 
+    mutate_if(sapply(., is.factor), as.numeric)
+  
+  # 1. --- SL
+  task <- make_sl3_Task(
+    data = obs,
+    outcome = y_name,
+    covariates = x_names
+  )
+  
+  # num_knots = c(200, 100,  50)
+  lrn_hal0 <- Lrnr_hal9001$new(smoothness_orders = 0, family = y_type, return_x_basis = TRUE)
+  lrn_hal1 <- Lrnr_hal9001$new(smoothness_orders = 1, family = y_type, return_x_basis = TRUE)
+  lrn_hal2 <- Lrnr_hal9001$new(smoothness_orders = 2, family = y_type, return_x_basis = TRUE)
+  lrn_hal3 <- Lrnr_hal9001$new(smoothness_orders = 3, family = y_type, return_x_basis = TRUE)
+  
+  # num_knots = c(20,10,5)
+  lrn_hal0_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 0,
+                                            family = y_type, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 0,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  lrn_hal1_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 1,
+                                            family = y_type, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 1,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  lrn_hal2_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 2,
+                                            family = y_type, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 2,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  lrn_hal3_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 3,
+                                            family = y_type, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 3,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  
+  learners <- c(lrn_hal0, lrn_hal0_smallerKnots, lrn_hal1, lrn_hal1_smallerKnots, 
+                lrn_hal2, lrn_hal2_smallerKnots, lrn_hal3, lrn_hal3_smallerKnots)
+  names(learners) <- c("halcv0", "halcv0_sKnots", "halcv1", "halcv1_sKnots", 
+                       "halcv2", "halcv2_sKnots", "halcv3", "halcv3_sKnots")
+  stack <- make_learner(Stack, learners)
+  
+  cv_selector <- Lrnr_cv_selector$new(eval_function = loss_loglik_binomial) # https://tlverse.org/sl3/reference/loss_functions.html
+  dSL <- Lrnr_sl$new(learners = stack, metalearner = cv_selector)
+  
+  dSL_fit <- dSL$train(task)
+  
+  #--- 2. SL fit results
+  Dsl_fit_summary <- dSL_fit$print()
+  smooth_orders = c(0,0,1,1,2,2,3,3)
+  num_knots = rep(c("default", "smaller"),4)
+  
+  results <- list()
+  
+  for (i in 1:length(dSL_fit$learner_fits)) {
+    
+    hal_CV <- dSL_fit$learner_fits[[i]]$fit_object
+    
+    # risk
+    cv_risk = Dsl_fit_summary[i,3]
+    
+    # smooth order & if default number of knots of HAL fit
+    SO = smooth_orders[i]
+    n_knots_default = as.numeric(num_knots[i] == "default")
+    
+    # sl_pick 
+    sl_pick = as.numeric(dSL_fit$coefficients[i]==1)
+    
+    # lambda
+    lambda_CV <- hal_CV$lambda_star
+    
+    # number of basis
+    num_basis_CV <- sum(hal_CV$coefs[-1] != 0)
+    
+    # prediction
+    psi_hat <- sapply(eval_points, function(a){ X_new <- X
+    X_new$A = a
+    mean(predict(hal_CV, new_data = X_new)) } )
+    
+    # IC-based inference
+    psi_hat_pnt_cv_se <- IC_based_se(X, Y, hal_CV, eval_points)
+    
+    # returns
+    psi_hat_pnt_cv <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV,  1, 
+                            psi_hat_pnt_cv_se, 
+                            num_basis_CV, cv_risk, SO, n_knots_default, sl_pick)
+    
+    colnames(psi_hat_pnt_cv) <- c("a", "y_hat", "lambda", "lambda_scaler", "SE",
+                                  "n_basis", "cv_risk", "smooth_order", 
+                                  "if_n_knots_default", "sl_pick")
+    
+    psi_hat_pnt_cv <- as.data.frame(psi_hat_pnt_cv) %>% 
+      mutate(ci_lwr = y_hat - 1.96 * SE,
+             ci_upr = y_hat + 1.96 * SE)
+    
+    results[[i]] <- psi_hat_pnt_cv
+  }
+  
+  names(results) = names(learners)
+  
+  #--- 3. SL pick undersmooth
+  # undersmo0th hal based on the one sl picked
+  sl_pick_idx = which(dSL_fit$coefficients==1)
+  
+  hal_fit_sl_pick = dSL_fit$learner_fits[[sl_pick_idx]]$fit_object
+  SO_pick = smooth_orders[sl_pick_idx]
+  n_knots_default_pick = as.numeric(num_knots[sl_pick_idx] == "default")
+  
+  hal_undersmooth <- undersmooth_hal(X, Y,
+                                     fit_init = hal_fit_sl_pick,
+                                     family = y_type)
+  
+  lambda_u_g = hal_undersmooth$lambda_under
+  
+  if(is.na(lambda_u_g) | hal_undersmooth$lambda_under == hal_undersmooth$lambda_init){
+    lambda_u_g <- lambda_CV
+    print(sprintf('  globally u lambdas: %f', lambda_u_g))
+    
+    hal_u_g <- hal_fit_sl_pick
+  } else {
+    if(n_knots_default_pick == 1){
+      hal_u_g <- fit_hal(X = X, Y = Y, 
+                         family = y_type,
+                         smoothness_orders = SO_pick,
+                         return_x_basis = TRUE,
+                         fit_control = list(cv_select = FALSE),
+                         lambda = lambda_u_g)
+    } else {
+      hal_u_g <- fit_hal(X = X, Y = Y, 
+                         family = y_type,
+                         smoothness_orders = SO_pick,
+                         return_x_basis = TRUE,
+                         fit_control = list(cv_select = FALSE),
+                         lambda = lambda_u_g,
+                         num_knots = hal9001:::num_knots_generator(
+                           max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                           smoothness_orders = SO_pick,
+                           base_num_knots_0 = 20,
+                           base_num_knots_1 = 20  
+                         ))
+    }
+    
+  }
+  
+  # number of basis
+  num_basis_u_g <- sum(hal_u_g$coefs[-1] != 0)
+  
+  # prediction
+  psi_hat_u_g <- sapply(eval_points, function(a){ X_new <- X
+  X_new$A = a
+  mean(predict(hal_u_g, new_data = X_new)) } )
+  
+  # IC-based inference
+  psi_hat_pnt_u_g_se <- IC_based_se(X, Y, hal_u_g, eval_points)
+  
+  # returns
+  psi_hat_pnt_u_g <- cbind(eval_points, matrix(psi_hat_u_g, ncol=1), lambda_u_g,  lambda_u_g / hal_undersmooth$lambda_init, 
+                           psi_hat_pnt_u_g_se, 
+                           num_basis_u_g, NA, SO_pick, n_knots_default_pick, 1)
+  
+  colnames(psi_hat_pnt_u_g) <- c("a", "y_hat", "lambda", "lambda_scaler", "SE",
+                                 "n_basis", "cv_risk", "smooth_order", 
+                                 "if_n_knots_default", "sl_pick")
+  
+  psi_hat_pnt_u_g <- as.data.frame(psi_hat_pnt_u_g) %>% 
+    mutate(ci_lwr = y_hat - 1.96 * SE,
+           ci_upr = y_hat + 1.96 * SE)
+  
+  results[[length(dSL_fit$learner_fits) + 1]] <- psi_hat_pnt_u_g
+  names(results)[length(dSL_fit$learner_fits) + 1] = "U_HAL_SL_pick"
+  
+  return(results)
+}
+
+run_simu_smoothness_adaptive_HAL_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
+  result_list <- list()
+  
+  for(r in 1:rounds){
+    print(paste0("round ", r))
+    result <- tryCatch({
+      run_simu_smoothness_adaptive_HAL_1round(gen_data_func, eval_points, y_type, n=n)
+    }, error = function(e) {
+      print(paste0("Error: ", e$message))
+      NULL
+    })
+    
+    while(is.null(result)) {
+      print('retry with a new generated data')
+      result <- tryCatch({
+        run_simu_smoothness_adaptive_HAL_1round(gen_data_func, eval_points, y_type, n=n)
+      }, error = function(e) {
+        print(paste0("Error: ", e$message))
+        NULL
+      })
+    }
+    
+    result_list[[r]] <- result
+  }
+  
+  result_summaries <- list()
+  methods = names(result_list[[1]])
+  
+  for (method in methods){
+    result_list_method <- lapply(result_list, function(lst) lst[[method]])
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() 
+    
+    result_summaries[[method]] = result_summary
+  }
+  
+  result_summary = do.call("rbind", result_summaries) %>% as.data.frame()
+  
+  results <- list(result_summary = result_summary, result_list = result_list)
+  
+  return(results)
+}
+
+run_simu_smooth_orders_1round <- function(gen_data_func, eval_points, y_type, n){
+  
+  obs <- gen_data_func(n)
   
   y_name = "Y"
   x_names = names(obs)[names(obs) != 'Y']
@@ -77,14 +337,14 @@ run_simu_smooth_orders_1round <- function(gen_data_functions, eval_points, y_typ
   return(results)
 }
 
-run_simu_smooth_orders_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
+run_simu_smooth_orders_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
   
   result_list <- list()
   
   for(r in 1:rounds){
     print(paste0("round ", r))
     result <- tryCatch({
-      run_simu_smooth_orders_1round(gen_data_functions, eval_points, y_type, n=n)
+      run_simu_smooth_orders_1round(gen_data_func, eval_points, y_type, n=n)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -93,7 +353,7 @@ run_simu_smooth_orders_rep <- function(gen_data_functions, eval_points, y_type, 
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_smooth_orders_1round(gen_data_functions, eval_points, y_type, n=n)
+        run_simu_smooth_orders_1round(gen_data_func, eval_points, y_type, n=n)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL
@@ -146,11 +406,11 @@ run_simu_smooth_orders_rep <- function(gen_data_functions, eval_points, y_type, 
 #       - sample size n
 # returns the estimated ATE and empirical 95% CI
 ##############################################################
-run_simu_1round <- function(gen_data_functions, eval_points, y_type, n){
+run_simu_1round <- function(gen_data_func, eval_points, y_type, n){
   
   bootstrap = F
   
-  obs <- gen_data_functions(n)
+  obs <- gen_data_func(n)
   
   y_name = "Y"
   x_names = names(obs)[names(obs) != 'Y']
@@ -240,7 +500,7 @@ run_simu_1round <- function(gen_data_functions, eval_points, y_type, n){
 
 # returns the estimated ATE, empirical 95% CI, and coverage rates
 ##############################################################
-run_simu_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
+run_simu_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
   
   bootstrap = F
   
@@ -249,7 +509,7 @@ run_simu_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, ret
   for(r in 1:rounds){
     print(paste0("round ", r))
     result <- tryCatch({
-      run_simu_1round(gen_data_functions, eval_points, y_type, n=n)
+      run_simu_1round(gen_data_func, eval_points, y_type, n=n)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -258,7 +518,7 @@ run_simu_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, ret
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_1round(gen_data_functions, eval_points, y_type, n=n)
+        run_simu_1round(gen_data_func, eval_points, y_type, n=n)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL
@@ -332,11 +592,11 @@ run_simu_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, ret
 #       - sample size n
 # returns the estimated ATE and empirical 95% CI
 ##############################################################
-run_simu_1round_old <- function(gen_data_functions, eval_points, y_type, n){
+run_simu_1round_old <- function(gen_data_func, eval_points, y_type, n){
   
   bootstrap = F
   
-  obs <- gen_data_functions(n)
+  obs <- gen_data_func(n)
 
   y_name = "Y"
   x_names = names(obs)[names(obs) != 'Y']
@@ -483,7 +743,7 @@ run_simu_1round_old <- function(gen_data_functions, eval_points, y_type, n){
 
 # returns the estimated ATE, empirical 95% CI, and coverage rates
 ##############################################################
-run_simu_rep_old <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
+run_simu_rep_old <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
   
   bootstrap = F
   
@@ -492,7 +752,7 @@ run_simu_rep_old <- function(gen_data_functions, eval_points, y_type, n, rounds,
   for(r in 1:rounds){
     print(paste0("round ", r))
     result <- tryCatch({
-      run_simu_1round(gen_data_functions, eval_points, y_type, n=n)
+      run_simu_1round(gen_data_func, eval_points, y_type, n=n)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -501,7 +761,7 @@ run_simu_rep_old <- function(gen_data_functions, eval_points, y_type, n, rounds,
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_1round(gen_data_functions, eval_points, y_type, n=n)
+        run_simu_1round(gen_data_func, eval_points, y_type, n=n)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL
@@ -571,9 +831,9 @@ run_simu_rep_old <- function(gen_data_functions, eval_points, y_type, n, rounds,
 
 
 ##############################################################
-run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, lambda_scalers){
+run_simu_1round_scalers <- function(gen_data_func, eval_points, y_type, n, lambda_scalers){
   
-  obs <- gen_data_functions(n)
+  obs <- gen_data_func(n)
 
   y_name = "Y"
   x_names = names(obs)[names(obs) != 'Y']
@@ -700,13 +960,13 @@ run_simu_1round_scalers <- function(gen_data_functions, eval_points, y_type, n, 
 
 ##############################################################
 
-run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, rounds, return_all_rslts = F){
+run_simu_scaled_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
   lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
   result_list <- list()
   for(r in 1:rounds){
     print(paste0("round ", r))
     result <- tryCatch({
-      run_simu_1round_scalers(gen_data_functions, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
+      run_simu_1round_scalers(gen_data_func, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -715,7 +975,7 @@ run_simu_scaled_rep <- function(gen_data_functions, eval_points, y_type, n, roun
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_1round_scalers(gen_data_functions, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
+        run_simu_1round_scalers(gen_data_func, eval_points, y_type, n=n, lambda_scalers=lambda_scalers)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL

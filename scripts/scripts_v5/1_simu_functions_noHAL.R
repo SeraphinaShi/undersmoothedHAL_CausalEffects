@@ -49,9 +49,8 @@ run_simu_1round_gam_poly <- function(gen_data_functions, eval_points, y_type, n,
   } 
   
   # bootstrap-based inference
-  psi_hat_pnt_bt <- bootstrap_inference_gam_poly(obs, eval_points, form, method)
-  
-  psi_hat_pnt <- merge(psi_hat_pnt, psi_hat_pnt_bt, by = "a")
+  # psi_hat_pnt_bt <- bootstrap_inference_gam_poly(obs, eval_points, form, method)
+  # psi_hat_pnt <- merge(psi_hat_pnt, psi_hat_pnt_bt, by = "a")
 
   return(psi_hat_pnt)
 }
@@ -146,9 +145,9 @@ run_simu_gam_poly_rep <- function(gen_data_functions, eval_points, y_type, n, ro
     filter(SE != 0) %>% 
     mutate(bias = abs(y_hat - psi0),
            bias_se_ratio = bias / SE,
-           bias_se_ratio_bt = bias / SE_bt,
-           cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr),
-           cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt)) %>% 
+           # bias_se_ratio_bt = bias / SE_bt,
+           # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt),
+           cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
     group_by(a) %>% 
     mutate(oracal_SE = sqrt(var(y_hat)),
            oracal_bias_se_ratio = bias / oracal_SE,
