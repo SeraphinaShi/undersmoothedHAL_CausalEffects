@@ -447,7 +447,7 @@ plot_perforences_alllambda_noBT <- function(df, u_g_scaler=NA, u_l_scalers=NA, s
   p_se_list = list()
   p_bias_se_list = list()
   p_cr_list = list()
-  p_n_basis_list = list()
+  # p_n_basis_list = list()
   legend = NA
   
   for (i in 1:length(eval_points)) {
@@ -534,14 +534,6 @@ plot_perforences_alllambda_noBT <- function(df, u_g_scaler=NA, u_l_scalers=NA, s
       theme(axis.title=element_blank(),
             legend.position='none')
     
-    p_n_basis <- ggplot(df_a, aes(x = lambda_scaler)) +  
-      geom_line(aes(y = n_basis)) + 
-      geom_point(aes(y = n_basis)) + 
-      scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
-      theme_bw()  + 
-      theme(axis.title=element_blank(),
-            legend.position='none')
-    
     if(! is.na(u_g_scaler) ){
       p_est_avg <- p_est_avg +      
         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
@@ -562,11 +554,7 @@ plot_perforences_alllambda_noBT <- function(df, u_g_scaler=NA, u_l_scalers=NA, s
       p_cr <- p_cr +      
         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
-      
-      p_n_basis <- p_n_basis +
-        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
-      
+    
     }
     
     if(!any(is.na(u_l_scalers)) ){
@@ -585,9 +573,6 @@ plot_perforences_alllambda_noBT <- function(df, u_g_scaler=NA, u_l_scalers=NA, s
       p_cr <- p_cr +      
         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") 
       
-      p_n_basis <- p_n_basis +
-        geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") 
-      
     }
     
     p_est_avg_list[[i]] = p_est_avg
@@ -595,7 +580,6 @@ plot_perforences_alllambda_noBT <- function(df, u_g_scaler=NA, u_l_scalers=NA, s
     p_se_list[[i]] = p_se
     p_bias_se_list[[i]] = p_bias_se
     p_cr_list[[i]] = p_cr
-    p_n_basis_list[[i]] = p_n_basis
   }
   
   
@@ -605,23 +589,21 @@ plot_perforences_alllambda_noBT <- function(df, u_g_scaler=NA, u_l_scalers=NA, s
   g4 <- arrangeGrob(grobs = p_bias_se_list, nrow=1, left = grid::textGrob("|Bias| / Standard Error", rot=90, gp=gpar(fontsize=12)))
   g5 <- arrangeGrob(grobs = p_cr_list, nrow=1, left = grid::textGrob("Coverage rate", rot=90, gp=gpar(fontsize=12)) )#,
                     # bottom = grid::textGrob("lambda scalers", gp=gpar(fontsize=15)))
-  g6 <- arrangeGrob(grobs = p_n_basis_list, nrow=1, left = grid::textGrob("Number of basis", rot=90, gp=gpar(fontsize=12)),
-                    bottom = grid::textGrob("lambda scalers", gp=gpar(fontsize=15)))
+
   
   
-  p <- grid.arrange(g1, g2, g3, g4, g5, legend, legend_undersmoothing, g6,
+  p <- grid.arrange(g1, g2, g3, g4, g5, legend, legend_undersmoothing,
                     layout_matrix = rbind(c(1,NA),
                                           c(2,7),
                                           c(3,6),
                                           c(4,NA),
-                                          c(5,NA),
-                                          c(8,NA)),
+                                          c(5,NA)),
                     widths=c(13, 1), 
                     top = textGrob("HAL-based plug-in estimator performances for E[Y|a,W] \n", 
                                    gp=gpar(fontsize=18)))  
   
   if(!is.na(save_plot)){
-    ggsave(save_plot, plot=p, width = 25, height = 11, dpi = 500)
+    ggsave(save_plot, plot=p, width = 25, height = 9, dpi = 500)
   }
   
   return(p)
@@ -791,6 +773,235 @@ plot_perforences_alllambda <- function(df, u_g_scaler=NA, u_l_scalers=NA, save_p
   return(p)
 }
 
+
+
+plot_performences_adapt <- function(df, save_plot=NA){
+  
+  df$smooth_order = round(df$smooth_order, 4)
+  df$smooth_order = factor(df$smooth_order)
+  mean_sl_pick_SO = unique(df$smooth_order)[! unique(df$smooth_order) %in% 0:3]
+  
+  df$if_n_knots_default = round(df$if_n_knots_default, 4)
+  df$if_n_knots_default = factor(df$if_n_knots_default)
+  mean_sl_pick_if_n_knots_default = unique(df$if_n_knots_default)[! unique(df$if_n_knots_default) %in% c(0,1)]
+  
+  a_max <- max(df$a)
+   
+  p_est_avg_e <- ggplot(data=df, aes(x=a)) +
+    geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
+    geom_ribbon(aes(ymin=ci_lwr, ymax=ci_upr, color=smooth_order, fill=smooth_order, linetype=if_n_knots_default), width=0.7, alpha=0.1) +
+    geom_point(aes(y=psi0), color = "black") +
+    geom_point(aes(y=y_hat, color=smooth_order), shape=17, size=2, alpha= 0.7) +
+    labs(x="a", y="E[Y|a, W]", title = "Estimation, Delta-method CI") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    theme_bw() + 
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_fill_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash')) +
+    theme(legend.position='none')
+  
+  p_est_avg_o <- ggplot(data=df, aes(x=a)) +
+    geom_line(aes(y=psi0), alpha = 0.5, color="darkgrey") +
+    geom_ribbon(aes(ymin=oracal_ci_lwr, ymax=oracal_ci_upr, color=smooth_order, fill=smooth_order, linetype=if_n_knots_default), width=0.7, alpha=0.1) +
+    geom_point(aes(y=psi0), color = "black") +
+    geom_point(aes(y=y_hat, color=smooth_order), shape=17, size=2, alpha= 0.7) +
+    labs(x="a", y="E[Y|a, W]", title = "Estimation, Oracal CI") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    theme_bw() +
+    theme(legend.box = "horizontal",
+          legend.position='none') + 
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_fill_manual(name='smooth order',
+                      breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                      values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash')) 
+  
+  p_bias <- ggplot(df, aes(x = a, y = bias, color=smooth_order, linetype=if_n_knots_default)) +  
+    geom_line() +
+    geom_point() + 
+    labs(title="|Bias|") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    theme_bw() +
+    theme(legend.position='none') + 
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))
+  
+  p_se_e <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = SE, color=smooth_order, linetype=if_n_knots_default),alpha=0.7) +
+    geom_point(aes(y = SE, color=smooth_order, linetype=if_n_knots_default),alpha=0.7) + 
+    labs(title="Standard Error, Delta-method") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    theme_bw() + 
+    theme(legend.box = "horizontal") +
+    guides(color = guide_legend(nrow = 3, byrow = F)) +
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))
+  
+  
+  legend <- get_legend(p_se_e)
+  p_se_e <- p_se_e + theme(legend.position='none')
+  
+  p_se_o <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = oracal_SE, color=smooth_order, linetype=if_n_knots_default),alpha=0.7) +
+    geom_point(aes(y = oracal_SE, color=smooth_order, linetype=if_n_knots_default),alpha=0.7) +
+    labs(title="Standard Error, Oracal") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))  +
+    theme_bw() + 
+    theme(legend.position='none')
+  
+  p_bias_d_df_e <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = bias_se_ratio, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) +
+    geom_point(aes(y = bias_se_ratio, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) + 
+    labs(title="|Bias| / Standard Error, Delta-method") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))  +
+    theme_bw() +
+    theme(legend.position='none') 
+  
+  
+  p_bias_d_df_o <- ggplot(df, aes(x = a)) +  
+    geom_line(aes(y = oracal_bias_se_ratio, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) +
+    geom_point(aes(y = oracal_bias_se_ratio, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) + 
+    labs(title="|Bias| / Standard Error, Oracal") +
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))  +
+    theme_bw() +
+    theme(legend.position='none') 
+  
+  
+  ymin_cr_e = max(0.95, min(df$cover_rate))
+  p_cr_e <- ggplot(df, aes(x = a)) +  
+    geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=ymin_cr_e,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
+    geom_line(aes(y = cover_rate, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) +
+    geom_point(aes(y = cover_rate, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) + 
+    labs(title="95% CI Coverage Rate, Delta-method")+
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))  +
+    theme_bw() +
+    theme(legend.position='none') 
+  
+  ymin_cr_o = max(0.95, min(df$oracal_cover_rate))
+  p_cr_o <- ggplot(df, aes(x = a)) +  
+    geom_rect(data=NULL,aes(xmin=-Inf,xmax=Inf,ymin=ymin_cr_o,ymax=Inf), fill="khaki1", alpha = 0.1)+ # fill="darkseagreen1"
+    geom_line(aes(y = oracal_cover_rate, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) +
+    geom_point(aes(y = oracal_cover_rate, color=smooth_order, linetype=if_n_knots_default), alpha=0.7) + 
+    labs(title="95% CI Coverage Rate, Oracal")+
+    scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
+    scale_color_manual(name='smooth order',
+                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
+                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+    scale_linetype_manual(name='default number of knots',
+                          breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
+                          values=c('solid', 'dotted', 'twodash'))  +
+    theme_bw() +
+    theme(legend.position='none') 
+  
+  
+  p <- grid.arrange(p_est_avg_e, p_est_avg_o, 
+                    p_bias, legend,
+                    p_se_e, p_se_o, 
+                    p_bias_d_df_e, p_bias_d_df_o,
+                    p_cr_e, p_cr_o,
+                    layout_matrix = rbind(c(1,1,2,2),
+                                          c(1,1,2,2),
+                                          c(3,3,4,4),
+                                          c(3,3,NA,NA),
+                                          c(5,5,6,6),
+                                          c(5,5,6,6),
+                                          c(7,7,8,8),
+                                          c(7,7,8,8),
+                                          c(9,9,10,10),
+                                          c(9,9,10,10)),
+                    top = textGrob(paste0("HAL-based plug-in estimator performences for E[Y|a,W] \n"), 
+                                   gp=gpar(fontsize=17)))
+  
+  if(!is.na(save_plot)){
+    ggsave(save_plot, plot=p, width = 8, height = 12, dpi = 800)
+  }
+  return(p)
+  
+}
+
+
+summary_smoothness_adaptive_HAL <- function(result_list){
+  result_summaries <- list()
+  methods = names(result_list[[1]])
+  
+  for (method in methods){
+    result_list_method <- lapply(result_list, function(lst) lst[[method]])
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    check_n_basis <- function(df) {
+      !all(sapply(df$n_basis, is.numeric) & sapply(df$n_basis, length) == 1)
+    }
+    data_frames_with_varying_n_basis <- result_list_method[sapply(result_list_method, check_n_basis)]
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() 
+    
+    result_summary$method = method
+    result_summary$n_basis = mean(result_all$n_basis)
+    result_summary$smooth_order = mean(result_all$smooth_order)
+    result_summary$if_n_knots_default = mean(result_all$if_n_knots_default)
+    
+    result_summaries[[method]] = result_summary
+  }
+  
+  result_summary = do.call("rbind", result_summaries) %>% as.data.frame()
+  
+  results <- list(result_summary = result_summary, result_list = result_list)
+}
 
 plot_performences_cv_SO_123 <- function(df, save_plot=NA){
   
@@ -1149,12 +1360,12 @@ plot_estimations_uHAL_gam_poly <- function(df, save_plot=NA){
 plot_estimations_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
   
   # color_cv =  "#F8766D"
-  color_u_g = "#00BA38"
-  # color_u_l = '#619CFF'
+  color_u_adapt = "#00BA38"
+  color_u_g = '#619CFF'
   color_gam = 'chocolate2'
   color_poly = 'blueviolet'
   
-  df <- df[df$method %in% c("U_G", "GAM", "Poly"), ]
+  df <- df[df$method %in% c("U_G", "U_SOadapt", "GAM", "Poly"), ]
   
   a_max <- max(df$a)
   
@@ -1172,11 +1383,11 @@ plot_estimations_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
       scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
       scale_y_continuous(limits = c(ci_min, ci_max)) +
       scale_color_manual(name='Method',
-                         breaks=c('U_G', 'GAM', 'Poly'),
-                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                         breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                         values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
       scale_fill_manual(name='Method',
-                        breaks=c('U_G', 'GAM', 'Poly'),
-                        values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                        breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                        values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
       scale_linetype_manual(breaks=c('Oracal', 'Delta'),
                             values=c('Oracal'=1, 'Delta'=5)) +
       theme_bw() +
@@ -1196,8 +1407,8 @@ plot_estimations_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
     labs(title="|Bias|", x="a", y="|bias|") +
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
-                       breaks=c('U_G', 'GAM', 'Poly'),
-                       values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                       breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                       values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
     theme_bw()
   
   legend <- get_legend(p_bias)
@@ -1218,12 +1429,12 @@ plot_estimations_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
 plot_performances_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
   
   # color_cv =  "#F8766D"
-  color_u_g = "#00BA38"
-  # color_u_l = '#619CFF'
+  color_u_adapt = "#00BA38"
+  color_u_g = '#619CFF'
   color_gam = 'chocolate2'
   color_poly = 'blueviolet'
   
-  df <- df[df$method %in% c("U_G", "GAM", "Poly"), ]
+  df <- df[df$method %in% c("U_G", "U_SOadapt", "GAM", "Poly"), ]
   
   a_max <- max(df$a)
   #-------------------------------------------------
@@ -1233,8 +1444,8 @@ plot_performances_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
     labs(title="", x="a", y="|bias|") +
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='Method',
-                       breaks=c('U_G', 'GAM', 'Poly'),
-                       values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                       breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                       values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
     theme_bw()
   
   legend <- get_legend(p_bias)
@@ -1262,8 +1473,8 @@ plot_performances_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
       scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
       scale_y_continuous(limits = c(se_min, se_max)) +
       scale_color_manual(name='Method',
-                         breaks=c('U_G', 'GAM', 'Poly'),
-                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                         breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                         values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
       scale_linetype_manual(breaks=c('Oracal', 'Delta'),
                             values=c('Oracal'=1, 'Delta'=5)) +
       theme_bw() + 
@@ -1279,7 +1490,7 @@ plot_performances_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
   
   p_bias_sd[[1]] <- ggplot(df, aes(x = a)) +  
     geom_line(aes(y = bias_se_ratio, color=method, linetype='Delta'), alpha=0.7) +
-    geom_point(aes(y = bias_se_ratio, color=method, linetype='Delta'), alpha=0.7) + 
+    geom_point(aes(y = bias_se_ratio, color=method, linetype='Delta'), alpha=0.7) +
     labs(y = "|Bias| / Standard Error") 
   
   p_bias_sd[[2]] <- ggplot(df, aes(x = a)) +  
@@ -1292,8 +1503,8 @@ plot_performances_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
       labs(x='a', title="") +
       scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
       scale_color_manual(name='Method',
-                         breaks=c('U_G', 'GAM', 'Poly'),
-                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                         breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                         values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
       scale_linetype_manual(breaks=c('Oracal', 'Delta'),
                             values=c('Oracal'=1, 'Delta'=5)) +
       theme_bw() +
@@ -1323,8 +1534,8 @@ plot_performances_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
       scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
       scale_y_continuous(limits = c(0, 1)) +
       scale_color_manual(name='Method',
-                         breaks=c('U_G', 'GAM', 'Poly'),
-                         values=c('U_G'=color_u_g, 'GAM'=color_gam, 'Poly'=color_poly)) +
+                         breaks=c("U_G", 'U_SOadapt', 'GAM', 'Poly'),
+                         values=c("U_G"=color_u_g, 'U_SOadapt'=color_u_adapt, 'GAM'=color_gam, 'Poly'=color_poly)) +
       scale_linetype_manual(breaks=c('Oracal', 'Delta'),
                             values=c('Oracal'=1, 'Delta'=5)) +
       theme_bw() +

@@ -236,6 +236,11 @@ run_simu_smoothness_adaptive_HAL_rep <- function(gen_data_func, eval_points, y_t
     result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
     result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
     
+    check_n_basis <- function(df) {
+      !all(sapply(df$n_basis, is.numeric) & sapply(df$n_basis, length) == 1)
+      }
+    data_frames_with_varying_n_basis <- result_list_method[sapply(result_list_method, check_n_basis)]
+    
     result_summary <- result_all %>% 
       filter(SE != 0) %>% 
       mutate(bias = abs(y_hat - psi0),
@@ -250,6 +255,11 @@ run_simu_smoothness_adaptive_HAL_rep <- function(gen_data_func, eval_points, y_t
       summarise(across(where(is.numeric), mean)) %>% 
       ungroup() 
     
+    result_summary$method = method
+    result_summary$n_basis = mean(result_all$n_basis)
+    result_summary$smooth_order = mean(result_all$smooth_order)
+    result_summary$if_n_knots_default = mean(result_all$if_n_knots_default)
+    
     result_summaries[[method]] = result_summary
   }
   
@@ -258,6 +268,47 @@ run_simu_smoothness_adaptive_HAL_rep <- function(gen_data_func, eval_points, y_t
   results <- list(result_summary = result_summary, result_list = result_list)
   
   return(results)
+}
+
+summary_smoothness_adaptive_HAL <- function(result_list){
+  result_summaries <- list()
+  methods = names(result_list[[1]])
+  
+  for (method in methods){
+    result_list_method <- lapply(result_list, function(lst) lst[[method]])
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    check_n_basis <- function(df) {
+      !all(sapply(df$n_basis, is.numeric) & sapply(df$n_basis, length) == 1)
+    }
+    data_frames_with_varying_n_basis <- result_list_method[sapply(result_list_method, check_n_basis)]
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() 
+    
+    result_summary$method = method
+    result_summary$n_basis = mean(result_all$n_basis)
+    result_summary$smooth_order = mean(result_all$smooth_order)
+    result_summary$if_n_knots_default = mean(result_all$if_n_knots_default)
+    
+    result_summaries[[method]] = result_summary
+  }
+  
+  result_summary = do.call("rbind", result_summaries) %>% as.data.frame()
+  
+  results <- list(result_summary = result_summary, result_list = result_list)
 }
 
 run_simu_smooth_orders_1round <- function(gen_data_func, eval_points, y_type, n){

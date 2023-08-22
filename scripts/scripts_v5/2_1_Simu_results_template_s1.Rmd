@@ -48,6 +48,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, 
 ```
 
 
+
 ## n = 200
 ```{r}
 nn=200
@@ -114,7 +115,7 @@ results_grid_s <- results_grid_summary(results_grid)
 
 p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, # u_l_scalers=u_l_scalers, 
-                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_performences.png")), 
                                 max_bias_sd=NA)
 
 no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
@@ -124,52 +125,93 @@ print(no_empirical_CI_proportion)
 ```
 
 ```{r}
-# results_grid_s = results_grid_s[,c("lambda_scaler", "n_basis")] %>% unique() 
-# 
-# p_n_basis <- ggplot(results_grid_s, aes(x = lambda_scaler)) +  
-#       geom_line(aes(y = n_basis)) + 
-#       geom_point(aes(y = n_basis)) + 
-#       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
-#       theme_bw()  + 
-#       theme(axis.title=element_blank(),
-#             legend.position='none')
-# 
-# if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
-#       p_est_avg <- p_est_avg +      
-#         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-#         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-#         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
-# }
-```
+df_grid_n_basis = unique(results_grid_s[, c('lambda_scaler', 'n_basis')])
 
-### grid of smooth orders
-```{r fig.width=8, fig.height=12}
-load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
-
-df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
-print(df_so_n_basis)
-
-p <- plot_performences_cv_SO(df = results_so$result_summary,
-                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
-
-
-p <- plot_performences_cv_SO_123(df = results_so$result_summary,
-                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
-```
-
-```{r}
-p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +  
       geom_line(aes(y = n_basis)) + 
       geom_point(aes(y = n_basis)) + 
       theme_bw()  + 
-  labs(x = "Smooth order", y = "Number of bases") +
-      theme(legend.position='none')
+      labs(x = "lambda scalers", y = "Number of bases") +
+      theme(legend.position='none') +
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
 
 
-p_n_basis
+p_n_basis_grid
 
-ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800)
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.png")), plot=p_n_basis_grid, width = 5, height = 3,  dpi = 800)
 ```
+
+### Undersmoothed Smoothness-adaptive HAL
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
+
+results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+
+p <- plot_performences_adapt(df = results_adapt1$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
+```
+
+```{r}
+df_adapt_n_basis = unique(results_adapt1$result_summary[, c('smooth_order', 'if_n_knots_default', 'sl_pick', 'lambda', 'lambda_scaler', 'n_basis', 'cv_risk')])
+
+df_adapt_n_basis = round(df_adapt_n_basis, 4)
+df_adapt_n_basis$if_n_knots_default = factor(df_adapt_n_basis$if_n_knots_default)
+print(df_adapt_n_basis)
+
+p_n_basis_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = n_basis, color = if_n_knots_default)) + 
+      geom_point(aes(y = n_basis, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "Number of bases") 
+p_n_basis_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_num_basis.png")), plot=p_n_basis_grid, width = 5, height = 3,  dpi = 800)
+
+p_lambda_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = lambda, color = if_n_knots_default)) + 
+      geom_point(aes(y = lambda, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "lambda") 
+p_lambda_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_lambda.png")), plot=p_lambda_grid, width = 5, height = 3,  dpi = 800)
+
+p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = cv_risk, color = if_n_knots_default)) + 
+      geom_point(aes(y = cv_risk, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "CV risk") 
+p_cv_risk_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_cv_risk.png")), plot=p_cv_risk_grid, width = 5, height = 3,  dpi = 800)
+```
+
+<!-- ### grid of smooth orders -->
+<!-- ```{r fig.width=8, fig.height=12} -->
+<!-- load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData"))) -->
+
+<!-- df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]) -->
+<!-- print(df_so_n_basis) -->
+
+<!-- p <- plot_performences_cv_SO(df = results_so$result_summary, -->
+<!--                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png"))) -->
+
+
+<!-- p <- plot_performences_cv_SO_123(df = results_so$result_summary, -->
+<!--                                  save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png"))) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +   -->
+<!--       geom_line(aes(y = n_basis)) +  -->
+<!--       geom_point(aes(y = n_basis)) +  -->
+<!--       theme_bw()  +  -->
+<!--   labs(x = "Smooth order", y = "Number of bases") + -->
+<!--       theme(legend.position='none') -->
+
+
+<!-- p_n_basis -->
+
+<!-- ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800) -->
+<!-- ``` -->
 
 ### vs GAM & Polynomial regression
 ```{r}
@@ -177,12 +219,16 @@ load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData"))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
 results_poly$result_summary$method = "Poly"
+results_df1 = results$result_summary[results$result_summary$method == "U_G",]
+results_df2 = results_adapt1$result_summary[results_adapt1$result_summary$method == "U_HAL_SL_pick", ]
+results_df2$method = "U_SOadapt"
 
-colnames_overlap = intersect(names(results$result_summary), names(results_poly$result_summary))
+colnames_overlap = intersect( intersect(names(results_df1), names(results_df2)), names(results_poly$result_summary))
 
 results_all <- rbind(results_gam$result_summary[, colnames_overlap], 
                      results_poly$result_summary[, colnames_overlap], 
-                     results$result_summary[, colnames_overlap])
+                     results_df1[, colnames_overlap],
+                     results_df2[, colnames_overlap])
 ```
 
 ```{r fig.height=4, fig.width=9}
@@ -192,6 +238,7 @@ p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), 
 ```{r fig.height=9, fig.width=6}
 p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
+
 
 
 
@@ -263,7 +310,7 @@ results_grid_s <- results_grid_summary(results_grid)
 
 p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, # u_l_scalers=u_l_scalers, 
-                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_performences.png")), 
                                 max_bias_sd=NA)
 
 no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
@@ -273,52 +320,93 @@ print(no_empirical_CI_proportion)
 ```
 
 ```{r}
-# results_grid_s = results_grid_s[,c("lambda_scaler", "n_basis")] %>% unique() 
-# 
-# p_n_basis <- ggplot(results_grid_s, aes(x = lambda_scaler)) +  
-#       geom_line(aes(y = n_basis)) + 
-#       geom_point(aes(y = n_basis)) + 
-#       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
-#       theme_bw()  + 
-#       theme(axis.title=element_blank(),
-#             legend.position='none')
-# 
-# if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
-#       p_est_avg <- p_est_avg +      
-#         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-#         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-#         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
-# }
-```
+df_grid_n_basis = unique(results_grid_s[, c('lambda_scaler', 'n_basis')])
 
-### grid of smooth orders
-```{r fig.width=8, fig.height=12}
-load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
-
-df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
-print(df_so_n_basis)
-
-p <- plot_performences_cv_SO(df = results_so$result_summary,
-                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
-
-
-p <- plot_performences_cv_SO_123(df = results_so$result_summary,
-                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
-```
-
-```{r}
-p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +  
       geom_line(aes(y = n_basis)) + 
       geom_point(aes(y = n_basis)) + 
       theme_bw()  + 
-  labs(x = "Smooth order", y = "Number of bases") +
-      theme(legend.position='none')
+      labs(x = "lambda scalers", y = "Number of bases") +
+      theme(legend.position='none') +
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
 
 
-p_n_basis
+p_n_basis_grid
 
-ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800)
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.png")), plot=p_n_basis_grid, width = 5, height = 3,  dpi = 800)
 ```
+
+### Undersmoothed Smoothness-adaptive HAL
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
+
+results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+
+p <- plot_performences_adapt(df = results_adapt1$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
+```
+
+```{r}
+df_adapt_n_basis = unique(results_adapt1$result_summary[, c('smooth_order', 'if_n_knots_default', 'sl_pick', 'lambda', 'lambda_scaler', 'n_basis', 'cv_risk')])
+
+df_adapt_n_basis = round(df_adapt_n_basis, 4)
+df_adapt_n_basis$if_n_knots_default = factor(df_adapt_n_basis$if_n_knots_default)
+print(df_adapt_n_basis)
+
+p_n_basis_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = n_basis, color = if_n_knots_default)) + 
+      geom_point(aes(y = n_basis, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "Number of bases") 
+p_n_basis_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_num_basis.png")), plot=p_n_basis_grid, width = 5, height = 3,  dpi = 800)
+
+p_lambda_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = lambda, color = if_n_knots_default)) + 
+      geom_point(aes(y = lambda, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "lambda") 
+p_lambda_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_lambda.png")), plot=p_lambda_grid, width = 5, height = 3,  dpi = 800)
+
+p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = cv_risk, color = if_n_knots_default)) + 
+      geom_point(aes(y = cv_risk, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "CV risk") 
+p_cv_risk_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_cv_risk.png")), plot=p_cv_risk_grid, width = 5, height = 3,  dpi = 800)
+```
+
+<!-- ### grid of smooth orders -->
+<!-- ```{r fig.width=8, fig.height=12} -->
+<!-- load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData"))) -->
+
+<!-- df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]) -->
+<!-- print(df_so_n_basis) -->
+
+<!-- p <- plot_performences_cv_SO(df = results_so$result_summary, -->
+<!--                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png"))) -->
+
+
+<!-- p <- plot_performences_cv_SO_123(df = results_so$result_summary, -->
+<!--                                  save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png"))) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +   -->
+<!--       geom_line(aes(y = n_basis)) +  -->
+<!--       geom_point(aes(y = n_basis)) +  -->
+<!--       theme_bw()  +  -->
+<!--   labs(x = "Smooth order", y = "Number of bases") + -->
+<!--       theme(legend.position='none') -->
+
+
+<!-- p_n_basis -->
+
+<!-- ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800) -->
+<!-- ``` -->
 
 ### vs GAM & Polynomial regression
 ```{r}
@@ -326,12 +414,16 @@ load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData"))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
 results_poly$result_summary$method = "Poly"
+results_df1 = results$result_summary[results$result_summary$method == "U_G",]
+results_df2 = results_adapt1$result_summary[results_adapt1$result_summary$method == "U_HAL_SL_pick", ]
+results_df2$method = "U_SOadapt"
 
-colnames_overlap = intersect(names(results$result_summary), names(results_poly$result_summary))
+colnames_overlap = intersect( intersect(names(results_df1), names(results_df2)), names(results_poly$result_summary))
 
 results_all <- rbind(results_gam$result_summary[, colnames_overlap], 
                      results_poly$result_summary[, colnames_overlap], 
-                     results$result_summary[, colnames_overlap])
+                     results_df1[, colnames_overlap],
+                     results_df2[, colnames_overlap])
 ```
 
 ```{r fig.height=4, fig.width=9}
@@ -339,8 +431,11 @@ p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), 
 ```
 
 ```{r fig.height=9, fig.width=6}
-p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
+p <- plot_performances_uHAL_gam_poly_noBT(results_all, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
+
+
+
 
 
 ## n = 1000
@@ -409,7 +504,7 @@ results_grid_s <- results_grid_summary(results_grid)
 
 p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, # u_l_scalers=u_l_scalers, 
-                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_performences.png")), 
                                 max_bias_sd=NA)
 
 no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
@@ -419,52 +514,93 @@ print(no_empirical_CI_proportion)
 ```
 
 ```{r}
-# results_grid_s = results_grid_s[,c("lambda_scaler", "n_basis")] %>% unique() 
-# 
-# p_n_basis <- ggplot(results_grid_s, aes(x = lambda_scaler)) +  
-#       geom_line(aes(y = n_basis)) + 
-#       geom_point(aes(y = n_basis)) + 
-#       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
-#       theme_bw()  + 
-#       theme(axis.title=element_blank(),
-#             legend.position='none')
-# 
-# if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
-#       p_est_avg <- p_est_avg +      
-#         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-#         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
-#         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
-# }
-```
+df_grid_n_basis = unique(results_grid_s[, c('lambda_scaler', 'n_basis')])
 
-### grid of smooth orders
-```{r fig.width=8, fig.height=12}
-load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
-
-df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
-print(df_so_n_basis)
-
-p <- plot_performences_cv_SO(df = results_so$result_summary,
-                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
-
-
-p <- plot_performences_cv_SO_123(df = results_so$result_summary,
-                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
-```
-
-```{r}
-p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +  
       geom_line(aes(y = n_basis)) + 
       geom_point(aes(y = n_basis)) + 
       theme_bw()  + 
-  labs(x = "Smooth order", y = "Number of bases") +
-      theme(legend.position='none')
+      labs(x = "lambda scalers", y = "Number of bases") +
+      theme(legend.position='none') +
+        geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
 
 
-p_n_basis
+p_n_basis_grid
 
-ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800)
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.png")), plot=p_n_basis_grid, width = 5, height = 3,  dpi = 800)
 ```
+
+### Undersmoothed Smoothness-adaptive HAL
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
+
+results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+
+p <- plot_performences_adapt(df = results_adapt1$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
+```
+
+```{r}
+df_adapt_n_basis = unique(results_adapt1$result_summary[, c('smooth_order', 'if_n_knots_default', 'sl_pick', 'lambda', 'lambda_scaler', 'n_basis', 'cv_risk')])
+
+df_adapt_n_basis = round(df_adapt_n_basis, 4)
+df_adapt_n_basis$if_n_knots_default = factor(df_adapt_n_basis$if_n_knots_default)
+print(df_adapt_n_basis)
+
+p_n_basis_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = n_basis, color = if_n_knots_default)) + 
+      geom_point(aes(y = n_basis, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "Number of bases") 
+p_n_basis_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_num_basis.png")), plot=p_n_basis_grid, width = 5, height = 3,  dpi = 800)
+
+p_lambda_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = lambda, color = if_n_knots_default)) + 
+      geom_point(aes(y = lambda, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "lambda") 
+p_lambda_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_lambda.png")), plot=p_lambda_grid, width = 5, height = 3,  dpi = 800)
+
+p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
+      geom_line(aes(y = cv_risk, color = if_n_knots_default)) + 
+      geom_point(aes(y = cv_risk, color = if_n_knots_default)) + 
+      theme_bw()  + 
+      labs(x = "smooth order", y = "CV risk") 
+p_cv_risk_grid
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_cv_risk.png")), plot=p_cv_risk_grid, width = 5, height = 3,  dpi = 800)
+```
+
+<!-- ### grid of smooth orders -->
+<!-- ```{r fig.width=8, fig.height=12} -->
+<!-- load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData"))) -->
+
+<!-- df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')]) -->
+<!-- print(df_so_n_basis) -->
+
+<!-- p <- plot_performences_cv_SO(df = results_so$result_summary, -->
+<!--                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png"))) -->
+
+
+<!-- p <- plot_performences_cv_SO_123(df = results_so$result_summary, -->
+<!--                                  save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png"))) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +   -->
+<!--       geom_line(aes(y = n_basis)) +  -->
+<!--       geom_point(aes(y = n_basis)) +  -->
+<!--       theme_bw()  +  -->
+<!--   labs(x = "Smooth order", y = "Number of bases") + -->
+<!--       theme(legend.position='none') -->
+
+
+<!-- p_n_basis -->
+
+<!-- ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800) -->
+<!-- ``` -->
 
 ### vs GAM & Polynomial regression
 ```{r}
@@ -472,12 +608,16 @@ load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData"))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
 results_poly$result_summary$method = "Poly"
+results_df1 = results$result_summary[results$result_summary$method == "U_G",]
+results_df2 = results_adapt1$result_summary[results_adapt1$result_summary$method == "U_HAL_SL_pick", ]
+results_df2$method = "U_SOadapt"
 
-colnames_overlap = intersect(names(results$result_summary), names(results_poly$result_summary))
+colnames_overlap = intersect( intersect(names(results_df1), names(results_df2)), names(results_poly$result_summary))
 
 results_all <- rbind(results_gam$result_summary[, colnames_overlap], 
                      results_poly$result_summary[, colnames_overlap], 
-                     results$result_summary[, colnames_overlap])
+                     results_df1[, colnames_overlap],
+                     results_df2[, colnames_overlap])
 ```
 
 ```{r fig.height=4, fig.width=9}
@@ -487,8 +627,6 @@ p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), 
 ```{r fig.height=9, fig.width=6}
 p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
-
-
 
 
 
