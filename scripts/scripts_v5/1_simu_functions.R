@@ -473,6 +473,7 @@ run_simu_1round <- function(gen_data_func, eval_points, y_type, n, defualt_setti
     mutate_if(sapply(., is.factor), as.numeric)
   
   if(defualt_setting){
+    # print("d")
     fit_hal_all_criteria_rslts <- fit_hal_CV_U_0(X, Y, y_type, eval_points)
   } else {
     fit_hal_all_criteria_rslts <- fit_hal_CV_U(X, Y, y_type, eval_points)

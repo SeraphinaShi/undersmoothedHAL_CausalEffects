@@ -419,7 +419,7 @@ fit_hal_CV_U_0 <- function(X, Y, y_type, eval_points){
   #================================CV-HAL================================
   
   start <- Sys.time()
-  
+
   hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
                     smoothness_orders = 0,
                     return_x_basis = TRUE

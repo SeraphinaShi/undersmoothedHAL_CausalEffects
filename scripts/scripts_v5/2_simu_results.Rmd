@@ -183,7 +183,7 @@ sn = 2
 ```
 
 
-```{r child = '2_1_Simu_results_template_s2.Rmd'}
+```{r child = '2_1_Simu_results_template_s1.Rmd'}
 ```
 
 # Simulation 3
@@ -239,7 +239,7 @@ DGS <- generate_data_3
 sn = 3
 ```
 
-```{r child = '2_1_Simu_results_template_s3.Rmd'}
+```{r child = '2_1_Simu_results_template_s1.Rmd'}
 ```
 
 
