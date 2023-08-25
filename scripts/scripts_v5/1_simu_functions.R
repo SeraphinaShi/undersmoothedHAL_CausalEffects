@@ -457,7 +457,7 @@ run_simu_smooth_orders_rep <- function(gen_data_func, eval_points, y_type, n, ro
 #       - sample size n
 # returns the estimated ATE and empirical 95% CI
 ##############################################################
-run_simu_1round <- function(gen_data_func, eval_points, y_type, n){
+run_simu_1round <- function(gen_data_func, eval_points, y_type, n, defualt_setting = F){
   
   bootstrap = F
   
@@ -472,8 +472,12 @@ run_simu_1round <- function(gen_data_func, eval_points, y_type, n){
     select(all_of(x_names)) %>% 
     mutate_if(sapply(., is.factor), as.numeric)
   
+  if(defualt_setting){
+    fit_hal_all_criteria_rslts <- fit_hal_CV_U_0(X, Y, y_type, eval_points)
+  } else {
+    fit_hal_all_criteria_rslts <- fit_hal_CV_U(X, Y, y_type, eval_points)
+  }
   
-  fit_hal_all_criteria_rslts <- fit_hal_CV_U(X, Y, y_type, eval_points)
   
   #================================CV-HAL================================
   lambda_CV <- fit_hal_all_criteria_rslts$lambda_list$lambda_CV
@@ -551,7 +555,7 @@ run_simu_1round <- function(gen_data_func, eval_points, y_type, n){
 
 # returns the estimated ATE, empirical 95% CI, and coverage rates
 ##############################################################
-run_simu_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
+run_simu_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F, defualt_setting = F){
   
   bootstrap = F
   
@@ -560,7 +564,7 @@ run_simu_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_a
   for(r in 1:rounds){
     print(paste0("round ", r))
     result <- tryCatch({
-      run_simu_1round(gen_data_func, eval_points, y_type, n=n)
+      run_simu_1round(gen_data_func, eval_points, y_type, n=n, defualt_setting)
     }, error = function(e) {
       print(paste0("Error: ", e$message))
       NULL
@@ -569,7 +573,7 @@ run_simu_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_a
     while(is.null(result)) {
       print('retry with a new generated data')
       result <- tryCatch({
-        run_simu_1round(gen_data_func, eval_points, y_type, n=n)
+        run_simu_1round(gen_data_func, eval_points, y_type, n=n, defualt_setting)
       }, error = function(e) {
         print(paste0("Error: ", e$message))
         NULL

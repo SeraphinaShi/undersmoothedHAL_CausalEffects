@@ -127,6 +127,9 @@ print(no_empirical_CI_proportion)
 ```{r}
 df_grid_n_basis = unique(results_grid_s[, c('lambda_scaler', 'n_basis')])
 
+cv_n_b = mean(df_grid_n_basis$n_basis[df_grid_n_basis$lambda_scaler == 1])
+u_g_n_b = mean(df_grid_n_basis$n_basis[which(abs(df_grid_n_basis$lambda_scaler - u_g_scaler) == min(abs(df_grid_n_basis$lambda_scaler - u_g_scaler) ))])
+
 p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +  
       geom_line(aes(y = n_basis)) + 
       geom_point(aes(y = n_basis)) + 
@@ -134,7 +137,9 @@ p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +
       labs(x = "lambda scalers", y = "Number of bases") +
       theme(legend.position='none') +
         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") + 
+     annotate(x=u_g_scaler, y=+Inf, label=round(u_g_n_b, 2), vjust=2, geom="label") +
+     annotate(x=1, y=+Inf, label=round(cv_n_b, 2), vjust=2, geom="label")
 
 
 p_n_basis_grid
@@ -159,9 +164,16 @@ df_adapt_n_basis = round(df_adapt_n_basis, 4)
 df_adapt_n_basis$if_n_knots_default = factor(df_adapt_n_basis$if_n_knots_default)
 print(df_adapt_n_basis)
 
+
+df_adapt_n_basis$label_val = as.character(round(df_adapt_n_basis$n_basis, 2)) 
+df_adapt_n_basis$lambda_val = as.character(round(df_adapt_n_basis$lambda, 2)) 
+df_adapt_n_basis$cv_risk_val = as.character(round(df_adapt_n_basis$cv_risk, 2)) 
+
+
 p_n_basis_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = n_basis, color = if_n_knots_default)) + 
       geom_point(aes(y = n_basis, color = if_n_knots_default)) + 
+  geom_text(aes(y = n_basis, label = label_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "Number of bases") 
 p_n_basis_grid
@@ -170,6 +182,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_num_basis.
 p_lambda_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = lambda, color = if_n_knots_default)) + 
       geom_point(aes(y = lambda, color = if_n_knots_default)) + 
+  geom_text(aes(y = lambda, label = lambda_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "lambda") 
 p_lambda_grid
@@ -178,6 +191,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_lambda.png
 p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = cv_risk, color = if_n_knots_default)) + 
       geom_point(aes(y = cv_risk, color = if_n_knots_default)) + 
+  geom_text(aes(y = cv_risk, label = cv_risk_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "CV risk") 
 p_cv_risk_grid
@@ -322,6 +336,9 @@ print(no_empirical_CI_proportion)
 ```{r}
 df_grid_n_basis = unique(results_grid_s[, c('lambda_scaler', 'n_basis')])
 
+cv_n_b = mean(df_grid_n_basis$n_basis[df_grid_n_basis$lambda_scaler == 1])
+u_g_n_b = mean(df_grid_n_basis$n_basis[which(abs(df_grid_n_basis$lambda_scaler - u_g_scaler) == min(abs(df_grid_n_basis$lambda_scaler - u_g_scaler) ))])
+
 p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +  
       geom_line(aes(y = n_basis)) + 
       geom_point(aes(y = n_basis)) + 
@@ -329,7 +346,10 @@ p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +
       labs(x = "lambda scalers", y = "Number of bases") +
       theme(legend.position='none') +
         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") +
+       annotate(x=u_g_scaler, y=+Inf, label=round(u_g_n_b, 2), vjust=2, geom="label") +
+     annotate(x=1, y=+Inf, label=round(cv_n_b, 2), vjust=2, geom="label")
+
 
 
 p_n_basis_grid
@@ -354,9 +374,15 @@ df_adapt_n_basis = round(df_adapt_n_basis, 4)
 df_adapt_n_basis$if_n_knots_default = factor(df_adapt_n_basis$if_n_knots_default)
 print(df_adapt_n_basis)
 
+df_adapt_n_basis$label_val = as.character(round(df_adapt_n_basis$n_basis, 2)) 
+df_adapt_n_basis$lambda_val = as.character(round(df_adapt_n_basis$lambda, 2)) 
+df_adapt_n_basis$cv_risk_val = as.character(round(df_adapt_n_basis$cv_risk, 2)) 
+
+
 p_n_basis_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = n_basis, color = if_n_knots_default)) + 
       geom_point(aes(y = n_basis, color = if_n_knots_default)) + 
+  geom_text(aes(y = n_basis, label = label_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "Number of bases") 
 p_n_basis_grid
@@ -365,6 +391,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_num_basis.
 p_lambda_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = lambda, color = if_n_knots_default)) + 
       geom_point(aes(y = lambda, color = if_n_knots_default)) + 
+  geom_text(aes(y = lambda, label = lambda_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "lambda") 
 p_lambda_grid
@@ -373,6 +400,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_lambda.png
 p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = cv_risk, color = if_n_knots_default)) + 
       geom_point(aes(y = cv_risk, color = if_n_knots_default)) + 
+  geom_text(aes(y = cv_risk, label = cv_risk_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "CV risk") 
 p_cv_risk_grid
@@ -516,6 +544,9 @@ print(no_empirical_CI_proportion)
 ```{r}
 df_grid_n_basis = unique(results_grid_s[, c('lambda_scaler', 'n_basis')])
 
+cv_n_b = mean(df_grid_n_basis$n_basis[df_grid_n_basis$lambda_scaler == 1])
+u_g_n_b = mean(df_grid_n_basis$n_basis[which(abs(df_grid_n_basis$lambda_scaler - u_g_scaler) == min(abs(df_grid_n_basis$lambda_scaler - u_g_scaler) ))])
+
 p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +  
       geom_line(aes(y = n_basis)) + 
       geom_point(aes(y = n_basis)) + 
@@ -523,7 +554,10 @@ p_n_basis_grid <- ggplot(df_grid_n_basis, aes(x = lambda_scaler)) +
       labs(x = "lambda scalers", y = "Number of bases") +
       theme(legend.position='none') +
         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
-        geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+        geom_vline(xintercept = 1, lty=2, col = "#F8766D") +
+       annotate(x=u_g_scaler, y=+Inf, label=round(u_g_n_b, 2), vjust=2, geom="label") +
+     annotate(x=1, y=+Inf, label=round(cv_n_b, 2), vjust=2, geom="label")
+
 
 
 p_n_basis_grid
@@ -548,9 +582,17 @@ df_adapt_n_basis = round(df_adapt_n_basis, 4)
 df_adapt_n_basis$if_n_knots_default = factor(df_adapt_n_basis$if_n_knots_default)
 print(df_adapt_n_basis)
 
+
+
+df_adapt_n_basis$label_val = as.character(round(df_adapt_n_basis$n_basis, 2)) 
+df_adapt_n_basis$lambda_val = as.character(round(df_adapt_n_basis$lambda, 2)) 
+df_adapt_n_basis$cv_risk_val = as.character(round(df_adapt_n_basis$cv_risk, 2)) 
+
+
 p_n_basis_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = n_basis, color = if_n_knots_default)) + 
       geom_point(aes(y = n_basis, color = if_n_knots_default)) + 
+  geom_text(aes(y = n_basis, label = label_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "Number of bases") 
 p_n_basis_grid
@@ -559,6 +601,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_num_basis.
 p_lambda_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = lambda, color = if_n_knots_default)) + 
       geom_point(aes(y = lambda, color = if_n_knots_default)) + 
+  geom_text(aes(y = lambda, label = lambda_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "lambda") 
 p_lambda_grid
@@ -567,6 +610,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_lambda.png
 p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_knots_default)) +  
       geom_line(aes(y = cv_risk, color = if_n_knots_default)) + 
       geom_point(aes(y = cv_risk, color = if_n_knots_default)) + 
+  geom_text(aes(y = cv_risk, label = cv_risk_val), hjust=0, vjust=0) + 
       theme_bw()  + 
       labs(x = "smooth order", y = "CV risk") 
 p_cv_risk_grid

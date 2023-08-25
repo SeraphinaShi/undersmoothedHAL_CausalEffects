@@ -114,14 +114,18 @@ n = 200
 # save.image(file=here("data", "rdata", "02_simu_V5_sys1_200_grid.RData"))
 
 ## -----------------------------------------------------------------------------------------------------------------------
+# 
+# set.seed(123)
+# results_adapt <- run_simu_smoothness_adaptive_HAL_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_v5_sys1_200_adapt.RData"))
 
+
+## -----------------------------------------------------------------------------------------------------------------------
+#
 set.seed(123)
-results_adapt <- run_simu_smoothness_adaptive_HAL_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-save.image(file=here("data", "rdata", "02_simu_v5_sys1_200_adapt.RData"))
 
-
-
-
+results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
+save.image(file=here("data", "rdata", "02_simu_v5_sys1_200_default.RData"))
 
 
 
