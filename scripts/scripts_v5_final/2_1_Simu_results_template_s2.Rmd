@@ -1,0 +1,359 @@
+
+```{r fig.width=10, fig.height=7}
+obs <- DGS(n=10000)
+print(summary(obs))
+  
+# check positivity violations
+cat("Summary of A given W < -1:")
+summary(obs$A[obs$W < -1])
+cat("Summary of A given -1 < W <= 0:")
+summary(obs$A[-1 <= obs$W & obs$W < 0])
+cat("Summary of A given 0 < W <= 1:")
+summary(obs$A[0 <= obs$W & obs$W < 1])
+cat("Summary of A given 1 < W:")
+summary(obs$A[1 <= obs$W])
+
+
+p1 = ggplot(obs, aes(W)) + geom_histogram(stat="bin",aes(y=..density..), color='lightyellow', fill='lightyellow') + geom_density(lwd=1) + theme_bw() + labs(y='Density')
+p2 = ggplot(obs, aes(A)) + geom_histogram(stat="bin",aes(y=..density..), color='lightyellow', fill='lightyellow') + geom_density(lwd=1) + theme_bw() + labs(y='Density')
+p3 = ggplot(obs %>% group_by(Y) %>% summarise(count = n()) %>% mutate(Proportion = count / 10000), 
+            aes(x = Y, y = Proportion)) + geom_bar(stat = "identity", fill='lightyellow', color='grey') + theme_bw()
+p4 = ggplot(obs, aes(W, A)) + geom_point() + theme_bw()
+p5 = ggplot(obs, aes(W, Y)) + geom_point() + theme_bw()
+p6 = ggplot(obs, aes(A, Y)) + geom_point() + theme_bw()
+
+p <- grid.arrange(p1, p2, p3, p4, p5, p6, 
+                  nrow=2, ncol=3,
+                  top = textGrob(sprintf('Variable distributions of simulation %i', sn), 
+                                   gp=gpar(fontsize=17)))
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_EDAs.png")), p, width = 10, height = 6, dpi = 1000)
+```
+
+
+```{r fig.width=5, fig.height=4}
+load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+
+ggplot() +
+    geom_line(data=psi0_line, aes(x=a, y=psi0)) + 
+    geom_point(data=psi0_pnt, aes(x=a, y=psi0)) + 
+    labs(x="a", y="P_0(E[Y|a,W])",
+         title = "True Average Treatment Effect, P_0(E[Y|a,W])") +
+        theme(plot.title = element_text(hjust = 0.5),
+              panel.grid.major.x = element_blank(),
+              axis.text = element_text(size=7)) +
+  theme_bw()
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, height = 4, dpi = 1000)
+
+```
+
+
+## n = 200
+```{r}
+nn=200
+```
+
+```{r}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+
+
+cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV'])
+u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+
+cv_n_bases = unique(results$result_summary$n_basis[results$result_summary$method == 'CV'])
+u_g_n_bases = unique(results$result_summary$n_basis[results$result_summary$method == 'U_G'])
+
+# 
+# u_l_lambdas = rep(NA, length(eval_points))
+# u_l_scalers = rep(NA, length(eval_points))
+# 
+# for (i in 1:length(eval_points)) {
+#   u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+#   u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+# }
+
+cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda))
+cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler))
+# cat(paste0(' The average lambdatime of locally undersmoothed HAL:',
+#            '       ', paste0(round(u_l_lambdas, 4), collapse = ", "),
+#            '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV'))
+
+cat(sprintf(' The average number of bases of CV-HAL: %0.4f ', cv_n_bases))
+cat(sprintf(' The average number of bases of globally undersmoothed HAL: %0.4f ', u_g_n_bases))
+
+
+cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
+cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
+# cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+
+
+```
+
+```{r fig.height=9, fig.width=9}
+p <- plot_performences_cv_ug_alla_noBT(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
+```
+
+```{r fig.height=4, fig.width=12}
+p <- estimation_qqplot_cv_ug_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
+plot(p)
+```
+
+### grid of scalers
+```{r fig.width=25, fig.height=11}
+
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
+
+# results_grid_sum = results_grid_summary(results_grid)
+
+results_grid_s <- results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(results_grid_s,
+                                u_g_scaler=u_g_scaler, # u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+```{r}
+# results_grid_s = results_grid_s[,c("lambda_scaler", "n_basis")] %>% unique() 
+# 
+# p_n_basis <- ggplot(results_grid_s, aes(x = lambda_scaler)) +  
+#       geom_line(aes(y = n_basis)) + 
+#       geom_point(aes(y = n_basis)) + 
+#       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+#       theme_bw()  + 
+#       theme(axis.title=element_blank(),
+#             legend.position='none')
+# 
+# if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
+#       p_est_avg <- p_est_avg +      
+#         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+#         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+#         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+# }
+```
+
+### grid of smooth orders
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
+
+df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
+print(df_so_n_basis)
+
+p <- plot_performences_cv_SO(df = results_so$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
+
+
+p <- plot_performences_cv_SO_123(df = results_so$result_summary,
+                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
+```
+
+```{r}
+p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+      geom_line(aes(y = n_basis)) + 
+      geom_point(aes(y = n_basis)) + 
+      theme_bw()  + 
+  labs(x = "Smooth order", y = "Number of bases") +
+      theme(legend.position='none')
+
+
+p_n_basis
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800)
+```
+
+
+
+
+
+
+
+## n = 500
+```{r}
+nn=500
+```
+
+```{r}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+
+
+cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV'])
+u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+
+cv_n_bases = unique(results$result_summary$n_basis[results$result_summary$method == 'CV'])
+u_g_n_bases = unique(results$result_summary$n_basis[results$result_summary$method == 'U_G'])
+
+# 
+# u_l_lambdas = rep(NA, length(eval_points))
+# u_l_scalers = rep(NA, length(eval_points))
+# 
+# for (i in 1:length(eval_points)) {
+#   u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+#   u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+# }
+
+cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda))
+cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler))
+# cat(paste0(' The average lambdatime of locally undersmoothed HAL:',
+#            '       ', paste0(round(u_l_lambdas, 4), collapse = ", "),
+#            '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV'))
+
+cat(sprintf(' The average number of bases of CV-HAL: %0.4f ', cv_n_bases))
+cat(sprintf(' The average number of bases of globally undersmoothed HAL: %0.4f ', u_g_n_bases))
+
+
+cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
+cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
+# cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+
+
+```
+
+```{r fig.height=9, fig.width=9}
+p <- plot_performences_cv_ug_alla_noBT(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
+```
+
+```{r fig.height=4, fig.width=12}
+p <- estimation_qqplot_cv_ug_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
+plot(p)
+```
+
+### grid of scalers
+```{r fig.width=25, fig.height=11}
+
+lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
+
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
+
+# results_grid_sum = results_grid_summary(results_grid)
+
+results_grid_s <- results_grid_summary(results_grid)
+
+p <- plot_perforences_alllambda_noBT(results_grid_s,
+                                u_g_scaler=u_g_scaler, # u_l_scalers=u_l_scalers, 
+                                save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_grid.png")), 
+                                max_bias_sd=NA)
+
+no_empirical_CI_proportion <- results_grid$no_empirical_CI_proportion
+names(no_empirical_CI_proportion) = as.character(round(lambda_scalers,4))
+print("proportion of simulations that cannot compute empirical SD:")
+print(no_empirical_CI_proportion)
+```
+
+```{r}
+# results_grid_s = results_grid_s[,c("lambda_scaler", "n_basis")] %>% unique() 
+# 
+# p_n_basis <- ggplot(results_grid_s, aes(x = lambda_scaler)) +  
+#       geom_line(aes(y = n_basis)) + 
+#       geom_point(aes(y = n_basis)) + 
+#       scale_x_continuous(breaks=seq(0,1.2,by=0.25)) +
+#       theme_bw()  + 
+#       theme(axis.title=element_blank(),
+#             legend.position='none')
+# 
+# if(!any(is.na(u_g_scaler) & is.na(u_l_scalers)) ){
+#       p_est_avg <- p_est_avg +      
+#         geom_vline(xintercept = u_g_scaler, lty=2, col = "#00BA38") +
+#         geom_vline(xintercept = u_l_scaler, lty=2, col = "#619CFF") + 
+#         geom_vline(xintercept = 1, lty=2, col = "#F8766D") 
+# }
+```
+
+### grid of smooth orders
+```{r fig.width=8, fig.height=12}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_SO.RData")))
+
+df_so_n_basis = unique(results_so$result_summary[, c('smooth_order', 'lambda', 'n_basis', 'sl_pick')])
+print(df_so_n_basis)
+
+p <- plot_performences_cv_SO(df = results_so$result_summary,
+                             save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO.png")))
+
+
+p <- plot_performences_cv_SO_123(df = results_so$result_summary,
+                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_SO123.png")))
+```
+
+```{r}
+p_n_basis <- ggplot(df_so_n_basis, aes(x = smooth_order)) +  
+      geom_line(aes(y = n_basis)) + 
+      geom_point(aes(y = n_basis)) + 
+      theme_bw()  + 
+  labs(x = "Smooth order", y = "Number of bases") +
+      theme(legend.position='none')
+
+
+p_n_basis
+
+ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_num_basis_SO.png")), plot=p_n_basis, width = 5, height = 3,  dpi = 800)
+```
+
+
+
+
+
+
+## n = 1000
+```{r}
+nn=1000
+```
+
+```{r}
+load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+
+
+cv_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'CV'])
+u_g_lambda = unique(results$result_summary$lambda[results$result_summary$method == 'U_G'])
+u_g_scaler = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_G'])
+
+eval_points = seq(0,5,0.5)
+
+cv_n_bases = unique(results$result_summary$n_basis[results$result_summary$method == 'CV'])
+u_g_n_bases = unique(results$result_summary$n_basis[results$result_summary$method == 'U_G'])
+
+# 
+# u_l_lambdas = rep(NA, length(eval_points))
+# u_l_scalers = rep(NA, length(eval_points))
+# 
+# for (i in 1:length(eval_points)) {
+#   u_l_lambdas[i] = unique(results$result_summary$lambda[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+#   u_l_scalers[i] = unique(results$result_summary$lambda_scaler[results$result_summary$method == 'U_L' & results$result_summary$a == eval_points[i]])
+# }
+
+cat(sprintf(' The average lambda of CV-HAL: %0.4f (= 1 * lambda_CV )', cv_lambda))
+cat(sprintf(' The average lambda of globally undersmoothed HAL: %0.4f (= %0.4f * lambda_CV )', u_g_lambda, u_g_scaler))
+# cat(paste0(' The average lambdatime of locally undersmoothed HAL:',
+#            '       ', paste0(round(u_l_lambdas, 4), collapse = ", "),
+#            '   (= [', paste0(round(u_l_scalers, 4), collapse = ", "), '] * lambda_CV'))
+
+cat(sprintf(' The average number of bases of CV-HAL: %0.4f ', cv_n_bases))
+cat(sprintf(' The average number of bases of globally undersmoothed HAL: %0.4f ', u_g_n_bases))
+
+
+cat(sprintf(' The average fitting time for CV-HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='CV'])))
+cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_G'])))
+# cat(sprintf(' The average fitting time for locally undersmoothed HAL: %0.4f seconds', mean(results$result_summary$hal_fit_time[results$result_summary$method=='U_L'])))
+
+
+```
+
+```{r fig.height=9, fig.width=9}
+p <- plot_performences_cv_ug_alla_noBT(df = results$result_summary, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences.png")))
+```
+
+```{r fig.height=4, fig.width=12}
+p <- estimation_qqplot_cv_ug_alla(results_list = results, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots.png")))
+plot(p)
+```
