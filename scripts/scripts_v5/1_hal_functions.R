@@ -316,7 +316,7 @@ fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
 
 fit_hal_CV_U <- function(X, Y, y_type, eval_points){
   #================================CV-HAL================================
-  
+  print("1")
   start <- Sys.time()
   
   hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
@@ -416,6 +416,8 @@ fit_hal_CV_U <- function(X, Y, y_type, eval_points){
 }
 
 fit_hal_CV_U_0 <- function(X, Y, y_type, eval_points){
+  print("0")
+  
   #================================CV-HAL================================
   
   start <- Sys.time()

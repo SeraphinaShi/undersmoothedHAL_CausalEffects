@@ -414,7 +414,7 @@ run_simu_smooth_orders_rep <- function(gen_data_func, eval_points, y_type, n, ro
     result_list[[r]] <- result
   }
   
-  results <- list()
+  result_summaries <- list()
   smooth_orders = paste0("smooth_order = ", 0:5)
   
   for (s in smooth_orders){
@@ -437,16 +437,16 @@ run_simu_smooth_orders_rep <- function(gen_data_func, eval_points, y_type, n, ro
       ungroup() %>%
       mutate(hal_fit_time_unit = 'secs')
     
-    if(return_all_rslts){
-      results[[s]] <- list(result_summary = result_summary,
-                           all_results = result_list_method)
-    } else {
-      results[[s]] <- list(result_summary = result_summary)
-    }
+    result_summaries[[s]] <- result_summary
   }
   
-  results$result_summary <- rbind(results[[1]]$result_summary, results[[2]]$result_summary, results[[3]]$result_summary, 
-                                  results[[4]]$result_summary, results[[5]]$result_summary, results[[6]]$result_summary)
+  result_summary = do.call("rbind", result_summaries) %>% as.data.frame()
+  
+  if(return_all_rslts){
+    results <- list(result_summary = result_summary, result_list = result_list)
+  } else {
+    results <- list(result_summary = result_summary)
+  }
   
   return(results)
 }
@@ -522,7 +522,7 @@ run_simu_1round <- function(gen_data_func, eval_points, y_type, n, defualt_setti
     colnames(psi_hat_pnt_u_g) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "n_basis")
     
     # IC-based inference
-    psi_hat_pnt_u_g_se <- IC_based_se(X, Y, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, eval_points)
+    psi_hat_pnt_u_g_se <- IC_based_se(X, Y, fit_hal_all_criteria_rslts$hal_fit_list$hal_u_g, eval_points)
     psi_hat_pnt_u_g <- as.data.frame(psi_hat_pnt_u_g) %>% 
       mutate(SE = psi_hat_pnt_u_g_se,
              ci_lwr = y_hat - 1.96 * SE,
@@ -639,251 +639,6 @@ run_simu_rep <- function(gen_data_func, eval_points, y_type, n, rounds, return_a
   
   return(results)
 }
-
-
-
-##############################################################
-# This function runs the simulation with given:
-#       - data generating function
-#       - sample size n
-# returns the estimated ATE and empirical 95% CI
-##############################################################
-run_simu_1round_old <- function(gen_data_func, eval_points, y_type, n){
-  
-  bootstrap = F
-  
-  obs <- gen_data_func(n)
-
-  y_name = "Y"
-  x_names = names(obs)[names(obs) != 'Y']
-  y_type = "binomial"
-
-  Y <- as.numeric(as.matrix(obs %>% select(all_of(y_name))))
-  X <- obs %>% 
-    select(all_of(x_names)) %>% 
-    mutate_if(sapply(., is.factor), as.numeric)
-  
-  
-  fit_hal_all_criteria_rslts <- fit_hal_all_criteria(X, Y, y_type, eval_points)
-  
-  #================================CV-HAL================================
-  lambda_CV <- fit_hal_all_criteria_rslts$lambda_list$lambda_CV
-  psi_hat <- sapply(eval_points, function(a){ X_new <- X
-                                              X_new$A = a
-                                              mean(predict(fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, new_data = X_new)) } )
-
-  psi_hat_pnt_cv <- cbind(eval_points, matrix(psi_hat, ncol=1), lambda_CV, 1, 
-                          fit_hal_all_criteria_rslts$hal_fit_time_list$hal_cv_fit_time,
-                          fit_hal_all_criteria_rslts$num_basis_list$num_basis_CV)
-  colnames(psi_hat_pnt_cv) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "n_basis")
-  
-
-    # IC-based inference
-  psi_hat_pnt_cv_se <- IC_based_se(X, Y, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, eval_points)
-  psi_hat_pnt_cv <- as.data.frame(psi_hat_pnt_cv) %>% 
-    mutate(SE = psi_hat_pnt_cv_se,
-           ci_lwr = y_hat - 1.96 * SE,
-           ci_upr = y_hat + 1.96 * SE)
-
-  # bootstrap-based inference
-  if(bootstrap){
-    psi_hat_pnt_cv_bt_bds <- bootstrap_inference(X, Y, eval_points, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, y_type)
-    psi_hat_pnt_cv$ci_lwr_bt <- psi_hat_pnt_cv_bt_bds$lower_bd
-    psi_hat_pnt_cv$ci_upr_bt <- psi_hat_pnt_cv_bt_bds$upper_bd
-    psi_hat_pnt_cv$SE_bt <- psi_hat_pnt_cv_bt_bds$SE
-  }
-  
-  #================================global undersmoothing================================
-  if(any(fit_hal_all_criteria_rslts$hal_fit_list$hal_u_g$coefs[-1] != 0)){
-    
-    psi_hat <- sapply(eval_points, function(a){ X_new <- X
-                                                X_new$A = a
-                                                mean(predict(fit_hal_all_criteria_rslts$hal_fit_list$hal_u_g, new_data = X_new)) } )
-    
-    lambda_scaler = fit_hal_all_criteria_rslts$lambda_list$lambda_u_g / lambda_CV
-    psi_hat_pnt_u_g <- cbind(eval_points, matrix(psi_hat, ncol=1), fit_hal_all_criteria_rslts$lambda_list$lambda_u_g, lambda_scaler, 
-                             fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_g_fit_time,
-                             fit_hal_all_criteria_rslts$num_basis_list$num_basis_u_g)
-    
-    colnames(psi_hat_pnt_u_g) <- c("a", "y_hat", "lambda", "lambda_scaler", "hal_fit_time", "n_basis")
-    
-    # IC-based inference
-    psi_hat_pnt_u_g_se <- IC_based_se(X, Y, fit_hal_all_criteria_rslts$hal_fit_list$hal_CV, eval_points)
-    psi_hat_pnt_u_g <- as.data.frame(psi_hat_pnt_u_g) %>% 
-      mutate(SE = psi_hat_pnt_u_g_se,
-             ci_lwr = y_hat - 1.96 * SE,
-             ci_upr = y_hat + 1.96 * SE)
-    
-    if(bootstrap){
-      # bootstrap-based inference
-      psi_hat_pnt_u_g_bt_bds <- bootstrap_inference(X, Y, eval_points, fit_hal_all_criteria_rslts$hal_fit_list$hal_u_g, y_type)
-      psi_hat_pnt_u_g$ci_lwr_bt <- psi_hat_pnt_u_g_bt_bds$lower_bd
-      psi_hat_pnt_u_g$ci_upr_bt <- psi_hat_pnt_u_g_bt_bds$upper_bd
-      psi_hat_pnt_u_g$SE_bt <- psi_hat_pnt_u_g_bt_bds$SE
-    }
-    
-    
-  } else {
-    psi_hat_pnt_u_g <- NA
-  }
-
-
-  #================================local undersmoothing================================
-
-  #--------------------------estimations---------------------------------
-  hal_u_l = fit_hal_all_criteria_rslts$hal_fit_list$hal_u_l
-  lambda_u_l = fit_hal_all_criteria_rslts$lambda_list$lambda_u_l
-  lambda_u_l_idx = fit_hal_all_criteria_rslts$lambda_u_l_idx
-  
-  psi_hat_pnt_u_l = matrix(ncol = 9, nrow = length(eval_points))
-  
-  for (i in 1:length(eval_points)) {
-    a = eval_points[i]
-    u_l_idx = lambda_u_l_idx[i]
-    n_basis = fit_hal_all_criteria_rslts$num_basis_list$num_basis_u_l[i]
-    
-    hal_fit = hal_u_l[[u_l_idx]]
-    lambda = lambda_u_l[u_l_idx]
-    lambda_scaler = lambda / lambda_CV
-    
-    coef <- hal_fit$coefs
-    basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
-    
-    nonzero_idx <- which(coef != 0)
-    
-    if(length(nonzero_idx) > 0){
-      
-      X_new <- X
-      X_new$A = a
-      y_hat <- mean(predict(hal_fit, new_data = X_new))
-
-      # IC-based inference
-      SE <- IC_based_se_u_l(X, Y, hal_fit, a)
-      ci_lwr <- y_hat - 1.96 * SE
-      ci_upr <- y_hat + 1.96 * SE
-      
-      psi_hat_pnt_u_l[i,] = c(a, y_hat, lambda, lambda_scaler, 
-                              fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_l_fit_time, 
-                              n_basis,
-                              SE, ci_lwr, ci_upr)
-    } else {
-      psi_hat_pnt_u_l[i,] <- c(a, NA, lambda, lambda_scaler, 
-                               fit_hal_all_criteria_rslts$hal_fit_time_list$hal_u_l_fit_time, 
-                               NA,
-                               NA, NA, NA)
-    }
-  }
-  colnames(psi_hat_pnt_u_l) <- c("a", "y_hat", 'lambda', 'lambda_scaler', 'hal_fit_time', 'n_basis', "SE", "ci_lwr", "ci_upr")
-  psi_hat_pnt_u_l <- as.data.frame(psi_hat_pnt_u_l)
-  
-  # bootstrap-based inference
-  if(bootstrap){
-    psi_hat_pnt_u_l_bt_bds <- bootstrap_inference_u_l(X, Y, eval_points, fit_hal_all_criteria_rslts$hal_fit_list$hal_u_l, y_type, lambda_u_l_idx)
-    psi_hat_pnt_u_l$ci_lwr_bt <- psi_hat_pnt_u_l_bt_bds$lower_bd
-    psi_hat_pnt_u_l$ci_upr_bt <- psi_hat_pnt_u_l_bt_bds$upper_bd
-    psi_hat_pnt_u_l$SE_bt <- psi_hat_pnt_u_l_bt_bds$SE
-  }
-  
-  #====================================================================================
-  results <- list(psi_hat_pnt_cv, psi_hat_pnt_u_g, psi_hat_pnt_u_l)
-  names(results) = c("CV", "U_G", "U_L")
-  return(results)
-}
-
-
-##############################################################
-# This function runs the simulation for B rounds with given:
-#       - data generating function
-#       - sample size n
-#       - number of simulations: B
-
-# returns the estimated ATE, empirical 95% CI, and coverage rates
-##############################################################
-run_simu_rep_old <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
-  
-  bootstrap = F
-  
-  result_list <- list()
-  
-  for(r in 1:rounds){
-    print(paste0("round ", r))
-    result <- tryCatch({
-      run_simu_1round(gen_data_func, eval_points, y_type, n=n)
-    }, error = function(e) {
-      print(paste0("Error: ", e$message))
-      NULL
-    })
-    
-    while(is.null(result)) {
-      print('retry with a new generated data')
-      result <- tryCatch({
-        run_simu_1round(gen_data_func, eval_points, y_type, n=n)
-      }, error = function(e) {
-        print(paste0("Error: ", e$message))
-        NULL
-      })
-    }
-    
-    result_list[[r]] <- result
-  }
-  
-  results <- list()
-  for (method in c("CV", "U_G", "U_L")){
-    result_list_method <- lapply(result_list, function(lst) lst[[method]])
-    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
-    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
-    
-    if(bootstrap){
-      result_summary <- result_all %>% 
-        filter(SE != 0) %>% 
-        mutate(bias = abs(y_hat - psi0),
-               bias_se_ratio = bias / SE,
-               # bias_se_ratio_bt = bias / SE_bt,
-               # cover_rate_bt = as.numeric(ci_lwr_bt <= psi0 & psi0 <= ci_upr_bt),
-               cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-        group_by(a) %>% 
-        mutate(oracal_SE = sqrt(var(y_hat)),
-               oracal_bias_se_ratio = bias / oracal_SE,
-               oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
-               oracal_ci_upr = y_hat + 1.96 * oracal_SE,
-               oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-        summarise(across(where(is.numeric), mean)) %>% 
-        ungroup() %>%
-        mutate(hal_fit_time_unit = 'secs',
-               method = method)
-    } else {
-      result_summary <- result_all %>% 
-        filter(SE != 0) %>% 
-        mutate(bias = abs(y_hat - psi0),
-               bias_se_ratio = bias / SE,
-               cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-        group_by(a) %>% 
-        mutate(oracal_SE = sqrt(var(y_hat)),
-               oracal_bias_se_ratio = bias / oracal_SE,
-               oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
-               oracal_ci_upr = y_hat + 1.96 * oracal_SE,
-               oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-        summarise(across(where(is.numeric), mean)) %>% 
-        ungroup() %>%
-        mutate(hal_fit_time_unit = 'secs',
-               method = method)
-    }
-    
-    
-    if(return_all_rslts){
-      results[[method]] <- list(result_summary = result_summary,
-                                all_results = result_list_method)
-    } else {
-      results[[method]] <- list(result_summary = result_summary)
-    }
-  }
-  
-  results$result_summary <- rbind(results$CV$result_summary, results$U_G$result_summary, results$U_L$result_summary)
-  
-  return(results)
-}
-
-
 
 
 ##############################################################
