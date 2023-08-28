@@ -101,7 +101,7 @@ DGS <- generate_data_1
 sn = 1
 ```
 
-```{r child = '2_1_Simu_results_template_s1.Rmd'}
+```{r child = '2_1_Simu_results_template.Rmd'}
 ```
 
 # Simulation 2
@@ -327,8 +327,8 @@ DGS <- generate_data_4
 sn = 4
 ```
 
-```{r child = '2_1_Simu_results_template_0.Rmd'}
-```
+# ```{r child = '2_1_Simu_results_template_0.Rmd'}
+# ```
 
 # Simulation 5
 
@@ -390,8 +390,8 @@ DGS <- generate_data_5
 sn = 5
 ```
 
-```{r child = '2_1_Simu_results_template_0.Rmd'}
-```
+# ```{r child = '2_1_Simu_results_template_0.Rmd'}
+# ```
 
 # Simulation 6
 
