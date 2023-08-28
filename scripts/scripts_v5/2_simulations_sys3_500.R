@@ -96,10 +96,10 @@ source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 
 n= 500
 
-# set.seed(123)
-# results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V5_sys3_500.RData"))
+set.seed(123)
+results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys3_500.RData"))
 
 # ## -----------------------------------------------------------------------------------------------------------------------
 # rm(results)
@@ -116,8 +116,8 @@ n= 500
 
 ## -----------------------------------------------------------------------------------------------------------------------
 #
-set.seed(123)
-
-results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
-save.image(file=here("data", "rdata", "02_simu_v5_sys3_500_default.RData"))
+# set.seed(123)
+# 
+# results <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
+# save.image(file=here("data", "rdata", "02_simu_v5_sys3_500_default.RData"))
 

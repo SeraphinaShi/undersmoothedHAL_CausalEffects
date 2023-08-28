@@ -98,11 +98,18 @@ source(here("scripts", "scripts_v5", "1_simu_functions.R"))
 n = 1000
 
 ## -----------------------------------------------------------------------------------------------------------------------
-set.seed(123)
-results_so <- run_simu_smooth_orders_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# set.seed(123)
+# results_so <- run_simu_smooth_orders_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_V5_sys3_500_SO.RData"))
 
-save.image(file=here("data", "rdata", "02_simu_V5_sys3_500_SO.RData"))
 ## -----------------------------------------------------------------------------------------------------------------------
+set.seed(123)
+
+results_0 <- run_simu_rep(generate_data_3, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
+save.image(file=here("data", "rdata", "02_simu_v5_sys3_1000_default.RData"))
+
+
 # source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
 # 
 # set.seed(123)
