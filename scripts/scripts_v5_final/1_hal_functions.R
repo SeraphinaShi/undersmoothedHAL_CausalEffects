@@ -1010,3 +1010,159 @@ bootstrap_inference_u_l <- function(X, Y, eval_points, hal_fit, y_type, lambda_u
   #   
 }
 
+
+fit_undersmoothed_smoothness_adaptive_HAL <- function(df, y_name, x_names, family){
+  
+  Y <- as.numeric(df[, y_name])
+  
+  X <- df %>% 
+    select(all_of(x_names)) %>% 
+    mutate_if(sapply(., is.factor), as.numeric)
+  
+  # 1. --- SL
+  task <- make_sl3_Task(
+    data = df,
+    outcome = y_name,
+    covariates = x_names
+  )
+  
+  # num_knots = c(200, 100,  50)
+  lrn_hal0 <- Lrnr_hal9001$new(smoothness_orders = 0, family = family, return_x_basis = TRUE)
+  lrn_hal1 <- Lrnr_hal9001$new(smoothness_orders = 1, family = family, return_x_basis = TRUE)
+  lrn_hal2 <- Lrnr_hal9001$new(smoothness_orders = 2, family = family, return_x_basis = TRUE)
+  lrn_hal3 <- Lrnr_hal9001$new(smoothness_orders = 3, family = family, return_x_basis = TRUE)
+  
+  # num_knots = c(20,10,5)
+  lrn_hal0_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 0,
+                                            family = family, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 0,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  lrn_hal1_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 1,
+                                            family = family, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 1,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  lrn_hal2_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 2,
+                                            family = family, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 2,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  lrn_hal3_smallerKnots <- Lrnr_hal9001$new(smoothness_orders = 3,
+                                            family = family, 
+                                            return_x_basis = TRUE, 
+                                            num_knots = hal9001:::num_knots_generator(
+                                              max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                                              smoothness_orders = 3,
+                                              base_num_knots_0 = 20,
+                                              base_num_knots_1 = 20  
+                                            ))
+  
+  learners <- c(lrn_hal0, lrn_hal0_smallerKnots, lrn_hal1, lrn_hal1_smallerKnots, 
+                lrn_hal2, lrn_hal2_smallerKnots, lrn_hal3, lrn_hal3_smallerKnots)
+  names(learners) <- c("halcv0", "halcv0_sKnots", "halcv1", "halcv1_sKnots", 
+                       "halcv2", "halcv2_sKnots", "halcv3", "halcv3_sKnots")
+  stack <- make_learner(Stack, learners)
+  
+  if(family == "binomial"){
+    cv_selector <- Lrnr_cv_selector$new(eval_function = loss_loglik_binomial) # https://tlverse.org/sl3/reference/loss_functions.html
+  } else {
+    cv_selector <- Lrnr_cv_selector$new(eval_function = loss_squared_error) # https://tlverse.org/sl3/reference/loss_functions.html
+  }
+  
+  dSL <- Lrnr_sl$new(learners = stack, metalearner = cv_selector)
+  
+  dSL_fit <- dSL$train(task)
+  
+  #--- 2. SL pick undersmooth
+  smooth_orders = c(0,0,1,1,2,2,3,3)
+  num_knots = rep(c("default", "smaller"),4)
+  
+  # undersmo0th hal based on the one sl picked
+  sl_pick_idx = which(dSL_fit$coefficients==1)
+  
+  hal_fit_sl_pick = dSL_fit$learner_fits[[sl_pick_idx]]$fit_object
+  SO_pick = smooth_orders[sl_pick_idx]
+  n_knots_default_pick = as.numeric(num_knots[sl_pick_idx] == "default")
+  
+  hal_undersmooth <- undersmooth_hal(X, Y,
+                                     fit_init = hal_fit_sl_pick,
+                                     family = family)
+  
+  lambda_u_g = hal_undersmooth$lambda_under
+  
+  if(is.na(lambda_u_g) | hal_undersmooth$lambda_under == hal_undersmooth$lambda_init){
+    lambda_u_g <- lambda_CV
+    print(sprintf('  globally u lambdas: %f', lambda_u_g))
+    
+    hal_u_g <- hal_fit_sl_pick
+  } else {
+    if(n_knots_default_pick == 1){
+      hal_u_g <- fit_hal(X = X, Y = Y, 
+                         family = family,
+                         smoothness_orders = SO_pick,
+                         return_x_basis = TRUE,
+                         fit_control = list(cv_select = FALSE),
+                         lambda = lambda_u_g)
+    } else {
+      hal_u_g <- fit_hal(X = X, Y = Y, 
+                         family = family,
+                         smoothness_orders = SO_pick,
+                         return_x_basis = TRUE,
+                         fit_control = list(cv_select = FALSE),
+                         lambda = lambda_u_g,
+                         num_knots = hal9001:::num_knots_generator(
+                           max_degree = ifelse(ncol(X) >= 20, 2, 3), 
+                           smoothness_orders = SO_pick,
+                           base_num_knots_0 = 20,
+                           base_num_knots_1 = 20  
+                         ))
+    }
+    
+  }
+ 
+  return(hal_fit_object = hal_u_g,
+         hal_fit_info = list(lambda = lambda_u_g,
+                             lambda_scaler = lambda_u_g / hal_undersmooth$lambda_init, 
+                             num_basis = num_basis_u_g,
+                             smooth_order = SO_pick,
+                             n_knots_default = n_knots_default_pick,
+                             X = X,
+                             Y = Y)
+         ) 
+}
+
+
+predict_curve = function(X, points_curve, hal_fit){
+
+  # prediction
+  psi_hat_u_g <- sapply(points_curve, function(a){ X_new <- X
+  X_new[,A_name] = a
+  mean(predict(hal_fit, new_data = X_new)) } )
+  
+  # IC-based inference
+  psi_hat_pnt_u_g_se <- IC_based_se(X, Y, hal_fit, points_curve)
+
+  psi_hat_df <- cbind(points_curve, matrix(psi_hat_u_g, ncol=1), psi_hat_pnt_u_g_se)
+  
+  colnames(psi_hat_df) <- c("a", "y_hat", "SE")
+  
+  psi_hat_df <- as.data.frame(psi_hat_df) %>% 
+    mutate(ci_lwr = y_hat - 1.96 * SE,
+           ci_upr = y_hat + 1.96 * SE)
+  
+  return(psi_hat_df)
+    
+}

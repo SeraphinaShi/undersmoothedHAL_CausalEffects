@@ -1,0 +1,113 @@
+---
+title: "Framingham data using undersmoothed HAL"
+author: "Seraphina Shi"
+date: "2023-05-10"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r load_lib, include = FALSE, warning=FALSE, message=FALSE, echo=FALSE}
+library(here)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(foreach)
+
+library(stringr)
+library(glmnet)
+
+library(origami)
+library(hal9001)
+library(tictoc)
+
+library(R.utils)
+
+library(pROC)
+
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(grid)
+
+library(sl3)
+```
+
+```{r setup, include = FALSE} 
+plotFolder <- here("results","images", "framingham")
+if(!file.exists(plotFolder)) dir.create(plotFolder,recursive=TRUE)
+
+knitr::opts_chunk$set(
+  cache=FALSE, autodep=FALSE, warning=FALSE, message=FALSE, echo=FALSE,
+  results = 'markup', dev='png', dpi=150, fig.align = "center", fig.path=paste0(plotFolder, "/"),
+  cache.path=".cache/",
+  duplicate.label="allow"
+)
+```
+
+```{r}
+# https://search.r-project.org/CRAN/refmans/riskCommunicator/html/framingham.html
+data = read.csv(here("data", "framingham", "dataf.csv"), skip = 1)
+
+W_names = c("SEX", "AGE", "CURSMOKE", "DIABETES", "LDLC", "SYSBP", "DIABP", "CIGPDAY", "BMI", "GLUCOSE", "educ", "PREVCHD", "PREVAP", "PREVMI", "PREVSTRK", "PREVHYP")
+A_name = c("HDLC") # good cholesterol, the higher the better
+Y_names = c("MI_FCHD", "ANYCHD", "STROKE", "CVD")
+
+df = data[, c(W_names, A_name, Y_names)]
+
+dim(df)
+```
+
+# Preprocessing
+## Missing values 
+Remove `r sum(is.na(df$HDLC))` observations without HDLC, the treatment value. Then `r sum(! is.na(df$HDLC))` observations left.
+```{r}
+df = df[!is.na(df$HDLC), ]
+
+print("Proportion of missing values of each column:")
+print(round(apply(df, 2, function(col) mean(is.na(col))), 4))
+```
+
+Start with `r sum(complete.cases(df))` observations with complete cases. 
+```{r}
+df = df[complete.cases(df), ]
+```
+
+# EDA
+## Treatment
+```{r}
+summary(df$HDLC)
+hist(df$HDLC)
+```
+
+
+```{r}
+summary(df$MI_FCHD)
+summary(df$ANYCHD)
+summary(df$STROKE)
+summary(df$CVD)
+```
+
+```{r fig.height=12, fig.width=12}
+# install.packages("PerformanceAnalytics")
+library(PerformanceAnalytics)
+
+chart.Correlation(df, histogram = TRUE, method = "pearson")
+```
+
+# HDLC -> MI_FCHD
+```{r}
+fit_results = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "STROKE", x_names = c(A_name, W_names), family = "binomial")
+
+
+points_curve = unique(c(min(df$HDLC), seq(min(df$HDLC), max(df$HDLC), by = 10), max(df$HDLC)))
+
+```
+
+
+
+
+
+
+

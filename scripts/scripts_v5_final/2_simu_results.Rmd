@@ -45,7 +45,7 @@ knitr::opts_chunk$set(
   duplicate.label="allow"
 )
 
-source(here("scripts", "scripts_v5", "1_visual_functions.R"))
+source(here("scripts", "scripts_v5_final", "1_visual_functions.R"))
 ```
 
 # Simulation 1
@@ -183,7 +183,7 @@ sn = 2
 ```
 
 
-```{r child = '2_1_Simu_results_template_s1.Rmd'}
+```{r child = '2_1_Simu_results_template.Rmd'}
 ```
 
 # Simulation 3
@@ -239,7 +239,7 @@ DGS <- generate_data_3
 sn = 3
 ```
 
-```{r child = '2_1_Simu_results_template_s1.Rmd'}
+```{r child = '2_1_Simu_results_template.Rmd'}
 ```
 
 
