@@ -1132,16 +1132,19 @@ fit_undersmoothed_smoothness_adaptive_HAL <- function(df, y_name, x_names, famil
     }
     
   }
- 
-  return(hal_fit_object = hal_u_g,
-         hal_fit_info = list(lambda = lambda_u_g,
-                             lambda_scaler = lambda_u_g / hal_undersmooth$lambda_init, 
-                             num_basis = num_basis_u_g,
-                             smooth_order = SO_pick,
-                             n_knots_default = n_knots_default_pick,
-                             X = X,
-                             Y = Y)
-         ) 
+  
+  num_basis_u_g <- sum(hal_u_g$coefs[-1] != 0)
+  
+  returns = list(hal_fit_object = hal_u_g,
+                 hal_fit_info = list(smooth_order = SO_pick,
+                                     n_knots_default = n_knots_default_pick,
+                                     X = X,
+                                     Y = Y,
+                                     lambda = lambda_u_g,
+                                     lambda_scaler = lambda_u_g / hal_undersmooth$lambda_init, 
+                                     num_basis = num_basis_u_g))
+  
+  return(returns) 
 }
 
 

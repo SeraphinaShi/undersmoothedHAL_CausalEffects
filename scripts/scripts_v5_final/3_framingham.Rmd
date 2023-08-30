@@ -98,16 +98,34 @@ chart.Correlation(df, histogram = TRUE, method = "pearson")
 
 # HDLC -> MI_FCHD
 ```{r}
-fit_results = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "STROKE", x_names = c(A_name, W_names), family = "binomial")
+source(here("scripts", "scripts_v5_final", "1_hal_functions.R"))
 
+fit_results_1 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "MI_FCHD", x_names = c(A_name, W_names), family = "binomial")
+save.image(file=here("data", "rdata", "02_framingham_1.RData"))
 
-points_curve = unique(c(min(df$HDLC), seq(min(df$HDLC), max(df$HDLC), by = 10), max(df$HDLC)))
+# points_curve = unique(c(min(df$HDLC), seq(min(df$HDLC), max(df$HDLC), by = 10), max(df$HDLC)))
+
+```
+
+# HDLC -> ANYCHD
+```{r}
+fit_results_2 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "ANYCHD", x_names = c(A_name, W_names), family = "binomial")
+save.image(file=here("data", "rdata", "02_framingham_2.RData"))
+
 
 ```
 
 
+# HDLC -> STROKE
+```{r}
+fit_results_3 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "STROKE", x_names = c(A_name, W_names), family = "binomial")
+save.image(file=here("data", "rdata", "02_framingham_3.RData"))
+```
 
+# HDLC -> STROKE
+```{r}
+fit_results_4 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "CVD", x_names = c(A_name, W_names), family = "binomial")
+save.image(file=here("data", "rdata", "02_framingham_4.RData"))
 
-
-
+```
 
