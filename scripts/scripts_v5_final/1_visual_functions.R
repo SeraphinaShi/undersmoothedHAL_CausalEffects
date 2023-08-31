@@ -1,3 +1,27 @@
+add_bound <- function(summary_df){
+  
+  bounds = c(0,1)
+  
+  summary_df$y_hat <- pmax(bounds[1], summary_df$y_hat)
+  summary_df$y_hat <- pmin(summary_df$y_hat, bounds[2])
+  
+  summary_df$ci_lwr <- pmax(bounds[1], summary_df$ci_lwr)
+  summary_df$ci_lwr <- pmin(summary_df$ci_lwr, bounds[2])
+  
+  summary_df$ci_upr = pmax(bounds[1], summary_df$ci_upr)
+  summary_df$ci_upr <- pmin(summary_df$ci_upr, bounds[2])
+  
+  if("oracal_ci_lwr" %in% names(summary_df)){
+    summary_df$oracal_ci_lwr <- pmax(bounds[1], summary_df$oracal_ci_lwr)
+    summary_df$oracal_ci_lwr <- pmin(summary_df$oracal_ci_lwr, bounds[2])
+    
+    summary_df$oracal_ci_upr = pmax(bounds[1], summary_df$oracal_ci_upr)
+    summary_df$oracal_ci_upr <- pmin(summary_df$oracal_ci_upr, bounds[2])
+  }
+  
+  return(summary_df)
+}
+
 
 plot_performences_cv_ug_alla_noBT <- function(df, save_plot=NA){
   

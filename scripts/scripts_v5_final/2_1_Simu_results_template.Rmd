@@ -44,7 +44,6 @@ ggplot() +
   theme_bw()
 
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_psi0.png")),  width = 5, height = 4, dpi = 1000)
-
 ```
 
 
@@ -59,6 +58,8 @@ nn=200
 #### Zero smoothness order with default number of knots
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
+
+results_0$result_summary = add_bound(results_0$result_summary)
 
 rslt_sum_default = results_0$result_summary
 
@@ -96,6 +97,8 @@ plot(p)
 #### First smoothness order with smaller number of knots
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+
+results$result_summary = add_bound(results$result_summary)
 
 rslt_sum = results$result_summary
 
@@ -139,6 +142,8 @@ lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
 
 results_grid_s <- results_grid_summary(results_grid)
+results_grid_s = add_bound(results_grid_s)
+
 
 p <- plot_perforences_alllambda_noBT(results_grid_s,
                                 u_g_scaler=u_g_scaler, 
@@ -179,6 +184,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.p
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
 
 results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+results_adapt1$result_summary = add_bound(results_adapt1$result_summary)
 
 p <- plot_performences_adapt(df = results_adapt1$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
@@ -232,6 +238,8 @@ load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData"))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
 results_poly$result_summary$method = "Poly"
+results_adapt1 = add_bound(results_adapt1)
+
 results_df1 = results_0$result_summary[results_0$result_summary$method == "U_G",]
 results_df1$method = "U_G_0SO_dft"
 results_df2 = results_adapt1$result_summary[results_adapt1$result_summary$method == "U_HAL_SL_pick", ]
@@ -243,6 +251,9 @@ results_all <- rbind(results_gam$result_summary[, colnames_overlap],
                      results_poly$result_summary[, colnames_overlap], 
                      results_df1[, colnames_overlap],
                      results_df2[, colnames_overlap])
+
+results_all = add_bound(results_all)
+
 ```
 
 ```{r fig.height=4, fig.width=9}
@@ -252,6 +263,8 @@ p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), 
 ```{r fig.height=9, fig.width=6}
 p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
+
+
 
 
 
@@ -266,6 +279,8 @@ nn=500
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
 
+results_0$result_summary = add_bound(results_0$result_summary)
+
 rslt_sum_default = results_0$result_summary
 
 cv_lambda = unique(rslt_sum_default$lambda[rslt_sum_default$method == 'CV'])
@@ -302,6 +317,8 @@ plot(p)
 #### First smoothness order with smaller number of knots
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+
+results$result_summary = add_bound(results$result_summary)
 
 rslt_sum = results$result_summary
 
@@ -344,12 +361,12 @@ lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
 
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
 
-# results_grid_sum = results_grid_summary(results_grid)
-
 results_grid_s <- results_grid_summary(results_grid)
+results_grid_s = add_bound(results_grid_s)
+
 
 p <- plot_perforences_alllambda_noBT(results_grid_s,
-                                u_g_scaler=u_g_scaler, # u_l_scalers=u_l_scalers, 
+                                u_g_scaler=u_g_scaler, 
                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_performences.png")), 
                                 max_bias_sd=NA)
 
@@ -387,6 +404,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.p
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
 
 results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+results_adapt1$result_summary = add_bound(results_adapt1$result_summary)
 
 p <- plot_performences_adapt(df = results_adapt1$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
@@ -440,6 +458,8 @@ load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData"))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
 results_poly$result_summary$method = "Poly"
+results_adapt1 = add_bound(results_adapt1)
+
 results_df1 = results_0$result_summary[results_0$result_summary$method == "U_G",]
 results_df1$method = "U_G_0SO_dft"
 results_df2 = results_adapt1$result_summary[results_adapt1$result_summary$method == "U_HAL_SL_pick", ]
@@ -451,6 +471,9 @@ results_all <- rbind(results_gam$result_summary[, colnames_overlap],
                      results_poly$result_summary[, colnames_overlap], 
                      results_df1[, colnames_overlap],
                      results_df2[, colnames_overlap])
+
+results_all = add_bound(results_all)
+
 ```
 
 ```{r fig.height=4, fig.width=9}
@@ -460,9 +483,6 @@ p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), 
 ```{r fig.height=9, fig.width=6}
 p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
-
-
-
 
 
 
@@ -477,6 +497,8 @@ nn=1000
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
 
+results_0$result_summary = add_bound(results_0$result_summary)
+
 rslt_sum_default = results_0$result_summary
 
 cv_lambda = unique(rslt_sum_default$lambda[rslt_sum_default$method == 'CV'])
@@ -513,6 +535,8 @@ plot(p)
 #### First smoothness order with smaller number of knots
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
+
+results$result_summary = add_bound(results$result_summary)
 
 rslt_sum = results$result_summary
 
@@ -556,9 +580,11 @@ lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
 
 results_grid_s <- results_grid_summary(results_grid)
+results_grid_s = add_bound(results_grid_s)
+
 
 p <- plot_perforences_alllambda_noBT(results_grid_s,
-                                u_g_scaler=u_g_scaler,
+                                u_g_scaler=u_g_scaler, 
                                 save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_performences.png")), 
                                 max_bias_sd=NA)
 
@@ -596,6 +622,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.p
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
 
 results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+results_adapt1$result_summary = add_bound(results_adapt1$result_summary)
 
 p <- plot_performences_adapt(df = results_adapt1$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
@@ -649,6 +676,8 @@ load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData"))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
 results_poly$result_summary$method = "Poly"
+results_adapt1 = add_bound(results_adapt1)
+
 results_df1 = results_0$result_summary[results_0$result_summary$method == "U_G",]
 results_df1$method = "U_G_0SO_dft"
 results_df2 = results_adapt1$result_summary[results_adapt1$result_summary$method == "U_HAL_SL_pick", ]
@@ -660,6 +689,9 @@ results_all <- rbind(results_gam$result_summary[, colnames_overlap],
                      results_poly$result_summary[, colnames_overlap], 
                      results_df1[, colnames_overlap],
                      results_df2[, colnames_overlap])
+
+results_all = add_bound(results_all)
+
 ```
 
 ```{r fig.height=4, fig.width=9}
@@ -669,11 +701,5 @@ p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), 
 ```{r fig.height=9, fig.width=6}
 p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
-
-
-
-
-
-
 
 
