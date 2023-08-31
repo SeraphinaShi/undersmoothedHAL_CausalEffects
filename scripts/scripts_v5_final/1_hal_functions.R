@@ -26,8 +26,7 @@ undersmooth_hal <- function(X,
                             Y,
                             fit_init,
                             Nlam = 20,
-                            family = c("gaussian", "binomial", "poisson", "cox")
-){
+                            family = c("gaussian", "binomial", "poisson", "cox")){
   
   n = length(Y)
   
@@ -49,18 +48,18 @@ undersmooth_hal <- function(X,
   }
   
   
+  preds_init <- predict(fit_init, new_data = X)
+  resid_init <- preds_init - Y
+  
   if (family != "binomial"){
-    preds_init <- predict(fit_init, new_data = X)
     pred_mat <- predict(us_fit, fit_init$x_basis)
   }else {
-    preds_init <- predict(fit_init, new_data = X, type = "response")
     pred_mat <- predict(us_fit, fit_init$x_basis, type = "response")
   }
   resid_mat <- pred_mat - Y
   
+
   ## estimates of sd in each direction using initial fit
-  resid_init <- preds_init - Y
-  
   basis_mat_init <- as.matrix(fit_init$x_basis)
   basis_mat_init <- as.matrix(basis_mat_init[, nonzero_col_init])
   
@@ -99,8 +98,6 @@ undersmooth_hal <- function(X,
 }
 
 
-
-
 ###############################################################################
 #'  undersoomthed HAL helper function for global criterion
 #'
@@ -130,391 +127,11 @@ get_maxscore <- function(basis_mat, resid_mat, sd_est, Nlam, us_fit){
 
 
 ###############################################################################
-#'  fit and return CV HAL, globally undersmoothed HAL, and locally undersmoothed HAL
-
-
-fit_hal_all_criteria <- function(X, Y, y_type, eval_points){
-  #================================CV-HAL================================
-  
-  start <- Sys.time()
-  
-  hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
-                    return_x_basis = TRUE,
-                    num_knots = hal9001:::num_knots_generator(
-                      max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                      smoothness_orders = 1,
-                      base_num_knots_0 = 20,
-                      base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                    )
-  )
-  lambda_CV <- hal_CV$lambda_star
-  print(sprintf('  CV lambda: %f', lambda_CV))
-  
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_cv_fit_time = hal_fit_time
-  num_basis_CV <- sum(hal_CV$coefs[-1] != 0)
-  
-  #================================global undersmoothing================================
-  start <- Sys.time()
-  
-  CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
-  # if all coefs are zero, skip undersmooth and use the initial fit
-  if (length(CV_nonzero_col) == 0){
-    lambda_u_g = lambda_CV
-    
-    print(sprintf('  globally u lambdas: %f (same as CV-HAL)', lambda_u_g))
-    hal_u_g <- hal_CV
-  }else{
-    CV_basis_mat <- as.matrix(hal_CV$x_basis)
-    CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
-    
-    hal_undersmooth <- undersmooth_hal(X, Y,
-                                       fit_init = hal_CV,
-                                       family = y_type)
-    lambda_u_g = hal_undersmooth$lambda_under
-    
-    print(sprintf('  globally u lambdas: %f', lambda_u_g))
-    if(is.na(lambda_u_g)){
-      lambda_u_g <- lambda_CV
-      print(sprintf('  globally u lambdas: %f', lambda_u_g))
-      
-      hal_u_g <- hal_CV
-    } else {
-      hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
-                         return_x_basis = TRUE,
-                         num_knots = hal9001:::num_knots_generator(
-                           max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                           smoothness_orders = 1,
-                           base_num_knots_0 = 20, #200
-                           base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                         ),
-                         fit_control = list(
-                           cv_select = FALSE,
-                           n_folds = 10,
-                           foldid = NULL,
-                           use_min = TRUE,
-                           lambda.min.ratio = 1e-4,
-                           prediction_bounds = "default"
-                         ),
-                         lambda = lambda_u_g)
-    }
-  }
-
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_u_g_fit_time = hal_fit_time + hal_cv_fit_time
-  
-  num_basis_u_g <- sum(hal_u_g$coefs[-1] != 0)
-  
-  #================================local undersmoothing================================
-  start <- Sys.time()
-  
-  CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
-  # if all coefs are zero, skip undersmooth and use the initial fit
-  if (length(CV_nonzero_col) == 0){
-    lambdas_u_l = list()
-    hal_u_l = list()
-    
-    lambdas_u_l[[1]] = lambda_CV
-
-    print(sprintf('  locally u lambdas: %s (same as CV-HAL)', lambdas_u_l))
-    hal_u_l[[1]] <- hal_CV
-    lambda_u_l_idx = rep(1, length(eval_points))
-    
-  }else{
-    
-    lambdas_u_l = rep(NA, length(eval_points))
-    
-    for(i in 1:length(eval_points)){
-      X_local <- X
-      X_local$A = eval_points[i]
-      
-      CV_basis_mat_local <- make_design_matrix(as.matrix(X_local), hal_CV$basis_list, p_reserve = 0.75)
-      CV_basis_mat_local <- as.matrix(cbind(1, CV_basis_mat_local)[, CV_nonzero_col])
-      
-      hal_undersmooth_local <- undersmooth_hal(X_local, Y,
-                                               fit_init = hal_CV,
-                                               family = y_type)
-      lambda_local = hal_undersmooth_local$lambda_under
-      lambdas_u_l[i] = lambda_local
-    }
-    print(sprintf('  locally u lambdas: %s', paste(round(lambdas_u_l, 6), collapse = ", ")))
-    if(any(is.na(lambdas_u_l))){
-      lambdas_u_l[is.na(lambdas_u_l)] = lambda_CV
-      print(sprintf('  locally u lambdas: %s', paste(round(lambdas_u_l, 6), collapse = ", ")))
-    }
-    
-    lambda_u_l = unique(lambdas_u_l)
-    lambda_u_l_idx = match(lambdas_u_l, lambda_u_l)
-    
-    hal_u_l = list()
-    num_basis_u_l <- c()
-    for(i in 1:length(lambda_u_l)){
-      hal_u_l[[i]] <- fit_hal(X = X, Y = Y, family = y_type,
-                              return_x_basis = TRUE,
-                              num_knots = hal9001:::num_knots_generator(
-                                max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                                smoothness_orders = 1,
-                                base_num_knots_0 = 20, #200
-                                base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                              ),
-                              fit_control = list(
-                                cv_select = FALSE,
-                                n_folds = 10,
-                                foldid = NULL,
-                                use_min = TRUE,
-                                lambda.min.ratio = 1e-4,
-                                prediction_bounds = "default"
-                              ),
-                              lambda = lambda_u_l[i])
-      num_basis_u_l[i] <- sum(hal_u_l[[i]]$coefs[-1] != 0)
-    }
-  }
-  
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_u_l_fit_time = hal_fit_time + hal_cv_fit_time
-  num_basis_u_l = num_basis_u_l[lambda_u_l_idx]
-  
-  #================================return================================
-  hal_fit_list <- list(hal_CV = hal_CV, hal_u_g = hal_u_g, hal_u_l = hal_u_l)
-  lambda_list <- list(lambda_CV = lambda_CV, lambda_u_g = lambda_u_g, lambda_u_l = lambda_u_l)
-  hal_fit_time_list <- list(hal_cv_fit_time = hal_cv_fit_time, hal_u_g_fit_time = hal_u_g_fit_time, hal_u_l_fit_time = hal_u_l_fit_time)
-  num_basis_list <- list(num_basis_CV = num_basis_CV, num_basis_u_g = num_basis_u_g, num_basis_u_l = num_basis_u_l)
-  
-  return(list(hal_fit_list = hal_fit_list, lambda_list = lambda_list, hal_fit_time_list = hal_fit_time_list, lambda_u_l_idx = lambda_u_l_idx, num_basis_list = num_basis_list))
-}
-
-
-fit_hal_CV_U <- function(X, Y, y_type, eval_points){
-  #================================CV-HAL================================
-  print("1")
-  start <- Sys.time()
-  
-  hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
-                    return_x_basis = TRUE,
-                    num_knots = hal9001:::num_knots_generator(
-                      max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                      smoothness_orders = 1,
-                      base_num_knots_0 = 20,
-                      base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                    )
-  )
-  lambda_CV <- hal_CV$lambda_star
-  print(sprintf('  CV lambda: %f', lambda_CV))
-  
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_cv_fit_time = hal_fit_time
-  num_basis_CV <- sum(hal_CV$coefs[-1] != 0)
-  
-  #================================global undersmoothing================================
-  start <- Sys.time()
-  
-  CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
-  # if all coefs are zero, skip undersmooth and use the initial fit
-  if (length(CV_nonzero_col) == 0){
-    lambda_u_g = lambda_CV
-    
-    print(sprintf('  globally u lambdas: %f (same as CV-HAL)', lambda_u_g))
-    hal_u_g <- hal_CV
-  }else{
-    CV_basis_mat <- as.matrix(hal_CV$x_basis)
-    CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
-    
-    hal_undersmooth <- undersmooth_hal(X, Y,
-                                       fit_init = hal_CV,
-                                       family = y_type)
-    lambda_u_g = hal_undersmooth$lambda_under
-    
-    print(sprintf('  globally u lambdas: %f', lambda_u_g))
-    if(is.na(lambda_u_g)){
-      lambda_u_g <- lambda_CV
-      print(sprintf('  globally u lambdas: %f', lambda_u_g))
-      
-      hal_u_g <- hal_CV
-    } else {
-      hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
-                         return_x_basis = TRUE,
-                         num_knots = hal9001:::num_knots_generator(
-                           max_degree = ifelse(ncol(X) >= 20, 2, 3),
-                           smoothness_orders = 1,
-                           base_num_knots_0 = 20, #200
-                           base_num_knots_1 = 20 # max(100, ceiling(sqrt(n)))
-                         ),
-                         fit_control = list(
-                           cv_select = FALSE,
-                           n_folds = 10,
-                           foldid = NULL,
-                           use_min = TRUE,
-                           lambda.min.ratio = 1e-4,
-                           prediction_bounds = "default"
-                         ),
-                         lambda = lambda_u_g)
-    }
-  }
-  
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_u_g_fit_time = hal_fit_time + hal_cv_fit_time
-  
-  num_basis_u_g <- sum(hal_u_g$coefs[-1] != 0)
-  
-  #================================return================================
-  hal_fit_list <- list(hal_CV = hal_CV, hal_u_g = hal_u_g)
-  lambda_list <- list(lambda_CV = lambda_CV, lambda_u_g = lambda_u_g)
-  hal_fit_time_list <- list(hal_cv_fit_time = hal_cv_fit_time, hal_u_g_fit_time = hal_u_g_fit_time)
-  num_basis_list <- list(num_basis_CV = num_basis_CV, num_basis_u_g = num_basis_u_g)
-  
-  return(list(hal_fit_list = hal_fit_list, lambda_list = lambda_list, hal_fit_time_list = hal_fit_time_list, num_basis_list = num_basis_list))
-}
-
-fit_hal_CV_U_0 <- function(X, Y, y_type, eval_points){
-  print("0")
-  
-  #================================CV-HAL================================
-  
-  start <- Sys.time()
-
-  hal_CV <- fit_hal(X = X, Y = Y, family = y_type,
-                    smoothness_orders = 0,
-                    return_x_basis = TRUE
-  )
-  lambda_CV <- hal_CV$lambda_star
-  print(sprintf('  CV lambda: %f', lambda_CV))
-  
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_cv_fit_time = hal_fit_time
-  num_basis_CV <- sum(hal_CV$coefs[-1] != 0)
-  
-  #================================global undersmoothing================================
-  start <- Sys.time()
-  
-  CV_nonzero_col <- which(hal_CV$coefs[-1] != 0)
-  # if all coefs are zero, skip undersmooth and use the initial fit
-  if (length(CV_nonzero_col) == 0){
-    lambda_u_g = lambda_CV
-    
-    print(sprintf('  globally u lambdas: %f (same as CV-HAL)', lambda_u_g))
-    hal_u_g <- hal_CV
-  }else{
-    CV_basis_mat <- as.matrix(hal_CV$x_basis)
-    CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
-    
-    hal_undersmooth <- undersmooth_hal(X, Y,
-                                       fit_init = hal_CV,
-                                       family = y_type)
-    lambda_u_g = hal_undersmooth$lambda_under
-    
-    print(sprintf('  globally u lambdas: %f', lambda_u_g))
-    if(is.na(lambda_u_g)){
-      lambda_u_g <- lambda_CV
-      print(sprintf('  globally u lambdas: %f', lambda_u_g))
-      
-      hal_u_g <- hal_CV
-    } else {
-
-      hal_u_g <- fit_hal(X = X, Y = Y, family = y_type,
-                         smoothness_orders = 0,
-                         return_x_basis = TRUE,
-                         fit_control = list(
-                           cv_select = FALSE,
-                           n_folds = 10,
-                           foldid = NULL,
-                           use_min = TRUE,
-                           lambda.min.ratio = 1e-4,
-                           prediction_bounds = "default"
-                         ),
-                         lambda = lambda_u_g)
-    }
-  }
-  
-  end <- Sys.time()
-  
-  hal_fit_time = end - start
-  if(units(hal_fit_time) == 'secs'){
-    hal_fit_time = as.numeric(hal_fit_time)
-  } else if (units(hal_fit_time) == 'mins'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60
-  } else if (units(hal_fit_time) == 'hours'){
-    hal_fit_time = as.numeric(hal_fit_time)  * 60 * 24
-  }
-  
-  hal_u_g_fit_time = hal_fit_time + hal_cv_fit_time
-  
-  num_basis_u_g <- sum(hal_u_g$coefs[-1] != 0)
-  
-  #================================return================================
-  hal_fit_list <- list(hal_CV = hal_CV, hal_u_g = hal_u_g)
-  lambda_list <- list(lambda_CV = lambda_CV, lambda_u_g = lambda_u_g)
-  hal_fit_time_list <- list(hal_cv_fit_time = hal_cv_fit_time, hal_u_g_fit_time = hal_u_g_fit_time)
-  num_basis_list <- list(num_basis_CV = num_basis_CV, num_basis_u_g = num_basis_u_g)
-  
-  return(list(hal_fit_list = hal_fit_list, lambda_list = lambda_list, hal_fit_time_list = hal_fit_time_list, num_basis_list = num_basis_list))
-}
-
-
-###############################################################################
 #'  With given fitted HAL object and evaluation points, return the empirical SE
 
-IC_based_se <- function(X, Y, hal_fit, eval_points){
+IC_based_se <- function(X, Y, hal_fit, eval_points, family = "binomial"){
   
+  n = length(Y)
   coef <- hal_fit$coefs
   basis_mat <- cbind(1, as.matrix(hal_fit$x_basis))
   
@@ -524,9 +141,15 @@ IC_based_se <- function(X, Y, hal_fit, eval_points){
     coef_nonzero <- coef[nonzero_idx]
     basis_mat_nonzero <- as.matrix(basis_mat[, nonzero_idx])
     
+    if(family == "binomial"){
+      Y_hat = predict(hal_fit, new_data = X, type = "response")
+    } else {
+      Y_hat = predict(hal_fit, new_data = X)
+    }
+    
     IC_beta <- cal_IC_for_beta(X = basis_mat_nonzero, 
                                Y = Y, 
-                               Y_hat = predict(hal_fit, new_data = X, type = "response"),
+                               Y_hat = predict(hal_fit, new_data = X),
                                beta_n = coef_nonzero
     )
     
@@ -546,8 +169,6 @@ IC_based_se <- function(X, Y, hal_fit, eval_points){
         
         # empirical SE
         se[i] <- sqrt(var(IC_EY)/n)
-        #ci_lwr <- Y_hat - 1.96 * SE
-        #ci_upr <- Y_hat + 1.96 * SE
         
       }
     } else {
@@ -616,7 +237,7 @@ cal_IC_for_beta <- function(X, Y, Y_hat, beta_n, family = 'binomial'){
   
   # 2. calculate the derivative of phi:
   if(family == 'binomial'){
-    d_phi_scaler <- as.vector(exp(- beta_n %*% t(X)) / ((1 + exp(- beta_n %*% t(X)))^2))
+    d_phi_scaler <- as.vector(exp(- beta_n %*% t(X)) / ((1 + exp(- beta_n %*% t(X)))^2)) # exp(- beta_n %*% t(X)) / ((1 + exp(- beta_n %*% t(X)))^2))
     d_phi <- sweep(X, 1, d_phi_scaler, `*`)
   } else {
     d_phi = - X
@@ -1148,16 +769,16 @@ fit_undersmoothed_smoothness_adaptive_HAL <- function(df, y_name, x_names, famil
 }
 
 
-predict_curve = function(X, points_curve, hal_fit){
-
-  # prediction
+predict_curve = function(X, Y, points_curve, hal_fit, family = "binomial"){
+ 
+  # if (!is.matrix(X)) X <- as.matrix(X)
   psi_hat_u_g <- sapply(points_curve, function(a){ X_new <- X
-  X_new[,A_name] = a
-  mean(predict(hal_fit, new_data = X_new)) } )
+  X_new[,"A"] = a
+  mean(predict(hal_fit, new_data = X_new, type = "response")) } )
   
   # IC-based inference
   psi_hat_pnt_u_g_se <- IC_based_se(X, Y, hal_fit, points_curve)
-
+  
   psi_hat_df <- cbind(points_curve, matrix(psi_hat_u_g, ncol=1), psi_hat_pnt_u_g_se)
   
   colnames(psi_hat_df) <- c("a", "y_hat", "SE")
@@ -1165,6 +786,20 @@ predict_curve = function(X, points_curve, hal_fit){
   psi_hat_df <- as.data.frame(psi_hat_df) %>% 
     mutate(ci_lwr = y_hat - 1.96 * SE,
            ci_upr = y_hat + 1.96 * SE)
+  
+  if(family == "binomial"){
+    bounds <- c(0, 1)
+  } else {
+    bounds <- c(min(Y), max(Y))
+  }
+  psi_hat_df[,"y_hat"] <- pmax(bounds[1], psi_hat_df[,"y_hat"])
+  psi_hat_df[,"y_hat"] <- pmin(psi_hat_df[,"y_hat"], bounds[2])
+  
+  psi_hat_df[,"ci_lwr"] <- pmax(bounds[1], psi_hat_df[,"ci_lwr"])
+  psi_hat_df[,"ci_lwr"] <- pmin(psi_hat_df[,"ci_lwr"], bounds[2])
+  
+  psi_hat_df[,"ci_upr"] = pmax(bounds[1], psi_hat_df[,"ci_upr"])
+  psi_hat_df[,"ci_upr"] <- pmin(psi_hat_df[,"ci_upr"], bounds[2])
   
   return(psi_hat_df)
     

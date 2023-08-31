@@ -89,7 +89,7 @@ summary(df$STROKE)
 summary(df$CVD)
 ```
 
-```{r fig.height=12, fig.width=12}
+```{r CorrelationPlot, fig.height=12, fig.width=12}
 # install.packages("PerformanceAnalytics")
 library(PerformanceAnalytics)
 
@@ -97,35 +97,110 @@ chart.Correlation(df, histogram = TRUE, method = "pearson")
 ```
 
 # HDLC -> MI_FCHD
-```{r}
+```{r MI_FCHD}
+# fit_results_1 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "MI_FCHD", x_names = c(A_name, W_names), family = "binomial")
+# save.image(file=here("data", "rdata", "02_framingham_1.RData"))
+
+load(here("data", "rdata", "02_framingham_1.RData"))
 source(here("scripts", "scripts_v5_final", "1_hal_functions.R"))
 
-fit_results_1 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "MI_FCHD", x_names = c(A_name, W_names), family = "binomial")
-save.image(file=here("data", "rdata", "02_framingham_1.RData"))
+X = fit_results_1$hal_fit_info$X
+Y = fit_results_1$hal_fit_info$Y
+names(X)[which(names(X) == A_name)] = "A"
 
-# points_curve = unique(c(min(df$HDLC), seq(min(df$HDLC), max(df$HDLC), by = 10), max(df$HDLC)))
+points_curve = unique(c(min(df$HDLC), seq(min(df$HDLC), max(df$HDLC), by = 1), max(df$HDLC)))
+
+hal_fit_1 = fit_results_1$hal_fit_object
+
+psi_hat_df_1 = predict_curve(X, Y, points_curve, hal_fit_1)
+
+
+p_psi <- ggplot(data=psi_hat_df_1, aes(x=a)) +
+      geom_line(aes(y=y_hat), alpha = 0.5, color="darkgrey") +
+      geom_point(aes(y=y_hat), size=2, alpha= 0.7) +
+      labs(x="HDLC", y = "MI_FCHD", title = "Estimated dose-response curve") +
+      scale_x_continuous(limits = c(0, 200)) + # , breaks = 0:a_max
+      geom_vline(xintercept = 40, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = 60, lty=2, col = "darkgreen") +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5)) 
+p_psi
+ggsave(here(getwd(), "plots", paste0("framingham_MI_FCHD_est.png")), p_psi, width = 5, height = 4, dpi = 800)
+
+p_psi_ci <- ggplot(data=psi_hat_df_1, aes(x=a)) +
+      geom_line(aes(y=y_hat), alpha = 0.5, color="darkgrey") +
+      geom_point(aes(y=y_hat), size=2, alpha= 0.7) +
+      geom_ribbon(aes(ymin=ci_lwr, ymax=ci_upr),  width=0.7, alpha = 0.5) +
+      labs(x="HDLC", y = "MI_FCHD", title = "Estimated dose-response curve \n with delta-method derived 95% CI ") +
+        scale_x_continuous(limits = c(0, 200)) + # , breaks = 0:a_max
+      geom_vline(xintercept = 40, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = 60, lty=2, col = "darkgreen") +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5)) 
+p_psi_ci
+ggsave(here(getwd(), "plots", paste0("framingham_MI_FCHD_est_ci.png")), p_psi_ci, width = 5, height = 4, dpi = 800)
 
 ```
 
 # HDLC -> ANYCHD
-```{r}
-fit_results_2 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "ANYCHD", x_names = c(A_name, W_names), family = "binomial")
-save.image(file=here("data", "rdata", "02_framingham_2.RData"))
+```{r ANYCHD}
+# fit_results_2 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "ANYCHD", x_names = c(A_name, W_names), family = "binomial")
+# save.image(file=here("data", "rdata", "02_framingham_2.RData"))
+
+load(here("data", "rdata", "02_framingham_2.RData"))
+source(here("scripts", "scripts_v5_final", "1_hal_functions.R"))
+
+X = fit_results_2$hal_fit_info$X
+Y = fit_results_2$hal_fit_info$Y
+names(X)[which(names(X) == A_name)] = "A"
+
+points_curve = unique(c(min(df$HDLC), seq(min(df$HDLC), max(df$HDLC), by = 1), max(df$HDLC)))
+
+hal_fit_2 = fit_results_2$hal_fit_object
+
+psi_hat_df_2 = predict_curve(X, Y, points_curve, hal_fit_2)
+
+
+p_psi <- ggplot(data=psi_hat_df_2, aes(x=a)) +
+      geom_line(aes(y=y_hat), alpha = 0.5, color="darkgrey") +
+      geom_point(aes(y=y_hat), size=2, alpha= 0.7) +
+      labs(x="HDLC", y = "ANYCHD", title = "Estimated dose-response curve") +
+        scale_x_continuous(limits = c(0, 200)) + # , breaks = 0:a_max
+      geom_vline(xintercept = 40, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = 60, lty=2, col = "darkgreen") +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5)) 
+p_psi
+ggsave(here(getwd(), "plots", paste0("framingham_ANYCHD_est.png")), p_psi, width = 5, height = 4, dpi = 800)
+
+p_psi_ci <- ggplot(data=psi_hat_df_2, aes(x=a)) +
+      geom_line(aes(y=y_hat), alpha = 0.5, color="darkgrey") +
+      geom_point(aes(y=y_hat), size=2, alpha= 0.7) +
+      geom_ribbon(aes(ymin=ci_lwr, ymax=ci_upr),  width=0.7, alpha = 0.5) +
+      labs(x="HDLC", y = "ANYCHD", title = "Estimated dose-response curve \n with delta-method derived 95% CI ") +
+        scale_x_continuous(limits = c(0, 200)) + # , breaks = 0:a_max
+      geom_vline(xintercept = 40, lty=2, col = "#00BA38") +
+      geom_vline(xintercept = 60, lty=2, col = "darkgreen") +
+      theme_bw() +
+      theme(plot.title = element_text(hjust = 0.5)) 
+p_psi_ci
+ggsave(here(getwd(), "plots", paste0("framingham_ANYCHD_est_ci.png")), p_psi_ci, width = 5, height = 4, dpi = 800)
 
 
 ```
 
 
-# HDLC -> STROKE
-```{r}
-fit_results_3 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "STROKE", x_names = c(A_name, W_names), family = "binomial")
-save.image(file=here("data", "rdata", "02_framingham_3.RData"))
-```
+<!-- # HDLC -> STROKE -->
+<!-- ```{r STROKE} -->
+<!-- source(here("scripts", "scripts_v5_final", "1_hal_functions.R")) -->
+<!-- fit_results_3 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "STROKE", x_names = c(A_name, W_names), family = "binomial") -->
+<!-- save.image(file=here("data", "rdata", "02_framingham_3.RData")) -->
+<!-- ``` -->
 
-# HDLC -> STROKE
-```{r}
-fit_results_4 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "CVD", x_names = c(A_name, W_names), family = "binomial")
-save.image(file=here("data", "rdata", "02_framingham_4.RData"))
+<!-- # HDLC -> CVD -->
+<!-- ```{r CVD} -->
+<!-- fit_results_4 = fit_undersmoothed_smoothness_adaptive_HAL(df, y_name = "CVD", x_names = c(A_name, W_names), family = "binomial") -->
+<!-- save.image(file=here("data", "rdata", "02_framingham_4.RData")) -->
 
-```
+<!-- ``` -->
 
