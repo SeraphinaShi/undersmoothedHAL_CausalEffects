@@ -27,6 +27,7 @@ p <- grid.arrange(p1, p2, p3, p4, p5, p6,
                   top = textGrob(sprintf('Variable distributions of simulation %i', sn), 
                                    gp=gpar(fontsize=17)))
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_EDAs.png")), p, width = 10, height = 6, dpi = 1000)
+
 ```
 
 
@@ -133,7 +134,6 @@ plot(p)
 ```
 
 
-
 ### grid of scalers
 ```{r fig.width=25, fig.height=11}
 
@@ -188,6 +188,7 @@ results_adapt1$result_summary = add_bound(results_adapt1$result_summary)
 
 p <- plot_performences_adapt(df = results_adapt1$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
+
 ```
 
 ```{r}

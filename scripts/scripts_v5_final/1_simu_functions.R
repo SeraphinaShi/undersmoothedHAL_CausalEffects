@@ -505,7 +505,7 @@ run_simu_smoothness_adaptive_HAL_1round <- function(gen_data_func, eval_points, 
       mutate(ci_lwr = y_hat - 1.96 * SE,
              ci_upr = y_hat + 1.96 * SE)
     
-    if(family == "binomial"){
+    if(y_type == "binomial"){
       bounds <- c(0, 1)
     } else {
       bounds <- c(min(Y), max(Y))

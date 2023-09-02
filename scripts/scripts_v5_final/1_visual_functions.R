@@ -357,11 +357,27 @@ plot_performences_adapt <- function(df, save_plot=NA){
   
   df$smooth_order = round(df$smooth_order, 4)
   df$smooth_order = factor(df$smooth_order)
-  mean_sl_pick_SO = unique(df$smooth_order)[! unique(df$smooth_order) %in% 0:3]
+  
+  so_colors = c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")
+  if(sum(! unique(df$smooth_order) %in% 0:3) > 0) {
+    mean_sl_pick_SO = unique(df$smooth_order)[! unique(df$smooth_order) %in% 0:3]
+  } else {
+    mean_sl_pick_SO = unique(df$smooth_order[df$sl_pick==1])
+    so_colors[which(0:3 == mean_sl_pick_SO) ] = "#00BF7D"
+  }
+  
   
   df$if_n_knots_default = round(df$if_n_knots_default, 4)
   df$if_n_knots_default = factor(df$if_n_knots_default)
-  mean_sl_pick_if_n_knots_default = unique(df$if_n_knots_default)[! unique(df$if_n_knots_default) %in% c(0,1)]
+  
+  line_types = c('solid', 'dotted', 'twodash')
+  if(sum(! unique(df$if_n_knots_default) %in% c(0,1)) > 0) {
+    mean_sl_pick_if_n_knots_default = unique(df$if_n_knots_default)[! unique(df$if_n_knots_default) %in% c(0,1)]
+  } else {
+    mean_sl_pick_if_n_knots_default = unique(df$if_n_knots_default[df$sl_pick==1])
+    line_types[which(c(0,1) == mean_sl_pick_SO) ] = "twodash"
+  }
+ 
   
   a_max <- max(df$a)
    
@@ -375,13 +391,13 @@ plot_performences_adapt <- function(df, save_plot=NA){
     theme_bw() + 
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values = so_colors) +
     scale_fill_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash')) +
+                          values=line_types) +
     theme(legend.position='none')
   
   p_est_avg_o <- ggplot(data=df, aes(x=a)) +
@@ -396,13 +412,13 @@ plot_performences_adapt <- function(df, save_plot=NA){
           legend.position='none') + 
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_fill_manual(name='smooth order',
                       breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                      values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                      values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash')) 
+                          values=line_types) 
   
   p_bias <- ggplot(df, aes(x = a, y = bias, color=smooth_order, linetype=if_n_knots_default)) +  
     geom_line() +
@@ -413,10 +429,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     theme(legend.position='none') + 
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))
+                          values=line_types)
   
   p_se_e <- ggplot(df, aes(x = a)) +  
     geom_line(aes(y = SE, color=smooth_order, linetype=if_n_knots_default),alpha=0.7) +
@@ -428,10 +444,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     guides(color = guide_legend(nrow = 3, byrow = F)) +
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))
+                          values=line_types)
   
   
   legend <- get_legend(p_se_e)
@@ -444,10 +460,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))  +
+                          values=line_types)  +
     theme_bw() + 
     theme(legend.position='none')
   
@@ -458,10 +474,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))  +
+                          values=line_types)  +
     theme_bw() +
     theme(legend.position='none') 
   
@@ -473,10 +489,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))  +
+                          values=line_types)  +
     theme_bw() +
     theme(legend.position='none') 
   
@@ -490,10 +506,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))  +
+                          values=line_types)  +
     theme_bw() +
     theme(legend.position='none') 
   
@@ -506,10 +522,10 @@ plot_performences_adapt <- function(df, save_plot=NA){
     scale_x_continuous(limits = c(0, a_max), breaks = 0:a_max) +
     scale_color_manual(name='smooth order',
                        breaks=c("0", "1", "2", "3", as.character(mean_sl_pick_SO)),
-                       values=c("#F8766D", "#A3A500", "#00B0F6", "#E76BF3", "#00BF7D")) +
+                       values=so_colors) +
     scale_linetype_manual(name='default number of knots',
                           breaks=c("0", "1", as.character(mean_sl_pick_if_n_knots_default)),
-                          values=c('solid', 'dotted', 'twodash'))  +
+                          values=line_types)  +
     theme_bw() +
     theme(legend.position='none') 
   
