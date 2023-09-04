@@ -103,15 +103,31 @@ source(here("scripts", "scripts_v5_final", "1_simu_functions.R"))
 
 n = 1000
 
-source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
 
 set.seed(123)
-results_gam <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
-save.image(file=here("data", "rdata", "02_simu_V5_sys7_1000_GAM.RData"))
 
-rm(results_gam)
+results <- run_simu_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+save.image(file=here("data", "rdata", "02_simu_V5_sys7_1000.RData"))
+
+
+# ## -----------------------------------------------------------------------------------------------------------------------
+rm(results)
+
 set.seed(123)
-results_poly <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
-save.image(file=here("data", "rdata", "02_simu_V5_sys7_1000_poly.RData"))
+results_grid <- run_simu_scaled_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
 
+save.image(file=here("data", "rdata", "02_simu_V5_sys7_1-00_grid.RData"))
+
+# 
+# source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
+# 
+# set.seed(123)
+# results_gam <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
+# save.image(file=here("data", "rdata", "02_simu_V5_sys7_1000_GAM.RData"))
+# 
+# rm(results_gam)
+# set.seed(123)
+# results_poly <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
+# save.image(file=here("data", "rdata", "02_simu_V5_sys7_1000_poly.RData"))
+# 
 

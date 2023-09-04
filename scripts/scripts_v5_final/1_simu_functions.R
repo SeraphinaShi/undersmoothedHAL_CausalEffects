@@ -230,7 +230,7 @@ fit_hal_CV_U <- function(X, Y, y_type, eval_points){
     CV_basis_mat <- as.matrix(hal_CV$x_basis)
     CV_basis_mat <- as.matrix(CV_basis_mat[, CV_nonzero_col])
     
-    hal_undersmooth <- undersmooth_hal_1(X, Y,
+    hal_undersmooth <- undersmooth_hal(X, Y,
                                        fit_init = hal_CV,
                                        family = y_type)
     lambda_u_g = hal_undersmooth$lambda_under
