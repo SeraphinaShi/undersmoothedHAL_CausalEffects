@@ -105,14 +105,14 @@ n = 500
 
 # -----------------------------------------------------------------------------------------------------------------------
 # 
-set.seed(123)
-#
-results_0 <- run_simu_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
-save.image(file=here("data", "rdata", "02_simu_v5_sys7_500_default.RData"))
-p <- plot_performences_cv_ug_alla_noBT(df = results$result_summary)
+# set.seed(123)
+# #
+# results_0 <- run_simu_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
+# save.image(file=here("data", "rdata", "02_simu_v5_sys7_500_default.RData"))
+# p <- plot_performences_cv_ug_alla_noBT(df = results$result_summary)
 
 # -----------------------------------------------------------------------------------------------------------------------
-rm(results_0)
+# rm(results_0)
 
 set.seed(123)
 results_adapt <- run_simu_smoothness_adaptive_HAL_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
@@ -120,19 +120,21 @@ save.image(file=here("data", "rdata", "02_simu_v5_sys7_500_adapt.RData"))
 #p <- plot_performences_adapt(df = results_adapt$result_summary)
 
 # -----------------------------------------------------------------------------------------------------------------------
-# set.seed(123)
-# 
-# results <- run_simu_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-# save.image(file=here("data", "rdata", "02_simu_V5_sys7_500.RData"))
+rm(results_adapt)
+
+set.seed(123)
+
+results <- run_simu_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+save.image(file=here("data", "rdata", "02_simu_V5_sys7_500.RData"))
 
 
 # ## -----------------------------------------------------------------------------------------------------------------------
-# rm(results)
+rm(results)
 
-# set.seed(123)
-# results_grid <- run_simu_scaled_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V5_sys7_500_grid.RData"))
+set.seed(123)
+results_grid <- run_simu_scaled_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys7_500_grid.RData"))
 
 
 
