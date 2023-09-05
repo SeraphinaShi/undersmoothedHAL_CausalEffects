@@ -452,3 +452,45 @@ sn = 6
 
 
 
+# Simulation 7
+
+Data structure:  $O = (W, A, Y)$
+
+ * W - baseline covariates
+
+
+```{r check_sys6}
+generate_data_7 <- function(n, a=NA){
+  # exogenous variables
+  U_W <- rnorm(n, 0, 1)
+  U_A <- rnorm(n, 0, 1)
+  U_Y <- runif(n, 0, 1)
+  
+  # endogenous variables
+  W <- U_W
+  
+  if(is.na(a)){
+    A <-  2.5 - 0.5*W + U_A
+    A[A<=0] = 0
+    A[A>=5] = 5
+  } else {
+    A <- rep(a, n)
+  }
+  
+  
+  Y <- as.numeric(U_Y < plogis(-6 + W + 3.5*A*as.numeric(A >= 2) - 4*A*as.numeric(A >= 4) - 0.5 * W * A ))
+  
+  # data frame
+  O <- data.frame(W, A, Y)
+  return(O)
+}
+
+DGS <- generate_data_7
+sn = 7
+```
+
+# ```{r child = '2_1_Simu_results_template.Rmd'}
+# ```
+
+
+
