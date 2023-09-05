@@ -56,6 +56,11 @@ nn=200
 ```{r child = '2_1_Simu_results_template_sub.Rmd'}
 ```
 
+```{r}
+library(knitr)
+if(sn == 7) knit_exit()
+```
+
 
 ## n = 500
 ```{r}

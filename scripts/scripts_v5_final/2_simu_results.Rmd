@@ -457,9 +457,25 @@ sn = 6
 Data structure:  $O = (W, A, Y)$
 
  * W - baseline covariates
+ * A - treatment level based on W, continuous between 0 and 1
+ * Y - outcome, indicator of an event 
+
+ Underlying data generating process, $P_{U,X}$
+
+* Exogenous variables:
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$
+  + $U_A \sim Normal(\mu=0, \sigma^2 = 1^2)$
+  + $U_Y \sim Uniform(min = 0, max = 1)$
+
+* Structural equations F and endogenous variables:
+  + $W =  U_W$
+  + $A = bound(2.5 - 0.5W + U_A, min=0, max=5)$
+  + $Y = \mathbf{I}[U_Y < expit(-6 + W + 3.5A\mathbf{I}(A\geq2) - 4A\mathbf{I}(A\geq4) - 0.5WA)]$
+  
+Outcome of interest: $E_0[Y|a,W]$, $a \in [0,5]$, the causal dose-response curve
 
 
-```{r check_sys6}
+```{r check_sys7}
 generate_data_7 <- function(n, a=NA){
   # exogenous variables
   U_W <- rnorm(n, 0, 1)
@@ -489,8 +505,8 @@ DGS <- generate_data_7
 sn = 7
 ```
 
-# ```{r child = '2_1_Simu_results_template.Rmd'}
-# ```
+```{r child = '2_1_Simu_results_template.Rmd'}
+```
 
 
 
