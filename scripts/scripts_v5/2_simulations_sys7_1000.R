@@ -55,7 +55,7 @@ generate_data_7 <- function(n, a=NA){
     A <- rep(a, n)
   }
   
-  Y <- as.numeric(U_Y < plogis(-6 + W + 3.5*A*as.numeric(A > 2) - 4*A*as.numeric(A > 4) - 0.5 * W * A ))
+  Y <- as.numeric(U_Y < plogis(-6 + W + 3.5*A*as.numeric(A >= 2) - 4*A*as.numeric(A >= 4) - 0.5 * W * A ))
   
   # data frame
   O <- data.frame(W, A, Y)
@@ -76,11 +76,11 @@ psi0_a <- c()
 
 for (i in 1:length(a_vec)) {
   a <- a_vec[i]
-  if(a <= 2 | a > 4){
+  if(a < 2 | a >= 4){
     psi0_a[i] = 0
   } else {
     EW = 0
-    psi0_a[i] = plogis(-6 + EW + 3.5*a*as.numeric(a > 2) - 4*a*as.numeric(a > 4) - 0.5 * EW * a )
+    psi0_a[i] = plogis(-6 + EW + 3.5*a*as.numeric(a >= 2) - 4*a*as.numeric(a >= 4) - 0.5 * EW * a )
   }
   
 }
@@ -89,27 +89,6 @@ psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
 
 eval_points = seq(0, 5, 0.5)
 psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
-
-
-# psi0_a <- c()
-# 
-# N = 1e+07
-# data_0 <- generate_data_7(n=N, a=0)
-# 
-# for (i in 1:length(a_vec)) {
-#   a <- a_vec[i]
-# 
-#   data_a <- generate_data_7(n=N, a=a)
-#   psi0_a[i] <- mean(data_a$Y) # - data_0$Y
-# }
-# 
-# psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
-# # plot(x= psi0_line$a, psi0_line$psi0)
-# 
-# eval_points = seq(0, 5, 0.5)
-# psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
-
-# save.image(file=here("data", "rdata", "02_simu_V5_sys7_psi0.RData"))
 
 # ## -----------------------------------------------------------------------------------------------------------------------
 # load(here("data", "rdata", "02_simu_V5_sys7_psi0.RData"))

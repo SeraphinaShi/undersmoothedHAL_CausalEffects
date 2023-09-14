@@ -556,48 +556,6 @@ plot_performences_adapt <- function(df, save_plot=NA){
 }
 
 
-summary_smoothness_adaptive_HAL <- function(result_list){
-  result_summaries <- list()
-  methods = names(result_list[[1]])
-  
-  for (method in methods){
-    result_list_method <- lapply(result_list, function(lst) lst[[method]])
-    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
-    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
-    
-    check_n_basis <- function(df) {
-      !all(sapply(df$n_basis, is.numeric) & sapply(df$n_basis, length) == 1)
-    }
-    data_frames_with_varying_n_basis <- result_list_method[sapply(result_list_method, check_n_basis)]
-    
-    result_summary <- result_all %>% 
-      filter(SE != 0) %>% 
-      mutate(bias = abs(y_hat - psi0),
-             bias_se_ratio = bias / SE,
-             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
-      group_by(a) %>% 
-      mutate(oracal_SE = sqrt(var(y_hat)),
-             oracal_bias_se_ratio = bias / oracal_SE,
-             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
-             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
-             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
-      summarise(across(where(is.numeric), mean)) %>% 
-      ungroup() 
-    
-    result_summary$method = method
-    result_summary$n_basis = mean(result_all$n_basis)
-    result_summary$smooth_order = mean(result_all$smooth_order)
-    result_summary$if_n_knots_default = mean(result_all$if_n_knots_default)
-    
-    result_summaries[[method]] = result_summary
-  }
-  
-  result_summary = do.call("rbind", result_summaries) %>% as.data.frame()
-  
-  results <- list(result_summary = result_summary, result_list = result_list)
-}
-
-
 plot_estimations_uHAL_gam_poly_noBT <- function(df, save_plot=NA){
   
   # color_cv =  "#F8766D"
@@ -819,6 +777,9 @@ results_grid_summary <- function(results_grid_in){
     result_all <-  do.call("rbind", all_results) %>% as.data.frame()
     result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
     
+    # result_all_1 <- result_all %>% mutate(cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) 
+    # tmp = result_summary[result_summary$lambda_scaler==1.2 & result_summary$a==0.5, c("SE", "oracal_SE", "ci_lwr", "ci_upr", "cover_rate", "oracal_ci_lwr", "oracal_ci_upr", "oracal_cover_rate")]
+    
     # result_list_scale <- lapply(result_list, function(lst) lst[[i]][c('a', 'y_hat', 'lambda', 'lambda_scaler', 'hal_fit_time', 'SE', 'ci_lwr', 'ci_upr')])
     # no_empirical_CI_proportion[i] <- mean(sapply(result_list_scale, function(rlt) any(is.na(rlt[,colnames(rlt) == 'SE']))))
     # result_all <-  do.call("rbind", result_list_scale) %>% as.data.frame()
@@ -856,3 +817,107 @@ results_grid_summary <- function(results_grid_in){
 }
 
 
+run_simu_rep_summary <- function(results_list){
+  results <- list()
+  for (method in c("CV", "U_G")){
+    result_list_method <- results_list[[method]]$all_results
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    result_summary <- result_all %>% 
+        filter(SE != 0) %>% 
+        mutate(bias = abs(y_hat - psi0),
+               bias_se_ratio = bias / SE,
+               cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+        group_by(a) %>% 
+        mutate(oracal_SE = sqrt(var(y_hat)),
+               oracal_bias_se_ratio = bias / oracal_SE,
+               oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+               oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+               oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+        summarise(across(where(is.numeric), mean)) %>% 
+        ungroup() %>%
+        mutate(hal_fit_time_unit = 'secs',
+               method = method)
+    
+    
+    results[[method]] <- list(result_summary = result_summary,
+                                all_results = result_list_method)
+
+  }
+  
+  results$result_summary <- rbind(results$CV$result_summary, results$U_G$result_summary, results$U_L$result_summary)
+  
+  return(results)
+}
+
+
+smoothness_adaptive_HAL_summary <- function(result_list){
+  result_summaries <- list()
+  methods = names(result_list[[1]])
+  
+  for (method in methods){
+    result_list_method <- lapply(result_list, function(lst) lst[[method]])
+    result_all <-  do.call("rbind", result_list_method) %>% as.data.frame()
+    result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+    
+    check_n_basis <- function(df) {
+      !all(sapply(df$n_basis, is.numeric) & sapply(df$n_basis, length) == 1)
+    }
+    data_frames_with_varying_n_basis <- result_list_method[sapply(result_list_method, check_n_basis)]
+    
+    result_summary <- result_all %>% 
+      filter(SE != 0) %>% 
+      mutate(bias = abs(y_hat - psi0),
+             bias_se_ratio = bias / SE,
+             cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+      group_by(a) %>% 
+      mutate(oracal_SE = sqrt(var(y_hat)),
+             oracal_bias_se_ratio = bias / oracal_SE,
+             oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+             oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+             oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+      summarise(across(where(is.numeric), mean)) %>% 
+      ungroup() 
+    
+    result_summary$method = method
+    result_summary$n_basis = mean(result_all$n_basis)
+    result_summary$smooth_order = mean(result_all$smooth_order)
+    result_summary$if_n_knots_default = mean(result_all$if_n_knots_default)
+    
+    result_summaries[[method]] = result_summary
+  }
+  
+  result_summary = do.call("rbind", result_summaries) %>% as.data.frame()
+  
+  results <- list(result_summary = result_summary, result_list = result_list)
+}
+
+
+run_simu_rep_GAM_poly_summary <- function(results_list, method){
+
+  result_all <-  do.call("rbind", results_list$all_results) %>% as.data.frame()
+  result_all <- merge(as.data.frame(psi0_pnt), result_all, by=c("a"))
+  
+  result_summary <- result_all %>% 
+    filter(SE != 0) %>% 
+    mutate(bias = abs(y_hat - psi0),
+           bias_se_ratio = bias / SE,
+           cover_rate = as.numeric(ci_lwr <= psi0 & psi0 <= ci_upr)) %>% 
+    group_by(a) %>% 
+    mutate(oracal_SE = sqrt(var(y_hat)),
+           oracal_bias_se_ratio = bias / oracal_SE,
+           oracal_ci_lwr = y_hat - 1.96 * oracal_SE,
+           oracal_ci_upr = y_hat + 1.96 * oracal_SE,
+           oracal_cover_rate = as.numeric(oracal_ci_lwr <= psi0 & psi0 <= oracal_ci_upr)) %>%
+    summarise(across(where(is.numeric), mean)) %>% 
+    ungroup() %>%
+    mutate(method = method)
+  
+  
+  results <- list(result_summary = result_summary,
+                  all_results = results_list$all_results)
+
+  
+  return(results)
+}

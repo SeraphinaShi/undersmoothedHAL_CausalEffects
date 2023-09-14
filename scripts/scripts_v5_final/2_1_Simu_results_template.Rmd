@@ -34,6 +34,7 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_EDAs.png")), p, width = 1
 ```{r fig.width=5, fig.height=4}
 load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
 
+
 ggplot() +
     geom_line(data=psi0_line, aes(x=a, y=psi0)) + 
     geom_point(data=psi0_pnt, aes(x=a, y=psi0)) + 
@@ -54,11 +55,6 @@ nn=200
 ```
 
 ```{r child = '2_1_Simu_results_template_sub.Rmd'}
-```
-
-```{r}
-library(knitr)
-if(sn == 7) knit_exit()
 ```
 
 

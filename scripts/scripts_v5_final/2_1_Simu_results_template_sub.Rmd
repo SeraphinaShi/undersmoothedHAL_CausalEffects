@@ -4,6 +4,12 @@
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
 
+if(sn == 7){
+  load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+  results_0 = run_simu_rep_summary(results_0)
+  # save.image(file=here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
+}
+
 results_0$result_summary = add_bound(results_0$result_summary)
 
 rslt_sum_default = results_0$result_summary
@@ -32,7 +38,6 @@ cat(sprintf(' The average fitting time for globally undersmoothed HAL: %0.4f sec
 
 ```{r fig.height=9, fig.width=9}
 p <- plot_performences_cv_ug_alla_noBT(df = rslt_sum_default, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_performences_default.png")))
-
 ```
 ```{r fig.height=4, fig.width=12}
 p <- estimation_qqplot_cv_ug_alla(results_list = results_0, save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_QQplots_default.png")))
@@ -42,17 +47,26 @@ plot(p)
 
 ### Undersmoothed Smoothness-adaptive HAL
 ```{r fig.width=8, fig.height=12}
+
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_adapt.RData")))
 
-results_adapt1 = summary_smoothness_adaptive_HAL(results_adapt$result_list)
+if(sn == 7){
+  load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+  # save.image(file=here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
+}
+
+results_adapt1 = smoothness_adaptive_HAL_summary(results_adapt$result_list)
 results_adapt1$result_summary = add_bound(results_adapt1$result_summary)
 
 p <- plot_performences_adapt(df = results_adapt1$result_summary,
                              save_plot=here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_performences.png")))
 
+
+
 ```
 
 ```{r}
+
 df_adapt_n_basis = unique(results_adapt1$result_summary[, c('smooth_order', 'if_n_knots_default', 'sl_pick', 'lambda', 'lambda_scaler', 'n_basis', 'cv_risk')])
 
 df_adapt_n_basis = round(df_adapt_n_basis, 4)
@@ -91,6 +105,8 @@ p_cv_risk_grid <- ggplot(df_adapt_n_basis, aes(x = smooth_order, color = if_n_kn
       labs(x = "smooth order", y = "CV risk") 
 p_cv_risk_grid
 ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_cv_risk.png")), plot=p_cv_risk_grid, width = 5, height = 3,  dpi = 800)
+
+
 ```
 
 
@@ -98,13 +114,19 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_adapt_cv_risk.pn
 ```{r}
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, ".RData")))
 
+if(sn == 7){
+  load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+  results_0 = run_simu_rep_summary(results_0)
+  # save.image(file=here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
+}
+
 results$result_summary = add_bound(results$result_summary)
 
 rslt_sum = results$result_summary
 
 cv_lambda = unique(rslt_sum$lambda[rslt_sum$method == 'CV'])
-u_g_lambda = unique(rslt_sum$lambda[rslt_sum$method == 'U_G'])
-u_g_scaler = unique(rslt_sum$lambda_scaler[rslt_sum$method == 'U_G'])
+u_g_lambda = mean(unique(rslt_sum$lambda[rslt_sum$method == 'U_G']))
+u_g_scaler = mean(unique(rslt_sum$lambda_scaler[rslt_sum$method == 'U_G']))
 
 eval_points = seq(0,5,0.5)
 
@@ -139,6 +161,12 @@ plot(p)
 lambda_scalers = c(1.2, 1.1, 10^seq(from=0, to=-3, length=20))
 
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_grid.RData")))
+
+if(sn == 7){
+  load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+  results_0 = run_simu_rep_summary(results_0)
+  # save.image(file=here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
+}
 
 results_grid_s <- results_grid_summary(results_grid)
 results_grid_s = add_bound(results_grid_s)
@@ -183,6 +211,13 @@ ggsave(here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_grid_num_basis.p
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_poly.RData")))
 load(here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_GAM.RData")))
 
+if(sn == 7){
+  load(file=here("data", "rdata", paste0("02_simu_V5_sys", sn ,"_psi0.RData")))
+  results_poly = run_simu_rep_GAM_poly_summary(results_poly, "Poly")
+  results_gam = run_simu_rep_GAM_poly_summary(results_gam, "GAM")
+  # save.image(file=here("data", "rdata", paste0("02_simu_V5_sys", sn, "_", nn, "_default.RData")))
+}
+
 results_poly$result_summary$method = "Poly"
 results_adapt1 = add_bound(results_adapt1)
 
@@ -203,12 +238,13 @@ results_all = add_bound(results_all)
 ```
 
 ```{r fig.height=4, fig.width=9}
+
 p1 <- plot_estimations_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_estimates.png")) )
+
 ```
 
 ```{r fig.height=9, fig.width=6}
 p <- plot_performances_uHAL_gam_poly_noBT(results_all,save_plot = here(getwd(), "plots", paste0("simu_sys", sn, "_n", n, "_compare_performances.png")) )
 ```
-
 
 

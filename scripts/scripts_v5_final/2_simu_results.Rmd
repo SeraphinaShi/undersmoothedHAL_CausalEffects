@@ -493,7 +493,6 @@ generate_data_7 <- function(n, a=NA){
     A <- rep(a, n)
   }
   
-  
   Y <- as.numeric(U_Y < plogis(-6 + W + 3.5*A*as.numeric(A >= 2) - 4*A*as.numeric(A >= 4) - 0.5 * W * A ))
   
   # data frame
