@@ -55,8 +55,7 @@ generate_data_7 <- function(n, a=NA){
     A <- rep(a, n)
   }
   
-  
-  Y <- as.numeric(U_Y < plogis(-6 + W + 3.5*A*as.numeric(A >= 2) - 4*A*as.numeric(A >= 4) - 0.5 * W * A ))
+  Y <- as.numeric(U_Y < plogis(-6 + W + 3.5*A*as.numeric(A > 2) - 4*A*as.numeric(A > 4) - 0.5 * W * A ))
   
   # data frame
   O <- data.frame(W, A, Y)
@@ -72,8 +71,26 @@ generate_data_7 <- function(n, a=NA){
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-# a_vec <- seq(0,5,0.1)
-# psi0_a <- c()
+a_vec <- seq(0,5,0.1)
+psi0_a <- c()
+
+for (i in 1:length(a_vec)) {
+  a <- a_vec[i]
+  if(a <= 2 | a > 4){
+    psi0_a[i] = 0
+  } else {
+    EW = 0
+    psi0_a[i] = plogis(-6 + EW + 3.5*a*as.numeric(a > 2) - 4*a*as.numeric(a > 4) - 0.5 * EW * a )
+  }
+  
+}
+
+psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
+
+eval_points = seq(0, 5, 0.5)
+psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
+
+
 # psi0_a <- c()
 # 
 # N = 1e+07
@@ -91,12 +108,12 @@ generate_data_7 <- function(n, a=NA){
 # 
 # eval_points = seq(0, 5, 0.5)
 # psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
-# 
+
 # save.image(file=here("data", "rdata", "02_simu_V5_sys7_psi0.RData"))
 # 
 # 
 # ## -----------------------------------------------------------------------------------------------------------------------
-load(here("data", "rdata", "02_simu_V5_sys7_psi0.RData"))
+# load(here("data", "rdata", "02_simu_V5_sys7_psi0.RData"))
 
 source(here("scripts", "scripts_v5_final", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5_final", "1_simu_functions.R"))
@@ -121,30 +138,23 @@ n = 200
 
 # -----------------------------------------------------------------------------------------------------------------------
 
-set.seed(123)
-results_grid <- run_simu_scaled_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-#
-save.image(file=here("data", "rdata", "02_simu_V5_sys7_200_grid.RData"))
+# set.seed(123)
+# results_grid <- run_simu_scaled_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# #
+# save.image(file=here("data", "rdata", "02_simu_V5_sys7_200_grid.RData"))
 
 
 
 # ## -----------------------------------------------------------------------------------------------------------------------
-# load(here("data", "rdata", "02_simu_V5_sys7_psi0.RData"))
-# 
-# source(here("scripts", "scripts_v5_final", "1_hal_functions.R"))
-# source(here("scripts", "scripts_v5_final", "1_simu_functions.R"))
-# 
-# n = 200
-# 
-# source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
-# 
-# set.seed(123)
-# results_gam <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
-# save.image(file=here("data", "rdata", "02_simu_V5_sys7_200_GAM.RData"))
-# 
-# rm(results_gam)
-# set.seed(123)
-# results_poly <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
-# save.image(file=here("data", "rdata", "02_simu_V5_sys7_200_poly.RData"))
-# 
-# 
+source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
+
+set.seed(123)
+results_gam <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
+save.image(file=here("data", "rdata", "02_simu_V5_sys7_200_GAM.RData"))
+
+rm(results_gam)
+set.seed(123)
+results_poly <- run_simu_gam_poly_rep(generate_data_7, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
+save.image(file=here("data", "rdata", "02_simu_V5_sys7_200_poly.RData"))
+
+
