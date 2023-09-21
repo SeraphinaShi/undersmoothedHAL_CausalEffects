@@ -71,7 +71,7 @@ generate_data_7 <- function(n, a=NA){
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-a_vec <- seq(0,5,0.1)
+a_vec <- seq(0,5,0.01)
 psi0_a <- c()
 
 for (i in 1:length(a_vec)) {

@@ -79,7 +79,7 @@ generate_data_5 <- function(n, a=NA){
   } else {
     A <- rep(a, n)
   }
-  
+
   Y <- as.numeric(U_Y < plogis(-9 - W$W1 + 0.7*W$W2 - 0.3*W$W1 * W$W3 - 0.4*W$W4 - 0.2 * W$W6^2 + 0.01 * W$W8 *W$W10 + 4*A + 3*sin((0.8*A)^2)) )
   mean(Y)
   
@@ -93,7 +93,7 @@ generate_data_5 <- function(n, a=NA){
 ## ----true_psi_sys5-------------------------------------------------------------------------------------------------------------------
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
-
+# 
 # a_vec <- seq(0,5,0.1)
 # psi0_a <- c()
 # psi0_a <- c()
@@ -102,7 +102,7 @@ generate_data_5 <- function(n, a=NA){
 # 
 # for (i in 1:length(a_vec)) {
 #   a <- a_vec[i]
-#   
+# 
 #   data_a <- generate_data_5(n=N, a=a)
 #   psi0_a[i] <- mean(data_a$Y) # - data_0$Y
 # }
@@ -125,6 +125,115 @@ load(here("data", "rdata", "02_simu_V5_sys5_psi0.RData"))
 
 source(here("scripts", "scripts_v5", "1_hal_functions.R"))
 source(here("scripts", "scripts_v5", "1_simu_functions.R"))
+
+#======================================================================
+# n = 200
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# set.seed(123)
+# 
+# results <- run_simu_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_200.RData"))
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results)
+# 
+# set.seed(123)
+# 
+# results_0 <- run_simu_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_200_default.RData"))
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results_0)
+# 
+# set.seed(123)
+# results_grid <- run_simu_scaled_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_200_grid.RData"))
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results_grid)
+# 
+# set.seed(123)
+# results_adapt <- run_simu_smoothness_adaptive_HAL_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_200_adapt.RData"))
+# 
+# 
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results_adapt)
+# 
+# source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
+# 
+# set.seed(123)
+# results_gam <- run_simu_gam_poly_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_200_GAM.RData"))
+# 
+# rm(results_gam)
+# set.seed(123)
+# results_poly <- run_simu_gam_poly_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_200_poly.RData"))
+# 
+# 
+# 
+# 
+# 
+# #======================================================================
+# rm(results_poly)
+# 
+# n = 500
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# set.seed(123)
+# 
+# results <- run_simu_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_500.RData"))
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results)
+# 
+# set.seed(123)
+# 
+# results_0 <- run_simu_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, defualt_setting = T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_500_default.RData"))
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results_0)
+# 
+# set.seed(123)
+# results_grid <- run_simu_scaled_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_500_grid.RData"))
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results_grid)
+# 
+# set.seed(123)
+# results_adapt <- run_simu_smoothness_adaptive_HAL_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_500_adapt.RData"))
+# 
+# 
+# 
+# ## -----------------------------------------------------------------------------------------------------------------------
+# rm(results_adapt)
+# 
+# source(here("scripts", "scripts_v5", "1_simu_functions_noHAL.R"))
+# 
+# set.seed(123)
+# results_gam <- run_simu_gam_poly_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "GAM")
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_500_GAM.RData"))
+# 
+# rm(results_gam)
+# set.seed(123)
+# results_poly <- run_simu_gam_poly_rep(generate_data_5, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T, method = "POLY")
+# save.image(file=here("data", "rdata", "02_simu_V5_sys5_500_poly.RData"))
+# 
+# 
+
+
+
+#======================================================================
+rm(results_poly)
 
 
 n = 1000
