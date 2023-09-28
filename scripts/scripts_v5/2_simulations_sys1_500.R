@@ -67,9 +67,24 @@ generate_data_1 <- function(n, a=NA){
 # Getting trul value of psi
 #------------------------------------------------------------------------------------
 
-# a_vec <- seq(0,5,0.1)
-# psi0_a <- c()
-# psi0_a <- c()
+a_vec <- seq(0,5,0.01)
+psi0_a <- c()
+
+for (i in 1:length(a_vec)) {
+  a <- a_vec[i]
+  
+  EW = 0
+  psi0_a[i] = plogis(-5 + EW + 2.25*a - 0.5 * EW * a )
+}
+
+psi0_line <- data.frame(a=a_vec, psi0 = psi0_a)
+
+eval_points = seq(0, 5, 0.5)
+psi0_pnt <- psi0_line[psi0_line$a %in% eval_points,]
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys1_psi0.RData"))
+
+
 # 
 # N = 1e+07
 # data_0 <- generate_data_1(n=N, a=0)
@@ -94,25 +109,26 @@ generate_data_1 <- function(n, a=NA){
 ## -----------------------------------------------------------------------------------------------------------------------
 load(here("data", "rdata", "02_simu_v5_sys1_psi0.RData"))
 
-source(here("scripts", "scripts_v5", "1_hal_functions.R"))
-source(here("scripts", "scripts_v5", "1_simu_functions.R"))
+# source(here("scripts", "scripts_v5", "1_hal_functions.R"))
+# source(here("scripts", "scripts_v5", "1_simu_functions.R"))
+source(here("scripts", "scripts_v5", "1_grid_extra_functions.R"))
 
 n = 500
 
 
-set.seed(123)
-results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-
-save.image(file=here("data", "rdata", "02_simu_v5_sys1_500.RData"))
+# set.seed(123)
+# results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# 
+# save.image(file=here("data", "rdata", "02_simu_v5_sys1_500.RData"))
 
 
 ## -----------------------------------------------------------------------------------------------------------------------
 # rm(results)
 # 
-# set.seed(123)
-# results_grid <- run_simu_scaled_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
-# 
-# save.image(file=here("data", "rdata", "02_simu_V5_sys1_500_grid.RData"))
+set.seed(123)
+results_grid_extra <- run_simu_scaled_rep_extra(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys1_500_grid_extra.RData"))
 
 ## -----------------------------------------------------------------------------------------------------------------------
 
