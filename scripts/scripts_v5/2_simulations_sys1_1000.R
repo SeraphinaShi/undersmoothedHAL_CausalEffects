@@ -94,16 +94,25 @@ generate_data_1 <- function(n, a=NA){
 ## -----------------------------------------------------------------------------------------------------------------------
 load(here("data", "rdata", "02_simu_v5_sys1_psi0.RData"))
 
-source(here("scripts", "scripts_v5", "1_hal_functions.R"))
-source(here("scripts", "scripts_v5", "1_simu_functions.R"))
+
+# source(here("scripts", "scripts_v5", "1_hal_functions.R"))
+# source(here("scripts", "scripts_v5", "1_simu_functions.R"))
+source(here("scripts", "scripts_v5", "1_grid_extra_functions.R"))
 
 n = 1000
 
+
 set.seed(123)
-results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+results_grid_extra <- run_simu_scaled_rep_extra(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+
+save.image(file=here("data", "rdata", "02_simu_V5_sys1_1000_grid_extra.RData"))
 
 
-save.image(file=here("data", "rdata", "02_simu_v5_sys1_1000.RData"))
+# set.seed(123)
+# results <- run_simu_rep(generate_data_1, eval_points, y_type = "binomial", n=n, rounds=500, return_all_rslts=T)
+# 
+# 
+# save.image(file=here("data", "rdata", "02_simu_v5_sys1_1000.RData"))
 
 
 ## -----------------------------------------------------------------------------------------------------------------------

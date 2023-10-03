@@ -1,5 +1,5 @@
 run_simu_scaled_rep_extra <- function(gen_data_func, eval_points, y_type, n, rounds, return_all_rslts = F){
-  lambda_scalers = c(seq(from = 3, to = 1.1, length = 15), 10^seq(from=0, to=-3, length=10))
+  lambda_scalers = c(seq(from = 5, to = 1.1, length = 15), 10^seq(from=0, to=-3, length=20))
   result_list <- list()
   for(r in 1:rounds){
     print(paste0("round ", r))
